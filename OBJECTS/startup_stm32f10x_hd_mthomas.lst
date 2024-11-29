@@ -1,0 +1,936 @@
+   1              		.cpu cortex-m3
+   2              		.arch armv7-m
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"startup_stm32f10x_hd_mthomas.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.global	g_pfnVectorsStartup
+  18              		.section	.isr_vectorsflash,"a"
+  19              		.align	2
+  22              	g_pfnVectorsStartup:
+  23 0000 00000000 		.word	_estack
+  24 0004 00000000 		.word	Reset_Handler
+  25              		.global	g_pfnVectors
+  26              		.section	.isr_vectorsram,"aw"
+  27              		.align	2
+  30              	g_pfnVectors:
+  31 0000 00000000 		.word	_estack
+  32 0004 00000000 		.word	Reset_Handler
+  33 0008 00000000 		.word	NMI_Handler
+  34 000c 00000000 		.word	HardFault_Handler
+  35 0010 00000000 		.word	MemManage_Handler
+  36 0014 00000000 		.word	BusFault_Handler
+  37 0018 00000000 		.word	UsageFault_Handler
+  38 001c 00000000 		.word	0
+  39 0020 00000000 		.word	0
+  40 0024 00000000 		.word	0
+  41 0028 00000000 		.word	0
+  42 002c 00000000 		.word	vPortSVCHandler
+  43 0030 00000000 		.word	DebugMon_Handler
+  44 0034 00000000 		.word	0
+  45 0038 00000000 		.word	xPortPendSVHandler
+  46 003c 00000000 		.word	xPortSysTickHandler
+  47 0040 00000000 		.word	WWDG_IRQHandler
+  48 0044 00000000 		.word	PVD_IRQHandler
+  49 0048 00000000 		.word	TAMPER_IRQHandler
+  50 004c 00000000 		.word	RTC_IRQHandler
+  51 0050 00000000 		.word	FLASH_IRQHandler
+  52 0054 00000000 		.word	RCC_IRQHandler
+  53 0058 00000000 		.word	EXTI0_IRQHandler
+  54 005c 00000000 		.word	EXTI1_IRQHandler
+  55 0060 00000000 		.word	EXTI2_IRQHandler
+  56 0064 00000000 		.word	EXTI3_IRQHandler
+  57 0068 00000000 		.word	EXTI4_IRQHandler
+  58 006c 00000000 		.word	DMA1_Channel1_IRQHandler
+  59 0070 00000000 		.word	DMA1_Channel2_IRQHandler
+  60 0074 00000000 		.word	DMA1_Channel3_IRQHandler
+  61 0078 00000000 		.word	DMA1_Channel4_IRQHandler
+  62 007c 00000000 		.word	DMA1_Channel5_IRQHandler
+  63 0080 00000000 		.word	DMA1_Channel6_IRQHandler
+  64 0084 00000000 		.word	DMA1_Channel7_IRQHandler
+  65 0088 00000000 		.word	ADC1_2_IRQHandler
+  66 008c 00000000 		.word	USB_HP_CAN1_TX_IRQHandler
+  67 0090 00000000 		.word	USB_LP_CAN1_RX0_IRQHandler
+  68 0094 00000000 		.word	CAN1_RX1_IRQHandler
+  69 0098 00000000 		.word	CAN1_SCE_IRQHandler
+  70 009c 00000000 		.word	EXTI9_5_IRQHandler
+  71 00a0 00000000 		.word	TIM1_BRK_IRQHandler
+  72 00a4 00000000 		.word	TIM1_UP_IRQHandler
+  73 00a8 00000000 		.word	TIM1_TRG_COM_IRQHandler
+  74 00ac 00000000 		.word	TIM1_CC_IRQHandler
+  75 00b0 00000000 		.word	TIM2_IRQHandler
+  76 00b4 00000000 		.word	TIM3_IRQHandler
+  77 00b8 00000000 		.word	TIM4_IRQHandler
+  78 00bc 00000000 		.word	I2C1_EV_IRQHandler
+  79 00c0 00000000 		.word	I2C1_ER_IRQHandler
+  80 00c4 00000000 		.word	I2C2_EV_IRQHandler
+  81 00c8 00000000 		.word	I2C2_ER_IRQHandler
+  82 00cc 00000000 		.word	SPI1_IRQHandler
+  83 00d0 00000000 		.word	SPI2_IRQHandler
+  84 00d4 00000000 		.word	USART1_IRQHandler
+  85 00d8 00000000 		.word	USART2_IRQHandler
+  86 00dc 00000000 		.word	USART3_IRQHandler
+  87 00e0 00000000 		.word	EXTI15_10_IRQHandler
+  88 00e4 00000000 		.word	RTCAlarm_IRQHandler
+  89 00e8 00000000 		.word	USBWakeUp_IRQHandler
+  90 00ec 00000000 		.word	TIM8_BRK_IRQHandler
+  91 00f0 00000000 		.word	TIM8_UP_IRQHandler
+  92 00f4 00000000 		.word	TIM8_TRG_COM_IRQHandler
+  93 00f8 00000000 		.word	TIM8_CC_IRQHandler
+  94 00fc 00000000 		.word	ADC3_IRQHandler
+  95 0100 00000000 		.word	FSMC_IRQHandler
+  96 0104 00000000 		.word	SDIO_IRQHandler
+  97 0108 00000000 		.word	TIM5_IRQHandler
+  98 010c 00000000 		.word	SPI3_IRQHandler
+  99 0110 00000000 		.word	UART4_IRQHandler
+ 100 0114 00000000 		.word	UART5_IRQHandler
+ 101 0118 00000000 		.word	TIM6_IRQHandler
+ 102 011c 00000000 		.word	TIM7_IRQHandler
+ 103 0120 00000000 		.word	DMA2_Channel1_IRQHandler
+ 104 0124 00000000 		.word	DMA2_Channel2_IRQHandler
+ 105 0128 00000000 		.word	DMA2_Channel3_IRQHandler
+ 106 012c 00000000 		.word	DMA2_Channel4_5_IRQHandler
+ 107              		.section	.text.Reset_Handler,"ax",%progbits
+ 108              		.align	1
+ 109              		.global	Reset_Handler
+ 110              		.syntax unified
+ 111              		.thumb
+ 112              		.thumb_func
+ 114              	Reset_Handler:
+ 115              	.LFB0:
+ 116              		.file 1 "common/lib.stm32/startup_stm32f10x_hd_mthomas.c"
+   1:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** /**
+   2:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  ******************************************************************************
+   3:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  * @file      startup_stm32f10x_md.c
+   4:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  * @author    MCD Application Team, modified by Martin Thomas
+   5:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  * @version   V3.0.0-mthomas
+   6:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  * @date      04/17/2009
+   7:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  * @brief     STM32F10x Medium Density Devices vector table for GNU toolchain.
+   8:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  *            This module performs:
+   9:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  *                - Set the initial SP
+  10:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  *                - Set the initial PC == Reset_Handler,
+  11:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  *                - Set the vector table entries with the exceptions ISR address,
+  12:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  *                - Branches to main in the C library (which eventually
+  13:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  *                  calls main()).
+  14:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  *            After Reset the Cortex-M3 processor is in Thread mode,
+  15:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  *            priority is Privileged, and the Stack is set to Main.
+  16:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  *******************************************************************************
+  17:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  * @copy
+  18:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  *
+  19:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  * THE PRESENT FIRMWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING CUSTOMERS
+  20:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  * WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER FOR THEM TO SAVE
+  21:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  * TIME. AS A RESULT, STMICROELECTRONICS SHALL NOT BE HELD LIABLE FOR ANY
+  22:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  * DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES WITH RESPECT TO ANY CLAIMS ARISING
+  23:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  * FROM THE CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE
+  24:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  * CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
+  25:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  *
+  26:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  * <h2><center>&copy; COPYRIGHT 2009 STMicroelectronics</center></h2>
+  27:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  */
+  28:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+  29:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** /* Modified by Martin Thomas HD added by Baron
+  30:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****    - to take VECT_TAB_RAM setting into account, also see the linker-script
+  31:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****    - to avoid warning "ISO C forbids initialization between function pointer and 'void *'".
+  32:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****    - added optional startup-delay to avoid unwanted operations while connecting with
+  33:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****      debugger/programmer
+  34:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****    - tested with the GNU arm-eabi toolchain as in CS G++ lite Q1/2009-161
+  35:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****    - minor modification in .data copy to avoid copy while "run from RAM"
+  36:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****      during debugging
+  37:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** */
+  38:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+  39:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** /* Includes ------------------------------------------------------------------*/
+  40:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** /* Private typedef -----------------------------------------------------------*/
+  41:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** /* Private typedef -----------------------------------------------------------*/
+  42:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** typedef void( *const intfunc )( void );
+  43:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+  44:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** /* Private define ------------------------------------------------------------*/
+  45:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #define WEAK __attribute__ ((weak))
+  46:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+  47:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** /* Private macro -------------------------------------------------------------*/
+  48:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** extern unsigned long _etext;
+  49:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** /* start address for the initialization values of the .data section.
+  50:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** defined in linker script */
+  51:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** extern unsigned long _sidata;
+  52:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+  53:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** /* start address for the .data section. defined in linker script */
+  54:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** extern unsigned long _sdata;
+  55:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+  56:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** /* end address for the .data section. defined in linker script */
+  57:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** extern unsigned long _edata;
+  58:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+  59:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** /* start address for the .bss section. defined in linker script */
+  60:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** extern unsigned long _sbss;
+  61:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+  62:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** /* end address for the .bss section. defined in linker script */
+  63:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** extern unsigned long _ebss;
+  64:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+  65:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** /* init value for the stack pointer. defined in linker script */
+  66:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** extern unsigned long _estack;
+  67:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+  68:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** /* Private variables ---------------------------------------------------------*/
+  69:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+  70:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** /* Private function prototypes -----------------------------------------------*/
+  71:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void Reset_Handler(void) __attribute__((__interrupt__));
+  72:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** extern int main(void);
+  73:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** extern void xPortPendSVHandler(void);
+  74:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** extern void xPortSysTickHandler(void);
+  75:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** //extern void vTimer2IntHandler( void );
+  76:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** extern void vPortSVCHandler( void );
+  77:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+  78:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void __Init_Data(void);
+  79:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void Default_Handler(void);
+  80:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+  81:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** /*******************************************************************************
+  82:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** *
+  83:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** *            Forward declaration of the default fault handlers.
+  84:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** *
+  85:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** *******************************************************************************/
+  86:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** //mthomas void WEAK Reset_Handler(void);
+  87:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK NMI_Handler(void);
+  88:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK HardFault_Handler(void);
+  89:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK MemManage_Handler(void);
+  90:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK BusFault_Handler(void);
+  91:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK UsageFault_Handler(void);
+  92:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** //mthomas void WEAK MemManage_Handler(void);
+  93:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** //void WEAK SVC_Handler(void);
+  94:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK DebugMon_Handler(void);
+  95:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** //void WEAK PendSV_Handler(void);
+  96:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** //void WEAK SysTick_Handler(void);
+  97:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+  98:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** /* External Interrupts */
+  99:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK WWDG_IRQHandler(void);
+ 100:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK PVD_IRQHandler(void);
+ 101:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK TAMPER_IRQHandler(void);
+ 102:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK RTC_IRQHandler(void);
+ 103:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK FLASH_IRQHandler(void);
+ 104:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK RCC_IRQHandler(void);
+ 105:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK EXTI0_IRQHandler(void);
+ 106:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK EXTI1_IRQHandler(void);
+ 107:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK EXTI2_IRQHandler(void);
+ 108:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK EXTI3_IRQHandler(void);
+ 109:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK EXTI4_IRQHandler(void);
+ 110:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK DMA1_Channel1_IRQHandler(void);
+ 111:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK DMA1_Channel2_IRQHandler(void);
+ 112:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK DMA1_Channel3_IRQHandler(void);
+ 113:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK DMA1_Channel4_IRQHandler(void);
+ 114:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK DMA1_Channel5_IRQHandler(void);
+ 115:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK DMA1_Channel6_IRQHandler(void);
+ 116:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK DMA1_Channel7_IRQHandler(void);
+ 117:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK ADC1_2_IRQHandler(void);
+ 118:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK USB_HP_CAN1_TX_IRQHandler(void);
+ 119:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK USB_LP_CAN1_RX0_IRQHandler(void);
+ 120:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK CAN1_RX1_IRQHandler(void);
+ 121:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK CAN1_SCE_IRQHandler(void);
+ 122:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK EXTI9_5_IRQHandler(void);
+ 123:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK TIM1_BRK_IRQHandler(void);
+ 124:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK TIM1_UP_IRQHandler(void);
+ 125:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK TIM1_TRG_COM_IRQHandler(void);
+ 126:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK TIM1_CC_IRQHandler(void);
+ 127:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK TIM2_IRQHandler(void);
+ 128:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK TIM3_IRQHandler(void);
+ 129:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK TIM4_IRQHandler(void);
+ 130:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK I2C1_EV_IRQHandler(void);
+ 131:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK I2C1_ER_IRQHandler(void);
+ 132:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK I2C2_EV_IRQHandler(void);
+ 133:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK I2C2_ER_IRQHandler(void);
+ 134:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK SPI1_IRQHandler(void);
+ 135:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK SPI2_IRQHandler(void);
+ 136:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK USART1_IRQHandler(void);
+ 137:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK USART2_IRQHandler(void);
+ 138:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK USART3_IRQHandler(void);
+ 139:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK EXTI15_10_IRQHandler(void);
+ 140:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK RTCAlarm_IRQHandler(void);
+ 141:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK USBWakeUp_IRQHandler(void);
+ 142:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK TIM8_BRK_IRQHandler(void);
+ 143:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK TIM8_UP_IRQHandler(void);
+ 144:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK TIM8_TRG_COM_IRQHandler(void);
+ 145:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK TIM8_CC_IRQHandler(void);
+ 146:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK ADC3_IRQHandler(void);
+ 147:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK FSMC_IRQHandler(void);
+ 148:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK SDIO_IRQHandler(void);
+ 149:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK TIM5_IRQHandler(void);
+ 150:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK SPI3_IRQHandler(void);
+ 151:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK UART4_IRQHandler(void);
+ 152:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK UART5_IRQHandler(void);
+ 153:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK TIM6_IRQHandler(void);
+ 154:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK TIM7_IRQHandler(void);
+ 155:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK DMA2_Channel1_IRQHandler(void);
+ 156:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK DMA2_Channel2_IRQHandler(void);
+ 157:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK DMA2_Channel3_IRQHandler(void);
+ 158:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void WEAK DMA2_Channel4_5_IRQHandler(void);
+ 159:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+ 160:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+ 161:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** /* Private functions ---------------------------------------------------------*/
+ 162:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** /******************************************************************************
+ 163:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** *
+ 164:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** * mthomas: If been built with VECT_TAB_RAM this creates two tables:
+ 165:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** * (1) a minimal table (stack-pointer, reset-vector) used during startup
+ 166:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** *     before relocation of the vector table using SCB_VTOR
+ 167:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** * (2) a full table which is copied to RAM and used after vector relocation
+ 168:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** *     (NVIC_SetVectorTable)
+ 169:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** * If been built without VECT_TAB_RAM the following comment from STM is valid:
+ 170:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** * The minimal vector table for a Cortex M3.  Note that the proper constructs
+ 171:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** * must be placed on this to ensure that it ends up at physical address
+ 172:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** * 0x0000.0000.
+ 173:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** *
+ 174:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** ******************************************************************************/
+ 175:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+ 176:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #ifdef VECT_TAB_RAM
+ 177:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** __attribute__ ((section(".isr_vectorsflash")))
+ 178:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void (* const g_pfnVectorsStartup[])(void) =
+ 179:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** {
+ 180:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     (intfunc)((unsigned long)&_estack), /* The initial stack pointer during startup */
+ 181:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     Reset_Handler,             /* The reset handler during startup */
+ 182:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** };
+ 183:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** __attribute__ ((section(".isr_vectorsram")))
+ 184:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void (* g_pfnVectors[])(void) =
+ 185:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #else /* VECT_TAB_RAM */
+ 186:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** __attribute__ ((section(".isr_vectorsflash")))
+ 187:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void (* const g_pfnVectors[])(void) =
+ 188:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #endif /* VECT_TAB_RAM */
+ 189:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** {
+ 190:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     (intfunc)((unsigned long)&_estack), /* The stack pointer after relocation */
+ 191:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     Reset_Handler,              /* Reset Handler */
+ 192:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     NMI_Handler,                /* NMI Handler */
+ 193:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     HardFault_Handler,          /* Hard Fault Handler */
+ 194:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     MemManage_Handler,          /* MPU Fault Handler */
+ 195:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     BusFault_Handler,           /* Bus Fault Handler */
+ 196:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     UsageFault_Handler,         /* Usage Fault Handler */
+ 197:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     0,                          /* Reserved */
+ 198:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     0,                          /* Reserved */
+ 199:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     0,                          /* Reserved */
+ 200:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     0,                          /* Reserved */
+ 201:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     vPortSVCHandler,// SVC_Handler,                /* SVCall Handler */
+ 202:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     DebugMon_Handler,           /* Debug Monitor Handler */
+ 203:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     0,                          /* Reserved */
+ 204:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     xPortPendSVHandler,// PendSV_Handler,             /* PendSV Handler */
+ 205:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     xPortSysTickHandler,// SysTick_Handler,            /* SysTick Handler */
+ 206:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+ 207:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     /* External Interrupts */
+ 208:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     WWDG_IRQHandler,            /* Window Watchdog */
+ 209:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     PVD_IRQHandler,             /* PVD through EXTI Line detect */
+ 210:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     TAMPER_IRQHandler,          /* Tamper */
+ 211:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     RTC_IRQHandler,             /* RTC */
+ 212:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     FLASH_IRQHandler,           /* Flash */
+ 213:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     RCC_IRQHandler,             /* RCC */
+ 214:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     EXTI0_IRQHandler,           /* EXTI Line 0 */
+ 215:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     EXTI1_IRQHandler,           /* EXTI Line 1 */
+ 216:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     EXTI2_IRQHandler,           /* EXTI Line 2 */
+ 217:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     EXTI3_IRQHandler,           /* EXTI Line 3 */
+ 218:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     EXTI4_IRQHandler,           /* EXTI Line 4 */
+ 219:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     DMA1_Channel1_IRQHandler,   /* DMA1 Channel 1 */
+ 220:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     DMA1_Channel2_IRQHandler,   /* DMA1 Channel 2 */
+ 221:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     DMA1_Channel3_IRQHandler,   /* DMA1 Channel 3 */
+ 222:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     DMA1_Channel4_IRQHandler,   /* DMA1 Channel 4 */
+ 223:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     DMA1_Channel5_IRQHandler,   /* DMA1 Channel 5 */
+ 224:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     DMA1_Channel6_IRQHandler,   /* DMA1 Channel 6 */
+ 225:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     DMA1_Channel7_IRQHandler,   /* DMA1 Channel 7 */
+ 226:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     ADC1_2_IRQHandler,          /* ADC1 & ADC2 */
+ 227:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     USB_HP_CAN1_TX_IRQHandler,  /* USB High Priority or CAN1 TX */
+ 228:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     USB_LP_CAN1_RX0_IRQHandler, /* USB Low  Priority or CAN1 RX0 */
+ 229:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     CAN1_RX1_IRQHandler,        /* CAN1 RX1 */
+ 230:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     CAN1_SCE_IRQHandler,        /* CAN1 SCE */
+ 231:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     EXTI9_5_IRQHandler,         /* EXTI Line 9..5 */
+ 232:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     TIM1_BRK_IRQHandler,        /* TIM1 Break */
+ 233:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     TIM1_UP_IRQHandler,         /* TIM1 Update */
+ 234:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     TIM1_TRG_COM_IRQHandler,    /* TIM1 Trigger and Commutation */
+ 235:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     TIM1_CC_IRQHandler,         /* TIM1 Capture Compare */
+ 236:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     TIM2_IRQHandler,            /* TIM2 */
+ 237:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     TIM3_IRQHandler,            /* TIM3 */
+ 238:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     TIM4_IRQHandler,            /* TIM4 */
+ 239:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     I2C1_EV_IRQHandler,         /* I2C1 Event */
+ 240:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     I2C1_ER_IRQHandler,         /* I2C1 Error */
+ 241:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     I2C2_EV_IRQHandler,         /* I2C2 Event */
+ 242:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     I2C2_ER_IRQHandler,         /* I2C2 Error */
+ 243:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     SPI1_IRQHandler,            /* SPI1 */
+ 244:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     SPI2_IRQHandler,            /* SPI2 */
+ 245:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     USART1_IRQHandler,          /* USART1 */
+ 246:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     USART2_IRQHandler,          /* USART2 */
+ 247:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     USART3_IRQHandler,          /* USART3 */
+ 248:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     EXTI15_10_IRQHandler,       /* EXTI Line 15..10 */
+ 249:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     RTCAlarm_IRQHandler,        /* RTC Alarm through EXTI Line */
+ 250:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     USBWakeUp_IRQHandler,       /* USB Wakeup from suspend */
+ 251:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     TIM8_BRK_IRQHandler,
+ 252:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     TIM8_UP_IRQHandler,
+ 253:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     TIM8_TRG_COM_IRQHandler,
+ 254:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     TIM8_CC_IRQHandler,
+ 255:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     ADC3_IRQHandler,
+ 256:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     FSMC_IRQHandler,
+ 257:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     SDIO_IRQHandler,
+ 258:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     TIM5_IRQHandler,
+ 259:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     SPI3_IRQHandler,
+ 260:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     UART4_IRQHandler,
+ 261:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     UART5_IRQHandler,
+ 262:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     TIM6_IRQHandler,
+ 263:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     TIM7_IRQHandler,
+ 264:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     DMA2_Channel1_IRQHandler,
+ 265:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     DMA2_Channel2_IRQHandler,
+ 266:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     DMA2_Channel3_IRQHandler,
+ 267:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     DMA2_Channel4_5_IRQHandler
+ 268:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+ 269:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** };
+ 270:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+ 271:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** /**
+ 272:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  * @brief  This is the code that gets called when the processor first
+ 273:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  *          starts execution following a reset event. Only the absolutely
+ 274:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  *          necessary set is performed, after which the application
+ 275:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  *          supplied main() routine is called.
+ 276:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  * @param  None
+ 277:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  * @retval : None
+ 278:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** */
+ 279:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+ 280:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void Reset_Handler(void)
+ 281:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** {
+ 117              		.loc 1 281 1
+ 118              		.cfi_startproc
+ 119              		@ Stack Align: May be called with mis-aligned SP.
+ 120              		@ args = 0, pretend = 0, frame = 8
+ 121              		@ frame_needed = 1, uses_anonymous_args = 0
+ 122 0000 6846     		mov	r0, sp
+ 123              		.cfi_register 13, 0
+ 124 0002 20F00701 		bic	r1, r0, #7
+ 125 0006 8D46     		mov	sp, r1
+ 126 0008 81B5     		push	{r0, r7, lr}
+ 127              	.LCFI0:
+ 128              		.cfi_def_cfa_offset 12
+ 129              		.cfi_offset 13, -12
+ 130              		.cfi_offset 7, -8
+ 131              		.cfi_offset 14, -4
+ 132 000a 83B0     		sub	sp, sp, #12
+ 133              	.LCFI1:
+ 134              		.cfi_def_cfa_offset 24
+ 135 000c 00AF     		add	r7, sp, #0
+ 136              	.LCFI2:
+ 137              		.cfi_def_cfa_register 7
+ 282:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+ 283:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #ifdef STARTUP_DELAY
+ 284:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****   volatile unsigned long i;
+ 285:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****   for (i=0;i<500000;i++) { ; }
+ 138              		.loc 1 285 9
+ 139 000e 0023     		movs	r3, #0
+ 140 0010 7B60     		str	r3, [r7, #4]
+ 141              		.loc 1 285 3
+ 142 0012 02E0     		b	.L2
+ 143              	.L3:
+ 144              		.loc 1 285 22 discriminator 3
+ 145 0014 7B68     		ldr	r3, [r7, #4]
+ 146 0016 0133     		adds	r3, r3, #1
+ 147 0018 7B60     		str	r3, [r7, #4]
+ 148              	.L2:
+ 149              		.loc 1 285 13 discriminator 1
+ 150 001a 7B68     		ldr	r3, [r7, #4]
+ 151              		.loc 1 285 3 discriminator 1
+ 152 001c 034A     		ldr	r2, .L5
+ 153 001e 9342     		cmp	r3, r2
+ 154 0020 F8D9     		bls	.L3
+ 286:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #endif
+ 287:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+ 288:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****   /* Initialize data and bss */
+ 289:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****   __Init_Data();
+ 155              		.loc 1 289 3
+ 156 0022 034B     		ldr	r3, .L5+4
+ 157 0024 9847     		blx	r3
+ 158              	.LVL0:
+ 290:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+ 291:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****   /* Call the application's entry point.*/
+ 292:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****   main();
+ 159              		.loc 1 292 3
+ 160 0026 034B     		ldr	r3, .L5+8
+ 161 0028 9847     		blx	r3
+ 162              	.LVL1:
+ 163              	.L4:
+ 293:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+ 294:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****   while(1) { ; }
+ 164              		.loc 1 294 8 discriminator 1
+ 165 002a FEE7     		b	.L4
+ 166              	.L6:
+ 167              		.align	2
+ 168              	.L5:
+ 169 002c 1FA10700 		.word	499999
+ 170 0030 00000000 		.word	__Init_Data
+ 171 0034 00000000 		.word	main
+ 172              		.cfi_endproc
+ 173              	.LFE0:
+ 175              		.section	.text.__Init_Data,"ax",%progbits
+ 176              		.align	1
+ 177              		.global	__Init_Data
+ 178              		.syntax unified
+ 179              		.thumb
+ 180              		.thumb_func
+ 182              	__Init_Data:
+ 183              	.LFB1:
+ 295:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** }
+ 296:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+ 297:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** /**
+ 298:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  * @brief  initializes data and bss sections
+ 299:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  * @param  None
+ 300:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  * @retval : None
+ 301:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** */
+ 302:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+ 303:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void __Init_Data(void)
+ 304:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** {
+ 184              		.loc 1 304 1
+ 185              		.cfi_startproc
+ 186              		@ args = 0, pretend = 0, frame = 8
+ 187              		@ frame_needed = 1, uses_anonymous_args = 0
+ 188              		@ link register save eliminated.
+ 189 0000 80B4     		push	{r7}
+ 190              	.LCFI3:
+ 191              		.cfi_def_cfa_offset 4
+ 192              		.cfi_offset 7, -4
+ 193 0002 83B0     		sub	sp, sp, #12
+ 194              	.LCFI4:
+ 195              		.cfi_def_cfa_offset 16
+ 196 0004 00AF     		add	r7, sp, #0
+ 197              	.LCFI5:
+ 198              		.cfi_def_cfa_register 7
+ 305:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****   unsigned long *pulSrc, *pulDest;
+ 306:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+ 307:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****   /* Copy the data segment initializers from flash to SRAM */
+ 308:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****   pulSrc  = &_sidata;
+ 199              		.loc 1 308 11
+ 200 0006 134B     		ldr	r3, .L13
+ 201 0008 7B60     		str	r3, [r7, #4]
+ 309:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****   pulDest = &_sdata;
+ 202              		.loc 1 309 11
+ 203 000a 134B     		ldr	r3, .L13+4
+ 204 000c 3B60     		str	r3, [r7]
+ 310:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****   if ( pulSrc != pulDest )
+ 205              		.loc 1 310 6
+ 206 000e 7A68     		ldr	r2, [r7, #4]
+ 207 0010 3B68     		ldr	r3, [r7]
+ 208 0012 9A42     		cmp	r2, r3
+ 209 0014 0CD0     		beq	.L8
+ 311:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****   {
+ 312:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     for(; pulDest < &_edata; )
+ 210              		.loc 1 312 5
+ 211 0016 07E0     		b	.L9
+ 212              	.L10:
+ 313:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     {
+ 314:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****       *(pulDest++) = *(pulSrc++);
+ 213              		.loc 1 314 30
+ 214 0018 7A68     		ldr	r2, [r7, #4]
+ 215 001a 131D     		adds	r3, r2, #4
+ 216 001c 7B60     		str	r3, [r7, #4]
+ 217              		.loc 1 314 16
+ 218 001e 3B68     		ldr	r3, [r7]
+ 219 0020 191D     		adds	r1, r3, #4
+ 220 0022 3960     		str	r1, [r7]
+ 221              		.loc 1 314 22
+ 222 0024 1268     		ldr	r2, [r2]
+ 223              		.loc 1 314 20
+ 224 0026 1A60     		str	r2, [r3]
+ 225              	.L9:
+ 312:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     {
+ 226              		.loc 1 312 5
+ 227 0028 3B68     		ldr	r3, [r7]
+ 228 002a 0C4A     		ldr	r2, .L13+8
+ 229 002c 9342     		cmp	r3, r2
+ 230 002e F3D3     		bcc	.L10
+ 231              	.L8:
+ 315:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     }
+ 316:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****   }
+ 317:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****   /* Zero fill the bss segment. */
+ 318:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****   for(pulDest = &_sbss; pulDest < &_ebss; )
+ 232              		.loc 1 318 15
+ 233 0030 0B4B     		ldr	r3, .L13+12
+ 234 0032 3B60     		str	r3, [r7]
+ 235              		.loc 1 318 3
+ 236 0034 04E0     		b	.L11
+ 237              	.L12:
+ 319:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****   {
+ 320:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****     *(pulDest++) = 0;
+ 238              		.loc 1 320 14
+ 239 0036 3B68     		ldr	r3, [r7]
+ 240 0038 1A1D     		adds	r2, r3, #4
+ 241 003a 3A60     		str	r2, [r7]
+ 242              		.loc 1 320 18
+ 243 003c 0022     		movs	r2, #0
+ 244 003e 1A60     		str	r2, [r3]
+ 245              	.L11:
+ 318:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****   {
+ 246              		.loc 1 318 3 discriminator 1
+ 247 0040 3B68     		ldr	r3, [r7]
+ 248 0042 084A     		ldr	r2, .L13+16
+ 249 0044 9342     		cmp	r3, r2
+ 250 0046 F6D3     		bcc	.L12
+ 321:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****   }
+ 322:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** }
+ 251              		.loc 1 322 1
+ 252 0048 00BF     		nop
+ 253 004a 00BF     		nop
+ 254 004c 0C37     		adds	r7, r7, #12
+ 255              	.LCFI6:
+ 256              		.cfi_def_cfa_offset 4
+ 257 004e BD46     		mov	sp, r7
+ 258              	.LCFI7:
+ 259              		.cfi_def_cfa_register 13
+ 260              		@ sp needed
+ 261 0050 80BC     		pop	{r7}
+ 262              	.LCFI8:
+ 263              		.cfi_restore 7
+ 264              		.cfi_def_cfa_offset 0
+ 265 0052 7047     		bx	lr
+ 266              	.L14:
+ 267              		.align	2
+ 268              	.L13:
+ 269 0054 00000000 		.word	_sidata
+ 270 0058 00000000 		.word	_sdata
+ 271 005c 00000000 		.word	_edata
+ 272 0060 00000000 		.word	_sbss
+ 273 0064 00000000 		.word	_ebss
+ 274              		.cfi_endproc
+ 275              	.LFE1:
+ 277              		.section	.text.Default_Handler,"ax",%progbits
+ 278              		.align	1
+ 279              		.global	Default_Handler
+ 280              		.syntax unified
+ 281              		.thumb
+ 282              		.thumb_func
+ 284              	Default_Handler:
+ 285              	.LFB2:
+ 323:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+ 324:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** /*******************************************************************************
+ 325:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** *
+ 326:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** * Provide weak aliases for each Exception handler to the Default_Handler.
+ 327:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** * As they are weak aliases, any function with the same name will override
+ 328:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** * this definition.
+ 329:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** *
+ 330:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** *******************************************************************************/
+ 331:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak MMI_Handler = Default_Handler
+ 332:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak MemManage_Handler = Default_Handler
+ 333:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak BusFault_Handler = Default_Handler
+ 334:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak UsageFault_Handler = Default_Handler
+ 335:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** //#pragma weak SVC_Handler = vPortSVCHandler
+ 336:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak DebugMon_Handler = Default_Handler
+ 337:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** //#pragma weak PendSV_Handler = xPortPendSVHandler
+ 338:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** //#pragma weak SysTick_Handler = xPortSysTickHandler
+ 339:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak WWDG_IRQHandler = Default_Handler
+ 340:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak PVD_IRQHandler = Default_Handler
+ 341:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak TAMPER_IRQHandler = Default_Handler
+ 342:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak RTC_IRQHandler = Default_Handler
+ 343:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak FLASH_IRQHandler = Default_Handler
+ 344:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak RCC_IRQHandler = Default_Handler
+ 345:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak EXTI0_IRQHandler = Default_Handler
+ 346:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak EXTI1_IRQHandler = Default_Handler
+ 347:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak EXTI2_IRQHandler = Default_Handler
+ 348:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak EXTI3_IRQHandler = Default_Handler
+ 349:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak EXTI4_IRQHandler = Default_Handler
+ 350:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak DMA1_Channel1_IRQHandler = Default_Handler
+ 351:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak DMA1_Channel2_IRQHandler = Default_Handler
+ 352:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak DMA1_Channel3_IRQHandler = Default_Handler
+ 353:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak DMA1_Channel4_IRQHandler = Default_Handler
+ 354:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak DMA1_Channel5_IRQHandler = Default_Handler
+ 355:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak DMA1_Channel6_IRQHandler = Default_Handler
+ 356:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak DMA1_Channel7_IRQHandler = Default_Handler
+ 357:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak ADC1_2_IRQHandler = Default_Handler
+ 358:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak USB_HP_CAN1_TX_IRQHandler = Default_Handler
+ 359:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak USB_LP_CAN1_RX0_IRQHandler = Default_Handler
+ 360:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak CAN1_RX1_IRQHandler = Default_Handler
+ 361:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak CAN1_SCE_IRQHandler = Default_Handler
+ 362:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak EXTI9_5_IRQHandler = Default_Handler
+ 363:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak TIM1_BRK_IRQHandler = Default_Handler
+ 364:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak TIM1_UP_IRQHandler = Default_Handler
+ 365:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak TIM1_TRG_COM_IRQHandler = Default_Handler
+ 366:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak TIM1_CC_IRQHandler = Default_Handler
+ 367:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak TIM2_IRQHandler = Default_Handler
+ 368:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak TIM3_IRQHandler = Default_Handler
+ 369:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak TIM4_IRQHandler = Default_Handler
+ 370:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak I2C1_EV_IRQHandler = Default_Handler
+ 371:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak I2C1_ER_IRQHandler = Default_Handler
+ 372:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak I2C2_EV_IRQHandler = Default_Handler
+ 373:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak I2C2_ER_IRQHandler = Default_Handler
+ 374:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak SPI1_IRQHandler = Default_Handler
+ 375:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak SPI2_IRQHandler = Default_Handler
+ 376:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak USART1_IRQHandler = Default_Handler
+ 377:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak USART2_IRQHandler = Default_Handler
+ 378:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak USART3_IRQHandler = Default_Handler
+ 379:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak EXTI15_10_IRQHandler = Default_Handler
+ 380:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak RTCAlarm_IRQHandler = Default_Handler
+ 381:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak USBWakeUp_IRQHandler = Default_Handler
+ 382:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak TIM8_BRK_IRQHandler = Default_Handler
+ 383:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak TIM8_UP_IRQHandler = Default_Handler
+ 384:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak TIM8_TRG_COM_IRQHandler = Default_Handler
+ 385:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak TIM8_CC_IRQHandler = Default_Handler
+ 386:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak ADC3_IRQHandler = Default_Handler
+ 387:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak FSMC_IRQHandler = Default_Handler
+ 388:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak SDIO_IRQHandler = Default_Handler
+ 389:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak TIM5_IRQHandler = Default_Handler
+ 390:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak SPI3_IRQHandler = Default_Handler
+ 391:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak UART4_IRQHandler = Default_Handler
+ 392:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak UART5_IRQHandler = Default_Handler
+ 393:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak TIM6_IRQHandler = Default_Handler
+ 394:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak TIM7_IRQHandler = Default_Handler
+ 395:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak DMA2_Channel1_IRQHandler = Default_Handler
+ 396:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak DMA2_Channel2_IRQHandler = Default_Handler
+ 397:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak DMA2_Channel3_IRQHandler = Default_Handler
+ 398:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** #pragma weak DMA2_Channel4_5_IRQHandler = Default_Handler
+ 399:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+ 400:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+ 401:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+ 402:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** /**
+ 403:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  * @brief  This is the code that gets called when the processor receives an
+ 404:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  *         unexpected interrupt.  This simply enters an infinite loop, preserving
+ 405:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  *         the system state for examination by a debugger.
+ 406:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  *
+ 407:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  * @param  None
+ 408:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****  * @retval : None
+ 409:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** */
+ 410:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** 
+ 411:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** void Default_Handler(void)
+ 412:common/lib.stm32/startup_stm32f10x_hd_mthomas.c **** {
+ 286              		.loc 1 412 1
+ 287              		.cfi_startproc
+ 288              		@ args = 0, pretend = 0, frame = 0
+ 289              		@ frame_needed = 1, uses_anonymous_args = 0
+ 290              		@ link register save eliminated.
+ 291 0000 80B4     		push	{r7}
+ 292              	.LCFI9:
+ 293              		.cfi_def_cfa_offset 4
+ 294              		.cfi_offset 7, -4
+ 295 0002 00AF     		add	r7, sp, #0
+ 296              	.LCFI10:
+ 297              		.cfi_def_cfa_register 7
+ 298              	.L16:
+ 413:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****   /* Go into an infinite loop. */
+ 414:common/lib.stm32/startup_stm32f10x_hd_mthomas.c ****   while (1)
+ 299              		.loc 1 414 9 discriminator 1
+ 300 0004 FEE7     		b	.L16
+ 301              		.cfi_endproc
+ 302              	.LFE2:
+ 304              		.weak	MMI_Handler
+ 305              		.thumb_set MMI_Handler,Default_Handler
+ 306              		.weak	DMA2_Channel4_5_IRQHandler
+ 307              		.thumb_set DMA2_Channel4_5_IRQHandler,Default_Handler
+ 308              		.weak	DMA2_Channel3_IRQHandler
+ 309              		.thumb_set DMA2_Channel3_IRQHandler,Default_Handler
+ 310              		.weak	DMA2_Channel2_IRQHandler
+ 311              		.thumb_set DMA2_Channel2_IRQHandler,Default_Handler
+ 312              		.weak	DMA2_Channel1_IRQHandler
+ 313              		.thumb_set DMA2_Channel1_IRQHandler,Default_Handler
+ 314              		.weak	TIM7_IRQHandler
+ 315              		.thumb_set TIM7_IRQHandler,Default_Handler
+ 316              		.weak	TIM6_IRQHandler
+ 317              		.thumb_set TIM6_IRQHandler,Default_Handler
+ 318              		.weak	UART5_IRQHandler
+ 319              		.thumb_set UART5_IRQHandler,Default_Handler
+ 320              		.weak	UART4_IRQHandler
+ 321              		.thumb_set UART4_IRQHandler,Default_Handler
+ 322              		.weak	SPI3_IRQHandler
+ 323              		.thumb_set SPI3_IRQHandler,Default_Handler
+ 324              		.weak	TIM5_IRQHandler
+ 325              		.thumb_set TIM5_IRQHandler,Default_Handler
+ 326              		.weak	SDIO_IRQHandler
+ 327              		.thumb_set SDIO_IRQHandler,Default_Handler
+ 328              		.weak	FSMC_IRQHandler
+ 329              		.thumb_set FSMC_IRQHandler,Default_Handler
+ 330              		.weak	ADC3_IRQHandler
+ 331              		.thumb_set ADC3_IRQHandler,Default_Handler
+ 332              		.weak	TIM8_CC_IRQHandler
+ 333              		.thumb_set TIM8_CC_IRQHandler,Default_Handler
+ 334              		.weak	TIM8_TRG_COM_IRQHandler
+ 335              		.thumb_set TIM8_TRG_COM_IRQHandler,Default_Handler
+ 336              		.weak	TIM8_UP_IRQHandler
+ 337              		.thumb_set TIM8_UP_IRQHandler,Default_Handler
+ 338              		.weak	TIM8_BRK_IRQHandler
+ 339              		.thumb_set TIM8_BRK_IRQHandler,Default_Handler
+ 340              		.weak	USBWakeUp_IRQHandler
+ 341              		.thumb_set USBWakeUp_IRQHandler,Default_Handler
+ 342              		.weak	RTCAlarm_IRQHandler
+ 343              		.thumb_set RTCAlarm_IRQHandler,Default_Handler
+ 344              		.weak	EXTI15_10_IRQHandler
+ 345              		.thumb_set EXTI15_10_IRQHandler,Default_Handler
+ 346              		.weak	USART3_IRQHandler
+ 347              		.thumb_set USART3_IRQHandler,Default_Handler
+ 348              		.weak	USART2_IRQHandler
+ 349              		.thumb_set USART2_IRQHandler,Default_Handler
+ 350              		.weak	USART1_IRQHandler
+ 351              		.thumb_set USART1_IRQHandler,Default_Handler
+ 352              		.weak	SPI2_IRQHandler
+ 353              		.thumb_set SPI2_IRQHandler,Default_Handler
+ 354              		.weak	SPI1_IRQHandler
+ 355              		.thumb_set SPI1_IRQHandler,Default_Handler
+ 356              		.weak	I2C2_ER_IRQHandler
+ 357              		.thumb_set I2C2_ER_IRQHandler,Default_Handler
+ 358              		.weak	I2C2_EV_IRQHandler
+ 359              		.thumb_set I2C2_EV_IRQHandler,Default_Handler
+ 360              		.weak	I2C1_ER_IRQHandler
+ 361              		.thumb_set I2C1_ER_IRQHandler,Default_Handler
+ 362              		.weak	I2C1_EV_IRQHandler
+ 363              		.thumb_set I2C1_EV_IRQHandler,Default_Handler
+ 364              		.weak	TIM4_IRQHandler
+ 365              		.thumb_set TIM4_IRQHandler,Default_Handler
+ 366              		.weak	TIM3_IRQHandler
+ 367              		.thumb_set TIM3_IRQHandler,Default_Handler
+ 368              		.weak	TIM2_IRQHandler
+ 369              		.thumb_set TIM2_IRQHandler,Default_Handler
+ 370              		.weak	TIM1_CC_IRQHandler
+ 371              		.thumb_set TIM1_CC_IRQHandler,Default_Handler
+ 372              		.weak	TIM1_TRG_COM_IRQHandler
+ 373              		.thumb_set TIM1_TRG_COM_IRQHandler,Default_Handler
+ 374              		.weak	TIM1_UP_IRQHandler
+ 375              		.thumb_set TIM1_UP_IRQHandler,Default_Handler
+ 376              		.weak	TIM1_BRK_IRQHandler
+ 377              		.thumb_set TIM1_BRK_IRQHandler,Default_Handler
+ 378              		.weak	EXTI9_5_IRQHandler
+ 379              		.thumb_set EXTI9_5_IRQHandler,Default_Handler
+ 380              		.weak	CAN1_SCE_IRQHandler
+ 381              		.thumb_set CAN1_SCE_IRQHandler,Default_Handler
+ 382              		.weak	CAN1_RX1_IRQHandler
+ 383              		.thumb_set CAN1_RX1_IRQHandler,Default_Handler
+ 384              		.weak	USB_LP_CAN1_RX0_IRQHandler
+ 385              		.thumb_set USB_LP_CAN1_RX0_IRQHandler,Default_Handler
+ 386              		.weak	USB_HP_CAN1_TX_IRQHandler
+ 387              		.thumb_set USB_HP_CAN1_TX_IRQHandler,Default_Handler
+ 388              		.weak	ADC1_2_IRQHandler
+ 389              		.thumb_set ADC1_2_IRQHandler,Default_Handler
+ 390              		.weak	DMA1_Channel7_IRQHandler
+ 391              		.thumb_set DMA1_Channel7_IRQHandler,Default_Handler
+ 392              		.weak	DMA1_Channel6_IRQHandler
+ 393              		.thumb_set DMA1_Channel6_IRQHandler,Default_Handler
+ 394              		.weak	DMA1_Channel5_IRQHandler
+ 395              		.thumb_set DMA1_Channel5_IRQHandler,Default_Handler
+ 396              		.weak	DMA1_Channel4_IRQHandler
+ 397              		.thumb_set DMA1_Channel4_IRQHandler,Default_Handler
+ 398              		.weak	DMA1_Channel3_IRQHandler
+ 399              		.thumb_set DMA1_Channel3_IRQHandler,Default_Handler
+ 400              		.weak	DMA1_Channel2_IRQHandler
+ 401              		.thumb_set DMA1_Channel2_IRQHandler,Default_Handler
+ 402              		.weak	DMA1_Channel1_IRQHandler
+ 403              		.thumb_set DMA1_Channel1_IRQHandler,Default_Handler
+ 404              		.weak	EXTI4_IRQHandler
+ 405              		.thumb_set EXTI4_IRQHandler,Default_Handler
+ 406              		.weak	EXTI3_IRQHandler
+ 407              		.thumb_set EXTI3_IRQHandler,Default_Handler
+ 408              		.weak	EXTI2_IRQHandler
+ 409              		.thumb_set EXTI2_IRQHandler,Default_Handler
+ 410              		.weak	EXTI1_IRQHandler
+ 411              		.thumb_set EXTI1_IRQHandler,Default_Handler
+ 412              		.weak	EXTI0_IRQHandler
+ 413              		.thumb_set EXTI0_IRQHandler,Default_Handler
+ 414              		.weak	RCC_IRQHandler
+ 415              		.thumb_set RCC_IRQHandler,Default_Handler
+ 416              		.weak	FLASH_IRQHandler
+ 417              		.thumb_set FLASH_IRQHandler,Default_Handler
+ 418              		.weak	RTC_IRQHandler
+ 419              		.thumb_set RTC_IRQHandler,Default_Handler
+ 420              		.weak	TAMPER_IRQHandler
+ 421              		.thumb_set TAMPER_IRQHandler,Default_Handler
+ 422              		.weak	PVD_IRQHandler
+ 423              		.thumb_set PVD_IRQHandler,Default_Handler
+ 424              		.weak	WWDG_IRQHandler
+ 425              		.thumb_set WWDG_IRQHandler,Default_Handler
+ 426              		.weak	DebugMon_Handler
+ 427              		.thumb_set DebugMon_Handler,Default_Handler
+ 428              		.weak	UsageFault_Handler
+ 429              		.thumb_set UsageFault_Handler,Default_Handler
+ 430              		.weak	BusFault_Handler
+ 431              		.thumb_set BusFault_Handler,Default_Handler
+ 432              		.weak	MemManage_Handler
+ 433              		.thumb_set MemManage_Handler,Default_Handler
+ 434              		.weak	HardFault_Handler
+ 435              		.weak	NMI_Handler
+ 436              		.text
+ 437              	.Letext0:
+DEFINED SYMBOLS
+                            *ABS*:00000000 startup_stm32f10x_hd_mthomas.c
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:22     .isr_vectorsflash:00000000 g_pfnVectorsStartup
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:19     .isr_vectorsflash:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:114    .text.Reset_Handler:00000000 Reset_Handler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:30     .isr_vectorsram:00000000 g_pfnVectors
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:27     .isr_vectorsram:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 MemManage_Handler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 BusFault_Handler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 UsageFault_Handler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 DebugMon_Handler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 WWDG_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 PVD_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 TAMPER_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 RTC_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 FLASH_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 RCC_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 EXTI0_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 EXTI1_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 EXTI2_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 EXTI3_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 EXTI4_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 DMA1_Channel1_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 DMA1_Channel2_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 DMA1_Channel3_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 DMA1_Channel4_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 DMA1_Channel5_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 DMA1_Channel6_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 DMA1_Channel7_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 ADC1_2_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 USB_HP_CAN1_TX_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 USB_LP_CAN1_RX0_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 CAN1_RX1_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 CAN1_SCE_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 EXTI9_5_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 TIM1_BRK_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 TIM1_UP_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 TIM1_TRG_COM_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 TIM1_CC_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 TIM2_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 TIM3_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 TIM4_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 I2C1_EV_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 I2C1_ER_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 I2C2_EV_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 I2C2_ER_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 SPI1_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 SPI2_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 USART1_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 USART2_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 USART3_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 EXTI15_10_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 RTCAlarm_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 USBWakeUp_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 TIM8_BRK_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 TIM8_UP_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 TIM8_TRG_COM_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 TIM8_CC_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 ADC3_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 FSMC_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 SDIO_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 TIM5_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 SPI3_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 UART4_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 UART5_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 TIM6_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 TIM7_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 DMA2_Channel1_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 DMA2_Channel2_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 DMA2_Channel3_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 DMA2_Channel4_5_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:108    .text.Reset_Handler:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:169    .text.Reset_Handler:0000002c $d
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:182    .text.__Init_Data:00000000 __Init_Data
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:176    .text.__Init_Data:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:269    .text.__Init_Data:00000054 $d
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:278    .text.Default_Handler:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 Default_Handler
+C:\Users\Admin\AppData\Local\Temp\cc4u1Rug.s:284    .text.Default_Handler:00000000 MMI_Handler
+
+UNDEFINED SYMBOLS
+_estack
+NMI_Handler
+HardFault_Handler
+vPortSVCHandler
+xPortPendSVHandler
+xPortSysTickHandler
+main
+_sidata
+_sdata
+_edata
+_sbss
+_ebss

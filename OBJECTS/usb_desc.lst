@@ -1,0 +1,117 @@
+   1              		.cpu cortex-m3
+   2              		.arch armv7-m
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"usb_desc.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.global	Virtual_Com_Port_DeviceDescriptor
+  18              		.section	.rodata.Virtual_Com_Port_DeviceDescriptor,"a"
+  19              		.align	2
+  22              	Virtual_Com_Port_DeviceDescriptor:
+  23 0000 12010002 		.ascii	"\022\001\000\002\002\000\000@\353\003\031a\000\002\001"
+  23      02000040 
+  23      EB031961 
+  23      000201
+  24 000f 020301   		.ascii	"\002\003\001"
+  25              		.global	Virtual_Com_Port_ConfigDescriptor
+  26              		.section	.rodata.Virtual_Com_Port_ConfigDescriptor,"a"
+  27              		.align	2
+  30              	Virtual_Com_Port_ConfigDescriptor:
+  31 0000 09024300 		.ascii	"\011\002C\000\002\001\000\3002\011\004\000\000\001\002"
+  31      020100C0 
+  31      32090400 
+  31      000102
+  32 000f 02010005 		.ascii	"\002\001\000\005$\000\020\001\005$\001\000\001\004$"
+  32      24001001 
+  32      05240100 
+  32      010424
+  33 001e 02060524 		.ascii	"\002\006\005$\006\000\001\007\005\202\003\010\000\377"
+  33      06000107 
+  33      05820308 
+  33      00FF
+  34 002c 09040100 		.ascii	"\011\004\001\000\002\012\000\000\000\007\005\003\002"
+  34      020A0000 
+  34      00070503 
+  34      02
+  35 0039 40000007 		.ascii	"@\000\000\007\005\201\002@\000\000"
+  35      05810240 
+  35      0000
+  36              		.global	Virtual_Com_Port_StringLangID
+  37              		.section	.rodata.Virtual_Com_Port_StringLangID,"a"
+  38              		.align	2
+  41              	Virtual_Com_Port_StringLangID:
+  42 0000 04030904 		.ascii	"\004\003\011\004"
+  43              		.global	Virtual_Com_Port_StringVendor
+  44              		.section	.rodata.Virtual_Com_Port_StringVendor,"a"
+  45              		.align	2
+  48              	Virtual_Com_Port_StringVendor:
+  49 0000 26035300 		.ascii	"&\003S\000T\000M\000i\000c\000r\000o\000e\000l\000e"
+  49      54004D00 
+  49      69006300 
+  49      72006F00 
+  49      65006C00 
+  50 0015 00630074 		.ascii	"\000c\000t\000r\000o\000n\000i\000c\000s\000"
+  50      0072006F 
+  50      006E0069 
+  50      00630073 
+  50      00
+  51              		.global	Virtual_Com_Port_StringProduct
+  52              		.section	.rodata.Virtual_Com_Port_StringProduct,"a"
+  53              		.align	2
+  56              	Virtual_Com_Port_StringProduct:
+  57 0000 32035300 		.ascii	"2\003S\000T\000M\0003\0002\000 \000V\000i\000r\000t"
+  57      54004D00 
+  57      33003200 
+  57      20005600 
+  57      69007200 
+  58 0015 00750061 		.ascii	"\000u\000a\000l\000 \000C\000O\000M\000 \000P\000o\000"
+  58      006C0020 
+  58      0043004F 
+  58      004D0020 
+  58      0050006F 
+  59 002a 72007400 		.ascii	"r\000t\000 \000 \000"
+  59      20002000 
+  60              		.global	Virtual_Com_Port_StringSerial
+  61              		.section	.data.Virtual_Com_Port_StringSerial,"aw"
+  62              		.align	2
+  65              	Virtual_Com_Port_StringSerial:
+  66 0000 1A035300 		.ascii	"\032\003S\000T\000M\0003\0002\0001\0000\000\000"
+  66      54004D00 
+  66      33003200 
+  66      31003000 
+  66      00
+  67 0011 00000000 		.space	9
+  67      00000000 
+  67      00
+  68              		.text
+  69              	.Letext0:
+  70              		.file 1 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+  71              		.file 2 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+  72              		.file 3 "usb/usb_desc.h"
+  73              		.file 4 "usb/usb_desc.c"
+DEFINED SYMBOLS
+                            *ABS*:00000000 usb_desc.c
+C:\Users\Admin\AppData\Local\Temp\ccxikq6w.s:22     .rodata.Virtual_Com_Port_DeviceDescriptor:00000000 Virtual_Com_Port_DeviceDescriptor
+C:\Users\Admin\AppData\Local\Temp\ccxikq6w.s:19     .rodata.Virtual_Com_Port_DeviceDescriptor:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\ccxikq6w.s:30     .rodata.Virtual_Com_Port_ConfigDescriptor:00000000 Virtual_Com_Port_ConfigDescriptor
+C:\Users\Admin\AppData\Local\Temp\ccxikq6w.s:27     .rodata.Virtual_Com_Port_ConfigDescriptor:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\ccxikq6w.s:41     .rodata.Virtual_Com_Port_StringLangID:00000000 Virtual_Com_Port_StringLangID
+C:\Users\Admin\AppData\Local\Temp\ccxikq6w.s:38     .rodata.Virtual_Com_Port_StringLangID:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\ccxikq6w.s:48     .rodata.Virtual_Com_Port_StringVendor:00000000 Virtual_Com_Port_StringVendor
+C:\Users\Admin\AppData\Local\Temp\ccxikq6w.s:45     .rodata.Virtual_Com_Port_StringVendor:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\ccxikq6w.s:56     .rodata.Virtual_Com_Port_StringProduct:00000000 Virtual_Com_Port_StringProduct
+C:\Users\Admin\AppData\Local\Temp\ccxikq6w.s:53     .rodata.Virtual_Com_Port_StringProduct:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\ccxikq6w.s:65     .data.Virtual_Com_Port_StringSerial:00000000 Virtual_Com_Port_StringSerial
+C:\Users\Admin\AppData\Local\Temp\ccxikq6w.s:62     .data.Virtual_Com_Port_StringSerial:00000000 $d
+
+NO UNDEFINED SYMBOLS

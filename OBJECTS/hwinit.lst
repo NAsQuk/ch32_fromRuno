@@ -1,0 +1,707 @@
+   1              		.cpu cortex-m3
+   2              		.arch armv7-m
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"hwinit.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.global	HSEStartUpStatus
+  18              		.section	.bss.HSEStartUpStatus,"aw",%nobits
+  21              	HSEStartUpStatus:
+  22 0000 00       		.space	1
+  23              		.section	.text.RCC_Configuration,"ax",%progbits
+  24              		.align	1
+  25              		.global	RCC_Configuration
+  26              		.syntax unified
+  27              		.thumb
+  28              		.thumb_func
+  30              	RCC_Configuration:
+  31              	.LFB27:
+  32              		.file 1 "common/lib.stm32/hwinit.c"
+   1:common/lib.stm32/hwinit.c **** /*
+   2:common/lib.stm32/hwinit.c ****  * hwinit.c
+   3:common/lib.stm32/hwinit.c ****  *
+   4:common/lib.stm32/hwinit.c ****  *  Created on: Mar 24, 2011
+   5:common/lib.stm32/hwinit.c ****  *      Author: baron
+   6:common/lib.stm32/hwinit.c ****  */
+   7:common/lib.stm32/hwinit.c **** #include "board.h"
+   8:common/lib.stm32/hwinit.c **** 
+   9:common/lib.stm32/hwinit.c **** //#ifdef ID_GD
+  10:common/lib.stm32/hwinit.c **** #define HSEStartUp_TimeOut      ((uint16_t)0xFFFF)
+  11:common/lib.stm32/hwinit.c **** //#else
+  12:common/lib.stm32/hwinit.c **** //   #define HSEStartUp_TimeOut   ((uint16_t)0x0500) /*!< Time out for HSE start up */
+  13:common/lib.stm32/hwinit.c **** //#endif
+  14:common/lib.stm32/hwinit.c **** 
+  15:common/lib.stm32/hwinit.c **** ErrorStatus HSEStartUpStatus;
+  16:common/lib.stm32/hwinit.c **** extern void USART3_IRQHandler(void);
+  17:common/lib.stm32/hwinit.c **** /*******************************************************************************
+  18:common/lib.stm32/hwinit.c ****  * Function Name  : RCC_Configuration
+  19:common/lib.stm32/hwinit.c ****  * Description    : Configures the different system clocks.
+  20:common/lib.stm32/hwinit.c ****  * Input          : None
+  21:common/lib.stm32/hwinit.c ****  * Output         : None
+  22:common/lib.stm32/hwinit.c ****  * Return         : None
+  23:common/lib.stm32/hwinit.c ****  *******************************************************************************/
+  24:common/lib.stm32/hwinit.c **** void RCC_Configuration(void) {
+  33              		.loc 1 24 30
+  34              		.cfi_startproc
+  35              		@ args = 0, pretend = 0, frame = 0
+  36              		@ frame_needed = 1, uses_anonymous_args = 0
+  37 0000 80B5     		push	{r7, lr}
+  38              	.LCFI0:
+  39              		.cfi_def_cfa_offset 8
+  40              		.cfi_offset 7, -8
+  41              		.cfi_offset 14, -4
+  42 0002 00AF     		add	r7, sp, #0
+  43              	.LCFI1:
+  44              		.cfi_def_cfa_register 7
+  25:common/lib.stm32/hwinit.c **** 	/* RCC system reset(for debug purpose) */
+  26:common/lib.stm32/hwinit.c **** 	RCC_DeInit();
+  45              		.loc 1 26 2
+  46 0004 234B     		ldr	r3, .L8
+  47 0006 9847     		blx	r3
+  48              	.LVL0:
+  27:common/lib.stm32/hwinit.c **** 
+  28:common/lib.stm32/hwinit.c **** 	/* Enable HSE */
+  29:common/lib.stm32/hwinit.c **** 	RCC_HSEConfig(RCC_HSE_ON);
+  49              		.loc 1 29 2
+  50 0008 4FF48030 		mov	r0, #65536
+  51 000c 224B     		ldr	r3, .L8+4
+  52 000e 9847     		blx	r3
+  53              	.LVL1:
+  30:common/lib.stm32/hwinit.c **** 	RCC_LSEConfig(RCC_LSE_OFF); /////проверить как работает с gd
+  54              		.loc 1 30 2
+  55 0010 0020     		movs	r0, #0
+  56 0012 224B     		ldr	r3, .L8+8
+  57 0014 9847     		blx	r3
+  58              	.LVL2:
+  31:common/lib.stm32/hwinit.c **** 	/* Wait till HSE is ready */
+  32:common/lib.stm32/hwinit.c **** 	HSEStartUpStatus = RCC_WaitForHSEStartUp();
+  59              		.loc 1 32 21
+  60 0016 224B     		ldr	r3, .L8+12
+  61 0018 9847     		blx	r3
+  62              	.LVL3:
+  63 001a 0346     		mov	r3, r0
+  64 001c 1A46     		mov	r2, r3
+  65              		.loc 1 32 19
+  66 001e 214B     		ldr	r3, .L8+16
+  67 0020 1A70     		strb	r2, [r3]
+  33:common/lib.stm32/hwinit.c **** 
+  34:common/lib.stm32/hwinit.c **** 	if (HSEStartUpStatus == SUCCESS) {
+  68              		.loc 1 34 23
+  69 0022 204B     		ldr	r3, .L8+16
+  70 0024 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+  71              		.loc 1 34 5
+  72 0026 012B     		cmp	r3, #1
+  73 0028 31D1     		bne	.L7
+  35:common/lib.stm32/hwinit.c **** 		/* Enable Prefetch Buffer */
+  36:common/lib.stm32/hwinit.c **** 		FLASH_PrefetchBufferCmd(FLASH_PrefetchBuffer_Enable);
+  74              		.loc 1 36 3
+  75 002a 1020     		movs	r0, #16
+  76 002c 1E4B     		ldr	r3, .L8+20
+  77 002e 9847     		blx	r3
+  78              	.LVL4:
+  37:common/lib.stm32/hwinit.c **** 
+  38:common/lib.stm32/hwinit.c **** 		/* Flash 2 wait state */
+  39:common/lib.stm32/hwinit.c **** 		FLASH_SetLatency(FLASH_Latency_2);
+  79              		.loc 1 39 3
+  80 0030 0220     		movs	r0, #2
+  81 0032 1E4B     		ldr	r3, .L8+24
+  82 0034 9847     		blx	r3
+  83              	.LVL5:
+  40:common/lib.stm32/hwinit.c **** 
+  41:common/lib.stm32/hwinit.c **** 		/* HCLK = SYSCLK */
+  42:common/lib.stm32/hwinit.c **** 
+  43:common/lib.stm32/hwinit.c **** 		if (initMK == 1) {
+  84              		.loc 1 43 14
+  85 0036 1E4B     		ldr	r3, .L8+28
+  86 0038 1B68     		ldr	r3, [r3]
+  87              		.loc 1 43 6
+  88 003a 012B     		cmp	r3, #1
+  89 003c 03D1     		bne	.L3
+  44:common/lib.stm32/hwinit.c **** 			RCC_HCLKConfig(RCC_SYSCLK_Div1);
+  90              		.loc 1 44 4
+  91 003e 0020     		movs	r0, #0
+  92 0040 1C4B     		ldr	r3, .L8+32
+  93 0042 9847     		blx	r3
+  94              	.LVL6:
+  95 0044 02E0     		b	.L4
+  96              	.L3:
+  45:common/lib.stm32/hwinit.c **** 		} else {
+  46:common/lib.stm32/hwinit.c **** 			RCC_HCLKConfig(RCC_SYSCLK_Div2);
+  97              		.loc 1 46 4
+  98 0046 8020     		movs	r0, #128
+  99 0048 1A4B     		ldr	r3, .L8+32
+ 100 004a 9847     		blx	r3
+ 101              	.LVL7:
+ 102              	.L4:
+  47:common/lib.stm32/hwinit.c **** 		}
+  48:common/lib.stm32/hwinit.c **** 
+  49:common/lib.stm32/hwinit.c **** 		/* PCLK2 = HCLK */
+  50:common/lib.stm32/hwinit.c **** 		RCC_PCLK2Config(RCC_HCLK_Div2);
+ 103              		.loc 1 50 3
+ 104 004c 4FF48060 		mov	r0, #1024
+ 105 0050 194B     		ldr	r3, .L8+36
+ 106 0052 9847     		blx	r3
+ 107              	.LVL8:
+  51:common/lib.stm32/hwinit.c **** 
+  52:common/lib.stm32/hwinit.c **** 		/* PCLK1 = HCLK/2 */
+  53:common/lib.stm32/hwinit.c **** 		RCC_PCLK1Config(RCC_HCLK_Div2);
+ 108              		.loc 1 53 3
+ 109 0054 4FF48060 		mov	r0, #1024
+ 110 0058 184B     		ldr	r3, .L8+40
+ 111 005a 9847     		blx	r3
+ 112              	.LVL9:
+  54:common/lib.stm32/hwinit.c **** 
+  55:common/lib.stm32/hwinit.c **** 		/* PLLCLK = 16MHz * 3 = 48 MHz */
+  56:common/lib.stm32/hwinit.c **** 		//RCC_PLLConfig(RCC_PLLSource_HSE_Div1, RCC_PLLMul_3);
+  57:common/lib.stm32/hwinit.c **** 		/* PLLCLK = (16MHz * 9) /2= 72 MHz */
+  58:common/lib.stm32/hwinit.c **** 		RCC_PLLConfig(RCC_PLLSource_HSE_Div2, RCC_PLLMul_9);
+ 113              		.loc 1 58 3
+ 114 005c 4FF4E011 		mov	r1, #1835008
+ 115 0060 4FF44030 		mov	r0, #196608
+ 116 0064 164B     		ldr	r3, .L8+44
+ 117 0066 9847     		blx	r3
+ 118              	.LVL10:
+  59:common/lib.stm32/hwinit.c **** 		//RCC_PLLConfig(RCC_PLLSource_HSE_Div1, RCC_PLLMul_2);
+  60:common/lib.stm32/hwinit.c **** 
+  61:common/lib.stm32/hwinit.c **** 		/* Enable PLL */
+  62:common/lib.stm32/hwinit.c **** 		RCC_PLLCmd(ENABLE);
+ 119              		.loc 1 62 3
+ 120 0068 0120     		movs	r0, #1
+ 121 006a 164B     		ldr	r3, .L8+48
+ 122 006c 9847     		blx	r3
+ 123              	.LVL11:
+  63:common/lib.stm32/hwinit.c **** 
+  64:common/lib.stm32/hwinit.c **** 		/* Wait till PLL is ready */
+  65:common/lib.stm32/hwinit.c **** 		while (RCC_GetFlagStatus(RCC_FLAG_PLLRDY) == RESET) {
+ 124              		.loc 1 65 9
+ 125 006e 00BF     		nop
+ 126              	.L5:
+ 127              		.loc 1 65 10 discriminator 1
+ 128 0070 3920     		movs	r0, #57
+ 129 0072 154B     		ldr	r3, .L8+52
+ 130 0074 9847     		blx	r3
+ 131              	.LVL12:
+ 132 0076 0346     		mov	r3, r0
+ 133              		.loc 1 65 9 discriminator 1
+ 134 0078 002B     		cmp	r3, #0
+ 135 007a F9D0     		beq	.L5
+  66:common/lib.stm32/hwinit.c **** 		}
+  67:common/lib.stm32/hwinit.c **** 
+  68:common/lib.stm32/hwinit.c **** 		/* Select PLL as system clock source */
+  69:common/lib.stm32/hwinit.c **** 		RCC_SYSCLKConfig(RCC_SYSCLKSource_PLLCLK);
+ 136              		.loc 1 69 3
+ 137 007c 0220     		movs	r0, #2
+ 138 007e 134B     		ldr	r3, .L8+56
+ 139 0080 9847     		blx	r3
+ 140              	.LVL13:
+  70:common/lib.stm32/hwinit.c **** 
+  71:common/lib.stm32/hwinit.c **** 		/* Wait till PLL is used as system clock source */
+  72:common/lib.stm32/hwinit.c **** 		while (RCC_GetSYSCLKSource() != 0x08) {
+ 141              		.loc 1 72 9
+ 142 0082 00BF     		nop
+ 143              	.L6:
+ 144              		.loc 1 72 10 discriminator 1
+ 145 0084 124B     		ldr	r3, .L8+60
+ 146 0086 9847     		blx	r3
+ 147              	.LVL14:
+ 148 0088 0346     		mov	r3, r0
+ 149              		.loc 1 72 9 discriminator 1
+ 150 008a 082B     		cmp	r3, #8
+ 151 008c FAD1     		bne	.L6
+ 152              	.L7:
+  73:common/lib.stm32/hwinit.c **** 		}
+  74:common/lib.stm32/hwinit.c **** 
+  75:common/lib.stm32/hwinit.c **** 
+  76:common/lib.stm32/hwinit.c **** 
+  77:common/lib.stm32/hwinit.c **** 	}
+  78:common/lib.stm32/hwinit.c **** }
+ 153              		.loc 1 78 1
+ 154 008e 00BF     		nop
+ 155 0090 80BD     		pop	{r7, pc}
+ 156              	.L9:
+ 157 0092 00BF     		.align	2
+ 158              	.L8:
+ 159 0094 00000000 		.word	RCC_DeInit
+ 160 0098 00000000 		.word	RCC_HSEConfig
+ 161 009c 00000000 		.word	RCC_LSEConfig
+ 162 00a0 00000000 		.word	RCC_WaitForHSEStartUp
+ 163 00a4 00000000 		.word	HSEStartUpStatus
+ 164 00a8 00000000 		.word	FLASH_PrefetchBufferCmd
+ 165 00ac 00000000 		.word	FLASH_SetLatency
+ 166 00b0 00000000 		.word	initMK
+ 167 00b4 00000000 		.word	RCC_HCLKConfig
+ 168 00b8 00000000 		.word	RCC_PCLK2Config
+ 169 00bc 00000000 		.word	RCC_PCLK1Config
+ 170 00c0 00000000 		.word	RCC_PLLConfig
+ 171 00c4 00000000 		.word	RCC_PLLCmd
+ 172 00c8 00000000 		.word	RCC_GetFlagStatus
+ 173 00cc 00000000 		.word	RCC_SYSCLKConfig
+ 174 00d0 00000000 		.word	RCC_GetSYSCLKSource
+ 175              		.cfi_endproc
+ 176              	.LFE27:
+ 178              		.section	.text.NVIC_Configuration,"ax",%progbits
+ 179              		.align	1
+ 180              		.global	NVIC_Configuration
+ 181              		.syntax unified
+ 182              		.thumb
+ 183              		.thumb_func
+ 185              	NVIC_Configuration:
+ 186              	.LFB28:
+  79:common/lib.stm32/hwinit.c **** /*******************************************************************************
+  80:common/lib.stm32/hwinit.c ****  * Function Name  : NVIC_Configuration
+  81:common/lib.stm32/hwinit.c ****  * Description    : Configures Vector Table base location.
+  82:common/lib.stm32/hwinit.c ****  * Input          : None
+  83:common/lib.stm32/hwinit.c ****  * Output         : None
+  84:common/lib.stm32/hwinit.c ****  * Return         : None
+  85:common/lib.stm32/hwinit.c ****  *******************************************************************************/
+  86:common/lib.stm32/hwinit.c **** #ifdef VECT_TAB_RAM
+  87:common/lib.stm32/hwinit.c **** /* vector-offset (TBLOFF) from bottom of SRAM. defined in linker script */
+  88:common/lib.stm32/hwinit.c **** extern uint32_t _isr_vectorsram_offs;
+  89:common/lib.stm32/hwinit.c **** void NVIC_Configuration(void)
+  90:common/lib.stm32/hwinit.c **** {
+ 187              		.loc 1 90 1
+ 188              		.cfi_startproc
+ 189              		@ args = 0, pretend = 0, frame = 8
+ 190              		@ frame_needed = 1, uses_anonymous_args = 0
+ 191 0000 80B5     		push	{r7, lr}
+ 192              	.LCFI2:
+ 193              		.cfi_def_cfa_offset 8
+ 194              		.cfi_offset 7, -8
+ 195              		.cfi_offset 14, -4
+ 196 0002 82B0     		sub	sp, sp, #8
+ 197              	.LCFI3:
+ 198              		.cfi_def_cfa_offset 16
+ 199 0004 00AF     		add	r7, sp, #0
+ 200              	.LCFI4:
+ 201              		.cfi_def_cfa_register 7
+  91:common/lib.stm32/hwinit.c **** 	/* Set the Vector Table base location at 0x20000000+_isr_vectorsram_offs */
+  92:common/lib.stm32/hwinit.c **** 	NVIC_SetVectorTable(NVIC_VectTab_RAM, (uint32_t) &_isr_vectorsram_offs);
+ 202              		.loc 1 92 2
+ 203 0006 434B     		ldr	r3, .L11
+ 204 0008 1946     		mov	r1, r3
+ 205 000a 4FF00050 		mov	r0, #536870912
+ 206 000e 424B     		ldr	r3, .L11+4
+ 207 0010 9847     		blx	r3
+ 208              	.LVL15:
+  93:common/lib.stm32/hwinit.c ****     NVIC_InitTypeDef NVIC_InitStructure;
+  94:common/lib.stm32/hwinit.c **** 
+  95:common/lib.stm32/hwinit.c ****     /* Configure one bit for preemption priority */
+  96:common/lib.stm32/hwinit.c ****     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
+ 209              		.loc 1 96 5
+ 210 0012 4FF44070 		mov	r0, #768
+ 211 0016 414B     		ldr	r3, .L11+8
+ 212 0018 9847     		blx	r3
+ 213              	.LVL16:
+  97:common/lib.stm32/hwinit.c **** 
+  98:common/lib.stm32/hwinit.c ****     NVIC_InitStructure.NVIC_IRQChannel = I2C1_EV_IRQn;
+ 214              		.loc 1 98 40
+ 215 001a 1F23     		movs	r3, #31
+ 216 001c 3B71     		strb	r3, [r7, #4]
+  99:common/lib.stm32/hwinit.c ****     	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = -3;
+ 217              		.loc 1 99 59
+ 218 001e FD23     		movs	r3, #253
+ 219 0020 7B71     		strb	r3, [r7, #5]
+ 100:common/lib.stm32/hwinit.c ****     	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;;
+ 220              		.loc 1 100 52
+ 221 0022 0023     		movs	r3, #0
+ 222 0024 BB71     		strb	r3, [r7, #6]
+ 101:common/lib.stm32/hwinit.c ****     	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+ 223              		.loc 1 101 44
+ 224 0026 0123     		movs	r3, #1
+ 225 0028 FB71     		strb	r3, [r7, #7]
+ 102:common/lib.stm32/hwinit.c ****     	NVIC_Init(&NVIC_InitStructure);
+ 226              		.loc 1 102 6
+ 227 002a 3B1D     		adds	r3, r7, #4
+ 228 002c 1846     		mov	r0, r3
+ 229 002e 3C4B     		ldr	r3, .L11+12
+ 230 0030 9847     		blx	r3
+ 231              	.LVL17:
+ 103:common/lib.stm32/hwinit.c **** 
+ 104:common/lib.stm32/hwinit.c ****     NVIC_InitStructure.NVIC_IRQChannel = I2C1_ER_IRQn;
+ 232              		.loc 1 104 40
+ 233 0032 2023     		movs	r3, #32
+ 234 0034 3B71     		strb	r3, [r7, #4]
+ 105:common/lib.stm32/hwinit.c ****     	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = -3;
+ 235              		.loc 1 105 59
+ 236 0036 FD23     		movs	r3, #253
+ 237 0038 7B71     		strb	r3, [r7, #5]
+ 106:common/lib.stm32/hwinit.c ****     	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+ 238              		.loc 1 106 52
+ 239 003a 0123     		movs	r3, #1
+ 240 003c BB71     		strb	r3, [r7, #6]
+ 107:common/lib.stm32/hwinit.c ****     	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+ 241              		.loc 1 107 44
+ 242 003e 0123     		movs	r3, #1
+ 243 0040 FB71     		strb	r3, [r7, #7]
+ 108:common/lib.stm32/hwinit.c ****     	NVIC_Init(&NVIC_InitStructure);
+ 244              		.loc 1 108 6
+ 245 0042 3B1D     		adds	r3, r7, #4
+ 246 0044 1846     		mov	r0, r3
+ 247 0046 364B     		ldr	r3, .L11+12
+ 248 0048 9847     		blx	r3
+ 249              	.LVL18:
+ 109:common/lib.stm32/hwinit.c **** 
+ 110:common/lib.stm32/hwinit.c **** 
+ 111:common/lib.stm32/hwinit.c ****     NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn;
+ 250              		.loc 1 111 40
+ 251 004a 2723     		movs	r3, #39
+ 252 004c 3B71     		strb	r3, [r7, #4]
+ 112:common/lib.stm32/hwinit.c ****     	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;//5//2
+ 253              		.loc 1 112 59
+ 254 004e 0123     		movs	r3, #1
+ 255 0050 7B71     		strb	r3, [r7, #5]
+ 113:common/lib.stm32/hwinit.c ****     	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+ 256              		.loc 1 113 52
+ 257 0052 0023     		movs	r3, #0
+ 258 0054 BB71     		strb	r3, [r7, #6]
+ 114:common/lib.stm32/hwinit.c ****     	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+ 259              		.loc 1 114 44
+ 260 0056 0123     		movs	r3, #1
+ 261 0058 FB71     		strb	r3, [r7, #7]
+ 115:common/lib.stm32/hwinit.c ****     	NVIC_Init(&NVIC_InitStructure);
+ 262              		.loc 1 115 6
+ 263 005a 3B1D     		adds	r3, r7, #4
+ 264 005c 1846     		mov	r0, r3
+ 265 005e 304B     		ldr	r3, .L11+12
+ 266 0060 9847     		blx	r3
+ 267              	.LVL19:
+ 116:common/lib.stm32/hwinit.c **** 
+ 117:common/lib.stm32/hwinit.c **** 	NVIC_InitStructure.NVIC_IRQChannel = UART4_IRQn;
+ 268              		.loc 1 117 37
+ 269 0062 3423     		movs	r3, #52
+ 270 0064 3B71     		strb	r3, [r7, #4]
+ 118:common/lib.stm32/hwinit.c **** 		NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 5;
+ 271              		.loc 1 118 56
+ 272 0066 0523     		movs	r3, #5
+ 273 0068 7B71     		strb	r3, [r7, #5]
+ 119:common/lib.stm32/hwinit.c **** 		NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+ 274              		.loc 1 119 49
+ 275 006a 0023     		movs	r3, #0
+ 276 006c BB71     		strb	r3, [r7, #6]
+ 120:common/lib.stm32/hwinit.c **** 		NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+ 277              		.loc 1 120 41
+ 278 006e 0123     		movs	r3, #1
+ 279 0070 FB71     		strb	r3, [r7, #7]
+ 121:common/lib.stm32/hwinit.c **** 		NVIC_Init(&NVIC_InitStructure);
+ 280              		.loc 1 121 3
+ 281 0072 3B1D     		adds	r3, r7, #4
+ 282 0074 1846     		mov	r0, r3
+ 283 0076 2A4B     		ldr	r3, .L11+12
+ 284 0078 9847     		blx	r3
+ 285              	.LVL20:
+ 122:common/lib.stm32/hwinit.c **** 
+ 123:common/lib.stm32/hwinit.c ****     NVIC_InitStructure.NVIC_IRQChannel = TIM5_IRQn;
+ 286              		.loc 1 123 40
+ 287 007a 3223     		movs	r3, #50
+ 288 007c 3B71     		strb	r3, [r7, #4]
+ 124:common/lib.stm32/hwinit.c ****         NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
+ 289              		.loc 1 124 62
+ 290 007e 0223     		movs	r3, #2
+ 291 0080 7B71     		strb	r3, [r7, #5]
+ 125:common/lib.stm32/hwinit.c ****         NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+ 292              		.loc 1 125 55
+ 293 0082 0023     		movs	r3, #0
+ 294 0084 BB71     		strb	r3, [r7, #6]
+ 126:common/lib.stm32/hwinit.c ****         NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+ 295              		.loc 1 126 47
+ 296 0086 0123     		movs	r3, #1
+ 297 0088 FB71     		strb	r3, [r7, #7]
+ 127:common/lib.stm32/hwinit.c ****         NVIC_Init(&NVIC_InitStructure);
+ 298              		.loc 1 127 9
+ 299 008a 3B1D     		adds	r3, r7, #4
+ 300 008c 1846     		mov	r0, r3
+ 301 008e 244B     		ldr	r3, .L11+12
+ 302 0090 9847     		blx	r3
+ 303              	.LVL21:
+ 128:common/lib.stm32/hwinit.c **** 
+ 129:common/lib.stm32/hwinit.c ****     NVIC_InitStructure.NVIC_IRQChannel = DMA1_Channel2_IRQn;
+ 304              		.loc 1 129 40
+ 305 0092 0C23     		movs	r3, #12
+ 306 0094 3B71     		strb	r3, [r7, #4]
+ 130:common/lib.stm32/hwinit.c ****         NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 7;
+ 307              		.loc 1 130 62
+ 308 0096 0723     		movs	r3, #7
+ 309 0098 7B71     		strb	r3, [r7, #5]
+ 131:common/lib.stm32/hwinit.c ****         NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+ 310              		.loc 1 131 55
+ 311 009a 0023     		movs	r3, #0
+ 312 009c BB71     		strb	r3, [r7, #6]
+ 132:common/lib.stm32/hwinit.c ****         NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+ 313              		.loc 1 132 47
+ 314 009e 0123     		movs	r3, #1
+ 315 00a0 FB71     		strb	r3, [r7, #7]
+ 133:common/lib.stm32/hwinit.c ****         NVIC_Init(&NVIC_InitStructure);
+ 316              		.loc 1 133 9
+ 317 00a2 3B1D     		adds	r3, r7, #4
+ 318 00a4 1846     		mov	r0, r3
+ 319 00a6 1E4B     		ldr	r3, .L11+12
+ 320 00a8 9847     		blx	r3
+ 321              	.LVL22:
+ 134:common/lib.stm32/hwinit.c **** 
+ 135:common/lib.stm32/hwinit.c **** 	NVIC_InitStructure.NVIC_IRQChannel = DMA1_Channel3_IRQn;
+ 322              		.loc 1 135 37
+ 323 00aa 0D23     		movs	r3, #13
+ 324 00ac 3B71     		strb	r3, [r7, #4]
+ 136:common/lib.stm32/hwinit.c **** 	   NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 4;
+ 325              		.loc 1 136 58
+ 326 00ae 0423     		movs	r3, #4
+ 327 00b0 7B71     		strb	r3, [r7, #5]
+ 137:common/lib.stm32/hwinit.c **** 	   NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+ 328              		.loc 1 137 51
+ 329 00b2 0023     		movs	r3, #0
+ 330 00b4 BB71     		strb	r3, [r7, #6]
+ 138:common/lib.stm32/hwinit.c **** 	   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+ 331              		.loc 1 138 43
+ 332 00b6 0123     		movs	r3, #1
+ 333 00b8 FB71     		strb	r3, [r7, #7]
+ 139:common/lib.stm32/hwinit.c **** 	   NVIC_Init(&NVIC_InitStructure);
+ 334              		.loc 1 139 5
+ 335 00ba 3B1D     		adds	r3, r7, #4
+ 336 00bc 1846     		mov	r0, r3
+ 337 00be 184B     		ldr	r3, .L11+12
+ 338 00c0 9847     		blx	r3
+ 339              	.LVL23:
+ 140:common/lib.stm32/hwinit.c **** 
+ 141:common/lib.stm32/hwinit.c ****    NVIC_InitStructure.NVIC_IRQChannel = DMA2_Channel5_IRQn;
+ 340              		.loc 1 141 39
+ 341 00c2 3B23     		movs	r3, #59
+ 342 00c4 3B71     		strb	r3, [r7, #4]
+ 142:common/lib.stm32/hwinit.c **** 	   NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 6;
+ 343              		.loc 1 142 58
+ 344 00c6 0623     		movs	r3, #6
+ 345 00c8 7B71     		strb	r3, [r7, #5]
+ 143:common/lib.stm32/hwinit.c **** 	   NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+ 346              		.loc 1 143 51
+ 347 00ca 0023     		movs	r3, #0
+ 348 00cc BB71     		strb	r3, [r7, #6]
+ 144:common/lib.stm32/hwinit.c **** 	   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+ 349              		.loc 1 144 43
+ 350 00ce 0123     		movs	r3, #1
+ 351 00d0 FB71     		strb	r3, [r7, #7]
+ 145:common/lib.stm32/hwinit.c **** 	   NVIC_Init(&NVIC_InitStructure);
+ 352              		.loc 1 145 5
+ 353 00d2 3B1D     		adds	r3, r7, #4
+ 354 00d4 1846     		mov	r0, r3
+ 355 00d6 124B     		ldr	r3, .L11+12
+ 356 00d8 9847     		blx	r3
+ 357              	.LVL24:
+ 146:common/lib.stm32/hwinit.c **** 
+ 147:common/lib.stm32/hwinit.c **** 	NVIC_InitStructure.NVIC_IRQChannel = DMA2_Channel3_IRQn;
+ 358              		.loc 1 147 37
+ 359 00da 3A23     		movs	r3, #58
+ 360 00dc 3B71     		strb	r3, [r7, #4]
+ 148:common/lib.stm32/hwinit.c **** 	   NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;
+ 361              		.loc 1 148 58
+ 362 00de 0323     		movs	r3, #3
+ 363 00e0 7B71     		strb	r3, [r7, #5]
+ 149:common/lib.stm32/hwinit.c **** 	   NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+ 364              		.loc 1 149 51
+ 365 00e2 0023     		movs	r3, #0
+ 366 00e4 BB71     		strb	r3, [r7, #6]
+ 150:common/lib.stm32/hwinit.c **** 	   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+ 367              		.loc 1 150 43
+ 368 00e6 0123     		movs	r3, #1
+ 369 00e8 FB71     		strb	r3, [r7, #7]
+ 151:common/lib.stm32/hwinit.c **** 	   NVIC_Init(&NVIC_InitStructure);
+ 370              		.loc 1 151 5
+ 371 00ea 3B1D     		adds	r3, r7, #4
+ 372 00ec 1846     		mov	r0, r3
+ 373 00ee 0C4B     		ldr	r3, .L11+12
+ 374 00f0 9847     		blx	r3
+ 375              	.LVL25:
+ 152:common/lib.stm32/hwinit.c **** 
+ 153:common/lib.stm32/hwinit.c **** 	NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;
+ 376              		.loc 1 153 37
+ 377 00f2 1D23     		movs	r3, #29
+ 378 00f4 3B71     		strb	r3, [r7, #4]
+ 154:common/lib.stm32/hwinit.c **** 	   NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+ 379              		.loc 1 154 58
+ 380 00f6 0123     		movs	r3, #1
+ 381 00f8 7B71     		strb	r3, [r7, #5]
+ 155:common/lib.stm32/hwinit.c **** 	   NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+ 382              		.loc 1 155 51
+ 383 00fa 0023     		movs	r3, #0
+ 384 00fc BB71     		strb	r3, [r7, #6]
+ 156:common/lib.stm32/hwinit.c **** 	   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+ 385              		.loc 1 156 43
+ 386 00fe 0123     		movs	r3, #1
+ 387 0100 FB71     		strb	r3, [r7, #7]
+ 157:common/lib.stm32/hwinit.c **** 	   NVIC_Init(&NVIC_InitStructure);
+ 388              		.loc 1 157 5
+ 389 0102 3B1D     		adds	r3, r7, #4
+ 390 0104 1846     		mov	r0, r3
+ 391 0106 064B     		ldr	r3, .L11+12
+ 392 0108 9847     		blx	r3
+ 393              	.LVL26:
+ 158:common/lib.stm32/hwinit.c ****     //----------------------------------------------------
+ 159:common/lib.stm32/hwinit.c **** }
+ 394              		.loc 1 159 1
+ 395 010a 00BF     		nop
+ 396 010c 0837     		adds	r7, r7, #8
+ 397              	.LCFI5:
+ 398              		.cfi_def_cfa_offset 8
+ 399 010e BD46     		mov	sp, r7
+ 400              	.LCFI6:
+ 401              		.cfi_def_cfa_register 13
+ 402              		@ sp needed
+ 403 0110 80BD     		pop	{r7, pc}
+ 404              	.L12:
+ 405 0112 00BF     		.align	2
+ 406              	.L11:
+ 407 0114 00000000 		.word	_isr_vectorsram_offs
+ 408 0118 00000000 		.word	NVIC_SetVectorTable
+ 409 011c 00000000 		.word	NVIC_PriorityGroupConfig
+ 410 0120 00000000 		.word	NVIC_Init
+ 411              		.cfi_endproc
+ 412              	.LFE28:
+ 414              		.section	.text.hwInit,"ax",%progbits
+ 415              		.align	1
+ 416              		.global	hwInit
+ 417              		.syntax unified
+ 418              		.thumb
+ 419              		.thumb_func
+ 421              	hwInit:
+ 422              	.LFB29:
+ 160:common/lib.stm32/hwinit.c **** #else
+ 161:common/lib.stm32/hwinit.c **** extern uint32_t _isr_vectorsflash_offs;
+ 162:common/lib.stm32/hwinit.c **** void NVIC_Configuration(void) {
+ 163:common/lib.stm32/hwinit.c **** 	/* Set the Vector Table base location at 0x08000000+_isr_vectorsflash_offs */
+ 164:common/lib.stm32/hwinit.c **** 	NVIC_SetVectorTable(NVIC_VectTab_FLASH,
+ 165:common/lib.stm32/hwinit.c **** 			(uint32_t) & _isr_vectorsflash_offs);
+ 166:common/lib.stm32/hwinit.c **** }
+ 167:common/lib.stm32/hwinit.c **** #endif /* VECT_TAB_RAM */
+ 168:common/lib.stm32/hwinit.c **** 
+ 169:common/lib.stm32/hwinit.c **** #ifdef USE_FULL_ASSERT
+ 170:common/lib.stm32/hwinit.c **** 
+ 171:common/lib.stm32/hwinit.c **** #include "term_io.h"
+ 172:common/lib.stm32/hwinit.c **** 
+ 173:common/lib.stm32/hwinit.c **** /**
+ 174:common/lib.stm32/hwinit.c ****  * @brief  Reports the name of the source file and the source line number
+ 175:common/lib.stm32/hwinit.c ****  *   where the assert_param error has occurred.
+ 176:common/lib.stm32/hwinit.c ****  * @param file: pointer to thvoid hwInit()
+ 177:common/lib.stm32/hwinit.c **** {
+ 178:common/lib.stm32/hwinit.c **** 
+ 179:common/lib.stm32/hwinit.c **** }
+ 180:common/lib.stm32/hwinit.c ****  * e source file name
+ 181:common/lib.stm32/hwinit.c ****  * @param line: assert_param error line source number
+ 182:common/lib.stm32/hwinit.c ****  * @retval : None
+ 183:common/lib.stm32/hwinit.c ****  */
+ 184:common/lib.stm32/hwinit.c **** void assert_failed(const uint8_t* file, const uint8_t* function, uint32_t line)
+ 185:common/lib.stm32/hwinit.c **** {
+ 186:common/lib.stm32/hwinit.c **** 	/* User can add his own implementation to report the file name and line number,
+ 187:common/lib.stm32/hwinit.c **** 	 ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+ 188:common/lib.stm32/hwinit.c **** 
+ 189:common/lib.stm32/hwinit.c **** 	xprintf("\n !!! Wrong parameter value detected\n");
+ 190:common/lib.stm32/hwinit.c **** 	xprintf(" - file %s\n", file);
+ 191:common/lib.stm32/hwinit.c **** 	xprintf(" - function %s\n", function);
+ 192:common/lib.stm32/hwinit.c **** 	xprintf(" - line %lu\n", line);
+ 193:common/lib.stm32/hwinit.c **** 
+ 194:common/lib.stm32/hwinit.c **** #if 0
+ 195:common/lib.stm32/hwinit.c **** 	/* Infinite loop */
+ 196:common/lib.stm32/hwinit.c **** 	while (1)
+ 197:common/lib.stm32/hwinit.c **** 	{
+ 198:common/lib.stm32/hwinit.c **** 	}
+ 199:common/lib.stm32/hwinit.c **** #endif
+ 200:common/lib.stm32/hwinit.c **** }
+ 201:common/lib.stm32/hwinit.c **** #endif
+ 202:common/lib.stm32/hwinit.c **** 
+ 203:common/lib.stm32/hwinit.c **** void hwInit() {
+ 423              		.loc 1 203 15
+ 424              		.cfi_startproc
+ 425              		@ args = 0, pretend = 0, frame = 0
+ 426              		@ frame_needed = 1, uses_anonymous_args = 0
+ 427 0000 80B5     		push	{r7, lr}
+ 428              	.LCFI7:
+ 429              		.cfi_def_cfa_offset 8
+ 430              		.cfi_offset 7, -8
+ 431              		.cfi_offset 14, -4
+ 432 0002 00AF     		add	r7, sp, #0
+ 433              	.LCFI8:
+ 434              		.cfi_def_cfa_register 7
+ 204:common/lib.stm32/hwinit.c **** 	GPIO_SetBits(GPIO_LEDWORK, LEDWORK);
+ 435              		.loc 1 204 2
+ 436 0004 8021     		movs	r1, #128
+ 437 0006 0448     		ldr	r0, .L14
+ 438 0008 044B     		ldr	r3, .L14+4
+ 439 000a 9847     		blx	r3
+ 440              	.LVL27:
+ 205:common/lib.stm32/hwinit.c **** 	/* System Clocks Configuration */
+ 206:common/lib.stm32/hwinit.c **** 	RCC_Configuration();
+ 441              		.loc 1 206 2
+ 442 000c 044B     		ldr	r3, .L14+8
+ 443 000e 9847     		blx	r3
+ 444              	.LVL28:
+ 207:common/lib.stm32/hwinit.c **** 	/* NVIC configuration */
+ 208:common/lib.stm32/hwinit.c **** 	NVIC_Configuration();
+ 445              		.loc 1 208 2
+ 446 0010 044B     		ldr	r3, .L14+12
+ 447 0012 9847     		blx	r3
+ 448              	.LVL29:
+ 209:common/lib.stm32/hwinit.c **** }
+ 449              		.loc 1 209 1
+ 450 0014 00BF     		nop
+ 451 0016 80BD     		pop	{r7, pc}
+ 452              	.L15:
+ 453              		.align	2
+ 454              	.L14:
+ 455 0018 00080140 		.word	1073809408
+ 456 001c 00000000 		.word	GPIO_SetBits
+ 457 0020 00000000 		.word	RCC_Configuration
+ 458 0024 00000000 		.word	NVIC_Configuration
+ 459              		.cfi_endproc
+ 460              	.LFE29:
+ 462              		.text
+ 463              	.Letext0:
+ 464              		.file 2 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 465              		.file 3 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 466              		.file 4 "common/lib.stm32/CMSIS/Core/CM3/stm32f10x.h"
+ 467              		.file 5 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/misc.h"
+ 468              		.file 6 "./board.h"
+ 469              		.file 7 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_gpio.h"
+ 470              		.file 8 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_rcc.h"
+ 471              		.file 9 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_flash.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 hwinit.c
+C:\Users\Admin\AppData\Local\Temp\ccBPB2IJ.s:21     .bss.HSEStartUpStatus:00000000 HSEStartUpStatus
+C:\Users\Admin\AppData\Local\Temp\ccBPB2IJ.s:22     .bss.HSEStartUpStatus:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\ccBPB2IJ.s:24     .text.RCC_Configuration:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccBPB2IJ.s:30     .text.RCC_Configuration:00000000 RCC_Configuration
+C:\Users\Admin\AppData\Local\Temp\ccBPB2IJ.s:159    .text.RCC_Configuration:00000094 $d
+C:\Users\Admin\AppData\Local\Temp\ccBPB2IJ.s:179    .text.NVIC_Configuration:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccBPB2IJ.s:185    .text.NVIC_Configuration:00000000 NVIC_Configuration
+C:\Users\Admin\AppData\Local\Temp\ccBPB2IJ.s:407    .text.NVIC_Configuration:00000114 $d
+C:\Users\Admin\AppData\Local\Temp\ccBPB2IJ.s:415    .text.hwInit:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccBPB2IJ.s:421    .text.hwInit:00000000 hwInit
+C:\Users\Admin\AppData\Local\Temp\ccBPB2IJ.s:455    .text.hwInit:00000018 $d
+
+UNDEFINED SYMBOLS
+RCC_DeInit
+RCC_HSEConfig
+RCC_LSEConfig
+RCC_WaitForHSEStartUp
+FLASH_PrefetchBufferCmd
+FLASH_SetLatency
+initMK
+RCC_HCLKConfig
+RCC_PCLK2Config
+RCC_PCLK1Config
+RCC_PLLConfig
+RCC_PLLCmd
+RCC_GetFlagStatus
+RCC_SYSCLKConfig
+RCC_GetSYSCLKSource
+_isr_vectorsram_offs
+NVIC_SetVectorTable
+NVIC_PriorityGroupConfig
+NVIC_Init
+GPIO_SetBits

@@ -1,0 +1,1317 @@
+   1              		.cpu cortex-m3
+   2              		.arch armv7-m
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"rvnet.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.section	.text.SwapBuffer,"ax",%progbits
+  18              		.align	1
+  19              		.global	SwapBuffer
+  20              		.syntax unified
+  21              		.thumb
+  22              		.thumb_func
+  24              	SwapBuffer:
+  25              	.LFB28:
+  26              		.file 1 "common/rtos/common/utils/rvnet.c"
+   1:common/rtos/common/utils/rvnet.c **** //********************************************************
+   2:common/rtos/common/utils/rvnet.c **** //    ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½      :
+   3:common/rtos/common/utils/rvnet.c **** //    ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½      : 1.0.
+   4:common/rtos/common/utils/rvnet.c **** //    ï¿½ï¿½ï¿½ï¿½        : 29.03.2009
+   5:common/rtos/common/utils/rvnet.c **** //    ï¿½ï¿½ï¿½ï¿½ï¿½       : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï
+   6:common/rtos/common/utils/rvnet.c **** //    ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½    : ï¿½ï¿½ï¿½ï¿½
+   7:common/rtos/common/utils/rvnet.c **** //    ï¿½ï¿½ï¿½ï¿½        :
+   8:common/rtos/common/utils/rvnet.c **** //    ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ :
+   9:common/rtos/common/utils/rvnet.c **** //    ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ : IAR
+  10:common/rtos/common/utils/rvnet.c **** //*********************************************************
+  11:common/rtos/common/utils/rvnet.c **** //    ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½           :
+  12:common/rtos/common/utils/rvnet.c **** //    ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½  :
+  13:common/rtos/common/utils/rvnet.c **** //    ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½       : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+  14:common/rtos/common/utils/rvnet.c **** //    ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½       :
+  15:common/rtos/common/utils/rvnet.c **** //*********************************************************
+  16:common/rtos/common/utils/rvnet.c **** #include "rvnet.h"
+  17:common/rtos/common/utils/rvnet.c **** #include "memman.h"
+  18:common/rtos/common/utils/rvnet.c **** #include "crc.h"
+  19:common/rtos/common/utils/rvnet.c **** 
+  20:common/rtos/common/utils/rvnet.c **** //extern uint8 ebuf[256];
+  21:common/rtos/common/utils/rvnet.c **** 
+  22:common/rtos/common/utils/rvnet.c **** RVNET_DATATYPE ReadDeviceID(uint8*);
+  23:common/rtos/common/utils/rvnet.c **** RVNET_DATATYPE ReadNWords(uint8*);
+  24:common/rtos/common/utils/rvnet.c **** RVNET_DATATYPE WriteNWords(uint8*);
+  25:common/rtos/common/utils/rvnet.c **** RVNET_DATATYPE ErrorAddress(uint8*);
+  26:common/rtos/common/utils/rvnet.c **** RVNET_DATATYPE ReadNBits(uint8*);
+  27:common/rtos/common/utils/rvnet.c **** RVNET_DATATYPE WriteBit(uint8*);
+  28:common/rtos/common/utils/rvnet.c **** void SwapBuffer(uint8 *buf, uint16 len);
+  29:common/rtos/common/utils/rvnet.c **** inline uint16 SwapWord(uint16 Word) {
+  30:common/rtos/common/utils/rvnet.c **** 	return (Word >> 8) | (Word << 8);
+  31:common/rtos/common/utils/rvnet.c **** }
+  32:common/rtos/common/utils/rvnet.c **** 
+  33:common/rtos/common/utils/rvnet.c **** inline void SwapBuffer(unsigned char *buf, uint16 len) {
+  27              		.loc 1 33 56
+  28              		.cfi_startproc
+  29              		@ args = 0, pretend = 0, frame = 16
+  30              		@ frame_needed = 1, uses_anonymous_args = 0
+  31              		@ link register save eliminated.
+  32 0000 80B4     		push	{r7}
+  33              	.LCFI0:
+  34              		.cfi_def_cfa_offset 4
+  35              		.cfi_offset 7, -4
+  36 0002 85B0     		sub	sp, sp, #20
+  37              	.LCFI1:
+  38              		.cfi_def_cfa_offset 24
+  39 0004 00AF     		add	r7, sp, #0
+  40              	.LCFI2:
+  41              		.cfi_def_cfa_register 7
+  42 0006 7860     		str	r0, [r7, #4]
+  43 0008 0B46     		mov	r3, r1
+  44 000a 7B80     		strh	r3, [r7, #2]	@ movhi
+  34:common/rtos/common/utils/rvnet.c **** 	unsigned char tint;
+  35:common/rtos/common/utils/rvnet.c **** 
+  36:common/rtos/common/utils/rvnet.c **** 	while (len--) {
+  45              		.loc 1 36 8
+  46 000c 0DE0     		b	.L2
+  47              	.L3:
+  37:common/rtos/common/utils/rvnet.c **** 		tint = *buf;
+  48              		.loc 1 37 8
+  49 000e 7B68     		ldr	r3, [r7, #4]
+  50 0010 1B78     		ldrb	r3, [r3]
+  51 0012 FB73     		strb	r3, [r7, #15]
+  38:common/rtos/common/utils/rvnet.c **** 		*buf = *(buf + 1);
+  52              		.loc 1 38 8
+  53 0014 7B68     		ldr	r3, [r7, #4]
+  54 0016 5A78     		ldrb	r2, [r3, #1]	@ zero_extendqisi2
+  55 0018 7B68     		ldr	r3, [r7, #4]
+  56 001a 1A70     		strb	r2, [r3]
+  39:common/rtos/common/utils/rvnet.c **** 		*(buf + 1) = tint;
+  57              		.loc 1 39 9
+  58 001c 7B68     		ldr	r3, [r7, #4]
+  59 001e 0133     		adds	r3, r3, #1
+  60              		.loc 1 39 14
+  61 0020 FA7B     		ldrb	r2, [r7, #15]
+  62 0022 1A70     		strb	r2, [r3]
+  40:common/rtos/common/utils/rvnet.c **** 		buf += 2;
+  63              		.loc 1 40 7
+  64 0024 7B68     		ldr	r3, [r7, #4]
+  65 0026 0233     		adds	r3, r3, #2
+  66 0028 7B60     		str	r3, [r7, #4]
+  67              	.L2:
+  36:common/rtos/common/utils/rvnet.c **** 		tint = *buf;
+  68              		.loc 1 36 12
+  69 002a 7B88     		ldrh	r3, [r7, #2]
+  70 002c 5A1E     		subs	r2, r3, #1
+  71 002e 7A80     		strh	r2, [r7, #2]	@ movhi
+  36:common/rtos/common/utils/rvnet.c **** 		tint = *buf;
+  72              		.loc 1 36 8
+  73 0030 002B     		cmp	r3, #0
+  74 0032 ECD1     		bne	.L3
+  41:common/rtos/common/utils/rvnet.c **** 	}
+  42:common/rtos/common/utils/rvnet.c **** }
+  75              		.loc 1 42 1
+  76 0034 00BF     		nop
+  77 0036 00BF     		nop
+  78 0038 1437     		adds	r7, r7, #20
+  79              	.LCFI3:
+  80              		.cfi_def_cfa_offset 4
+  81 003a BD46     		mov	sp, r7
+  82              	.LCFI4:
+  83              		.cfi_def_cfa_register 13
+  84              		@ sp needed
+  85 003c 80BC     		pop	{r7}
+  86              	.LCFI5:
+  87              		.cfi_restore 7
+  88              		.cfi_def_cfa_offset 0
+  89 003e 7047     		bx	lr
+  90              		.cfi_endproc
+  91              	.LFE28:
+  93              		.section	.text.RVnetSlaveProcess,"ax",%progbits
+  94              		.align	1
+  95              		.global	RVnetSlaveProcess
+  96              		.syntax unified
+  97              		.thumb
+  98              		.thumb_func
+ 100              	RVnetSlaveProcess:
+ 101              	.LFB29:
+  43:common/rtos/common/utils/rvnet.c **** //======================================================================
+  44:common/rtos/common/utils/rvnet.c **** //extern void BOOTSTART( void );
+  45:common/rtos/common/utils/rvnet.c **** 
+  46:common/rtos/common/utils/rvnet.c **** RVNET_DATATYPE RVnetSlaveProcess(uint8 *px_buf, RVNET_DATATYPE pkSize,
+  47:common/rtos/common/utils/rvnet.c **** 		uint8 device_address) {
+ 102              		.loc 1 47 25
+ 103              		.cfi_startproc
+ 104              		@ args = 0, pretend = 0, frame = 16
+ 105              		@ frame_needed = 1, uses_anonymous_args = 0
+ 106 0000 80B5     		push	{r7, lr}
+ 107              	.LCFI6:
+ 108              		.cfi_def_cfa_offset 8
+ 109              		.cfi_offset 7, -8
+ 110              		.cfi_offset 14, -4
+ 111 0002 84B0     		sub	sp, sp, #16
+ 112              	.LCFI7:
+ 113              		.cfi_def_cfa_offset 24
+ 114 0004 00AF     		add	r7, sp, #0
+ 115              	.LCFI8:
+ 116              		.cfi_def_cfa_register 7
+ 117 0006 7860     		str	r0, [r7, #4]
+ 118 0008 0B46     		mov	r3, r1
+ 119 000a FB70     		strb	r3, [r7, #3]
+ 120 000c 1346     		mov	r3, r2
+ 121 000e BB70     		strb	r3, [r7, #2]
+  48:common/rtos/common/utils/rvnet.c **** 	volatile uint8 *pxPack = px_buf;
+ 122              		.loc 1 48 18
+ 123 0010 7B68     		ldr	r3, [r7, #4]
+ 124 0012 FB60     		str	r3, [r7, #12]
+  49:common/rtos/common/utils/rvnet.c **** 	if (*pxPack == device_address) {
+ 125              		.loc 1 49 6
+ 126 0014 FB68     		ldr	r3, [r7, #12]
+ 127 0016 1B78     		ldrb	r3, [r3]
+ 128 0018 DBB2     		uxtb	r3, r3
+ 129              		.loc 1 49 5
+ 130 001a BA78     		ldrb	r2, [r7, #2]	@ zero_extendqisi2
+ 131 001c 9A42     		cmp	r2, r3
+ 132 001e 6DD1     		bne	.L5
+  50:common/rtos/common/utils/rvnet.c **** 		if (CheckCRC(pxPack, pkSize)) {
+ 133              		.loc 1 50 7
+ 134 0020 FB78     		ldrb	r3, [r7, #3]	@ zero_extendqisi2
+ 135 0022 1946     		mov	r1, r3
+ 136 0024 F868     		ldr	r0, [r7, #12]
+ 137 0026 3E4B     		ldr	r3, .L17
+ 138 0028 9847     		blx	r3
+ 139              	.LVL0:
+ 140 002a 0346     		mov	r3, r0
+ 141              		.loc 1 50 6
+ 142 002c 002B     		cmp	r3, #0
+ 143 002e 63D0     		beq	.L6
+  51:common/rtos/common/utils/rvnet.c **** 			pxPack++;
+ 144              		.loc 1 51 10
+ 145 0030 FB68     		ldr	r3, [r7, #12]
+ 146 0032 0133     		adds	r3, r3, #1
+ 147 0034 FB60     		str	r3, [r7, #12]
+  52:common/rtos/common/utils/rvnet.c **** 			switch (*pxPack) {
+ 148              		.loc 1 52 12
+ 149 0036 FB68     		ldr	r3, [r7, #12]
+ 150 0038 1B78     		ldrb	r3, [r3]
+ 151 003a DBB2     		uxtb	r3, r3
+ 152              		.loc 1 52 4
+ 153 003c 102B     		cmp	r3, #16
+ 154 003e 52D8     		bhi	.L7
+ 155 0040 01A2     		adr	r2, .L9
+ 156 0042 52F823F0 		ldr	pc, [r2, r3, lsl #2]
+ 157 0046 00BF     		.p2align 2
+ 158              	.L9:
+ 159 0048 8D000000 		.word	.L13+1
+ 160 004c 9F000000 		.word	.L12+1
+ 161 0050 9F000000 		.word	.L12+1
+ 162 0054 B1000000 		.word	.L11+1
+ 163 0058 B1000000 		.word	.L11+1
+ 164 005c C3000000 		.word	.L10+1
+ 165 0060 E7000000 		.word	.L7+1
+ 166 0064 E7000000 		.word	.L7+1
+ 167 0068 E7000000 		.word	.L7+1
+ 168 006c E7000000 		.word	.L7+1
+ 169 0070 E7000000 		.word	.L7+1
+ 170 0074 E7000000 		.word	.L7+1
+ 171 0078 E7000000 		.word	.L7+1
+ 172 007c E7000000 		.word	.L7+1
+ 173 0080 E7000000 		.word	.L7+1
+ 174 0084 E7000000 		.word	.L7+1
+ 175 0088 D5000000 		.word	.L8+1
+ 176              		.p2align 1
+ 177              	.L13:
+  53:common/rtos/common/utils/rvnet.c **** 			case 0x00:
+  54:common/rtos/common/utils/rvnet.c **** 				pxPack++;
+ 178              		.loc 1 54 11
+ 179 008c FB68     		ldr	r3, [r7, #12]
+ 180 008e 0133     		adds	r3, r3, #1
+ 181 0090 FB60     		str	r3, [r7, #12]
+  55:common/rtos/common/utils/rvnet.c **** 				pkSize = ReadDeviceID(pxPack);
+ 182              		.loc 1 55 14
+ 183 0092 F868     		ldr	r0, [r7, #12]
+ 184 0094 234B     		ldr	r3, .L17+4
+ 185 0096 9847     		blx	r3
+ 186              	.LVL1:
+ 187 0098 0346     		mov	r3, r0
+ 188 009a FB70     		strb	r3, [r7, #3]
+  56:common/rtos/common/utils/rvnet.c **** 				break;
+ 189              		.loc 1 56 5
+ 190 009c 30E0     		b	.L15
+ 191              	.L12:
+  57:common/rtos/common/utils/rvnet.c **** 			case 0x01:
+  58:common/rtos/common/utils/rvnet.c **** 			case 0x02:
+  59:common/rtos/common/utils/rvnet.c **** 				pxPack++;
+ 192              		.loc 1 59 11
+ 193 009e FB68     		ldr	r3, [r7, #12]
+ 194 00a0 0133     		adds	r3, r3, #1
+ 195 00a2 FB60     		str	r3, [r7, #12]
+  60:common/rtos/common/utils/rvnet.c **** 				pkSize = ReadNBits(pxPack);
+ 196              		.loc 1 60 14
+ 197 00a4 F868     		ldr	r0, [r7, #12]
+ 198 00a6 204B     		ldr	r3, .L17+8
+ 199 00a8 9847     		blx	r3
+ 200              	.LVL2:
+ 201 00aa 0346     		mov	r3, r0
+ 202 00ac FB70     		strb	r3, [r7, #3]
+  61:common/rtos/common/utils/rvnet.c **** 				break;
+ 203              		.loc 1 61 5
+ 204 00ae 27E0     		b	.L15
+ 205              	.L11:
+  62:common/rtos/common/utils/rvnet.c **** 			case 0x03:
+  63:common/rtos/common/utils/rvnet.c **** 			case 0x04:
+  64:common/rtos/common/utils/rvnet.c **** 				pxPack++;
+ 206              		.loc 1 64 11
+ 207 00b0 FB68     		ldr	r3, [r7, #12]
+ 208 00b2 0133     		adds	r3, r3, #1
+ 209 00b4 FB60     		str	r3, [r7, #12]
+  65:common/rtos/common/utils/rvnet.c **** 				pkSize = ReadNWords(pxPack);
+ 210              		.loc 1 65 14
+ 211 00b6 F868     		ldr	r0, [r7, #12]
+ 212 00b8 1C4B     		ldr	r3, .L17+12
+ 213 00ba 9847     		blx	r3
+ 214              	.LVL3:
+ 215 00bc 0346     		mov	r3, r0
+ 216 00be FB70     		strb	r3, [r7, #3]
+  66:common/rtos/common/utils/rvnet.c **** 				break;
+ 217              		.loc 1 66 5
+ 218 00c0 1EE0     		b	.L15
+ 219              	.L10:
+  67:common/rtos/common/utils/rvnet.c **** 			case 0x05:
+  68:common/rtos/common/utils/rvnet.c **** 				pxPack++;
+ 220              		.loc 1 68 11
+ 221 00c2 FB68     		ldr	r3, [r7, #12]
+ 222 00c4 0133     		adds	r3, r3, #1
+ 223 00c6 FB60     		str	r3, [r7, #12]
+  69:common/rtos/common/utils/rvnet.c **** 				pkSize = WriteBit(pxPack);
+ 224              		.loc 1 69 14
+ 225 00c8 F868     		ldr	r0, [r7, #12]
+ 226 00ca 194B     		ldr	r3, .L17+16
+ 227 00cc 9847     		blx	r3
+ 228              	.LVL4:
+ 229 00ce 0346     		mov	r3, r0
+ 230 00d0 FB70     		strb	r3, [r7, #3]
+  70:common/rtos/common/utils/rvnet.c **** 				break;
+ 231              		.loc 1 70 5
+ 232 00d2 15E0     		b	.L15
+ 233              	.L8:
+  71:common/rtos/common/utils/rvnet.c **** 			case 0x10:
+  72:common/rtos/common/utils/rvnet.c **** 				pxPack++;
+ 234              		.loc 1 72 11
+ 235 00d4 FB68     		ldr	r3, [r7, #12]
+ 236 00d6 0133     		adds	r3, r3, #1
+ 237 00d8 FB60     		str	r3, [r7, #12]
+  73:common/rtos/common/utils/rvnet.c **** 				pkSize = WriteNWords(pxPack);
+ 238              		.loc 1 73 14
+ 239 00da F868     		ldr	r0, [r7, #12]
+ 240 00dc 154B     		ldr	r3, .L17+20
+ 241 00de 9847     		blx	r3
+ 242              	.LVL5:
+ 243 00e0 0346     		mov	r3, r0
+ 244 00e2 FB70     		strb	r3, [r7, #3]
+  74:common/rtos/common/utils/rvnet.c **** 				break;
+ 245              		.loc 1 74 5
+ 246 00e4 0CE0     		b	.L15
+ 247              	.L7:
+  75:common/rtos/common/utils/rvnet.c **** 			default:
+  76:common/rtos/common/utils/rvnet.c **** 				pxPack++;
+ 248              		.loc 1 76 11
+ 249 00e6 FB68     		ldr	r3, [r7, #12]
+ 250 00e8 0133     		adds	r3, r3, #1
+ 251 00ea FB60     		str	r3, [r7, #12]
+  77:common/rtos/common/utils/rvnet.c **** 				pkSize = ErrorAddress(pxPack);
+ 252              		.loc 1 77 14
+ 253 00ec F868     		ldr	r0, [r7, #12]
+ 254 00ee 124B     		ldr	r3, .L17+24
+ 255 00f0 9847     		blx	r3
+ 256              	.LVL6:
+ 257 00f2 0346     		mov	r3, r0
+ 258 00f4 FB70     		strb	r3, [r7, #3]
+  78:common/rtos/common/utils/rvnet.c **** 				break;
+ 259              		.loc 1 78 5
+ 260 00f6 03E0     		b	.L15
+ 261              	.L6:
+  79:common/rtos/common/utils/rvnet.c **** 
+  80:common/rtos/common/utils/rvnet.c **** 			}
+  81:common/rtos/common/utils/rvnet.c **** 		} else
+  82:common/rtos/common/utils/rvnet.c **** 			return 0;
+ 262              		.loc 1 82 11
+ 263 00f8 0023     		movs	r3, #0
+ 264 00fa 0DE0     		b	.L16
+ 265              	.L5:
+  83:common/rtos/common/utils/rvnet.c **** 	} else
+  84:common/rtos/common/utils/rvnet.c **** 		return 0;
+ 266              		.loc 1 84 10
+ 267 00fc 0023     		movs	r3, #0
+ 268 00fe 0BE0     		b	.L16
+ 269              	.L15:
+  85:common/rtos/common/utils/rvnet.c **** 	pkSize += 2;
+ 270              		.loc 1 85 9
+ 271 0100 FB78     		ldrb	r3, [r7, #3]
+ 272 0102 0233     		adds	r3, r3, #2
+ 273 0104 FB70     		strb	r3, [r7, #3]
+  86:common/rtos/common/utils/rvnet.c **** 	SetCRC(px_buf, pkSize);
+ 274              		.loc 1 86 2
+ 275 0106 FB78     		ldrb	r3, [r7, #3]	@ zero_extendqisi2
+ 276 0108 1946     		mov	r1, r3
+ 277 010a 7868     		ldr	r0, [r7, #4]
+ 278 010c 0B4B     		ldr	r3, .L17+28
+ 279 010e 9847     		blx	r3
+ 280              	.LVL7:
+  87:common/rtos/common/utils/rvnet.c **** 	pkSize += 2;
+ 281              		.loc 1 87 9
+ 282 0110 FB78     		ldrb	r3, [r7, #3]
+ 283 0112 0233     		adds	r3, r3, #2
+ 284 0114 FB70     		strb	r3, [r7, #3]
+  88:common/rtos/common/utils/rvnet.c **** 	return pkSize;
+ 285              		.loc 1 88 9
+ 286 0116 FB78     		ldrb	r3, [r7, #3]	@ zero_extendqisi2
+ 287              	.L16:
+  89:common/rtos/common/utils/rvnet.c **** }
+ 288              		.loc 1 89 1
+ 289 0118 1846     		mov	r0, r3
+ 290 011a 1037     		adds	r7, r7, #16
+ 291              	.LCFI9:
+ 292              		.cfi_def_cfa_offset 8
+ 293 011c BD46     		mov	sp, r7
+ 294              	.LCFI10:
+ 295              		.cfi_def_cfa_register 13
+ 296              		@ sp needed
+ 297 011e 80BD     		pop	{r7, pc}
+ 298              	.L18:
+ 299              		.align	2
+ 300              	.L17:
+ 301 0120 00000000 		.word	CheckCRC
+ 302 0124 00000000 		.word	ReadDeviceID
+ 303 0128 00000000 		.word	ReadNBits
+ 304 012c 00000000 		.word	ReadNWords
+ 305 0130 00000000 		.word	WriteBit
+ 306 0134 00000000 		.word	WriteNWords
+ 307 0138 00000000 		.word	ErrorAddress
+ 308 013c 00000000 		.word	SetCRC
+ 309              		.cfi_endproc
+ 310              	.LFE29:
+ 312              		.section	.text.ReadDeviceID,"ax",%progbits
+ 313              		.align	1
+ 314              		.global	ReadDeviceID
+ 315              		.syntax unified
+ 316              		.thumb
+ 317              		.thumb_func
+ 319              	ReadDeviceID:
+ 320              	.LFB30:
+  90:common/rtos/common/utils/rvnet.c **** //======================================================================
+  91:common/rtos/common/utils/rvnet.c **** RVNET_DATATYPE ReadDeviceID(unsigned char *pxPack) {
+ 321              		.loc 1 91 52
+ 322              		.cfi_startproc
+ 323              		@ args = 0, pretend = 0, frame = 8
+ 324              		@ frame_needed = 1, uses_anonymous_args = 0
+ 325              		@ link register save eliminated.
+ 326 0000 80B4     		push	{r7}
+ 327              	.LCFI11:
+ 328              		.cfi_def_cfa_offset 4
+ 329              		.cfi_offset 7, -4
+ 330 0002 83B0     		sub	sp, sp, #12
+ 331              	.LCFI12:
+ 332              		.cfi_def_cfa_offset 16
+ 333 0004 00AF     		add	r7, sp, #0
+ 334              	.LCFI13:
+ 335              		.cfi_def_cfa_register 7
+ 336 0006 7860     		str	r0, [r7, #4]
+  92:common/rtos/common/utils/rvnet.c **** 	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+  93:common/rtos/common/utils/rvnet.c **** 	*pxPack = 0x00;
+ 337              		.loc 1 93 10
+ 338 0008 7B68     		ldr	r3, [r7, #4]
+ 339 000a 0022     		movs	r2, #0
+ 340 000c 1A70     		strb	r2, [r3]
+  94:common/rtos/common/utils/rvnet.c **** 	pxPack++;
+ 341              		.loc 1 94 8
+ 342 000e 7B68     		ldr	r3, [r7, #4]
+ 343 0010 0133     		adds	r3, r3, #1
+ 344 0012 7B60     		str	r3, [r7, #4]
+  95:common/rtos/common/utils/rvnet.c **** 	*pxPack = 0x01;
+ 345              		.loc 1 95 10
+ 346 0014 7B68     		ldr	r3, [r7, #4]
+ 347 0016 0122     		movs	r2, #1
+ 348 0018 1A70     		strb	r2, [r3]
+  96:common/rtos/common/utils/rvnet.c **** 	pxPack++;
+ 349              		.loc 1 96 8
+ 350 001a 7B68     		ldr	r3, [r7, #4]
+ 351 001c 0133     		adds	r3, r3, #1
+ 352 001e 7B60     		str	r3, [r7, #4]
+  97:common/rtos/common/utils/rvnet.c **** 	*pxPack = 0x01;
+ 353              		.loc 1 97 10
+ 354 0020 7B68     		ldr	r3, [r7, #4]
+ 355 0022 0122     		movs	r2, #1
+ 356 0024 1A70     		strb	r2, [r3]
+  98:common/rtos/common/utils/rvnet.c **** 	pxPack++;
+ 357              		.loc 1 98 8
+ 358 0026 7B68     		ldr	r3, [r7, #4]
+ 359 0028 0133     		adds	r3, r3, #1
+ 360 002a 7B60     		str	r3, [r7, #4]
+  99:common/rtos/common/utils/rvnet.c **** 	*pxPack = 0x01;
+ 361              		.loc 1 99 10
+ 362 002c 7B68     		ldr	r3, [r7, #4]
+ 363 002e 0122     		movs	r2, #1
+ 364 0030 1A70     		strb	r2, [r3]
+ 100:common/rtos/common/utils/rvnet.c **** 	pxPack++;
+ 365              		.loc 1 100 8
+ 366 0032 7B68     		ldr	r3, [r7, #4]
+ 367 0034 0133     		adds	r3, r3, #1
+ 368 0036 7B60     		str	r3, [r7, #4]
+ 101:common/rtos/common/utils/rvnet.c **** 	return 4;
+ 369              		.loc 1 101 9
+ 370 0038 0423     		movs	r3, #4
+ 102:common/rtos/common/utils/rvnet.c **** }
+ 371              		.loc 1 102 1
+ 372 003a 1846     		mov	r0, r3
+ 373 003c 0C37     		adds	r7, r7, #12
+ 374              	.LCFI14:
+ 375              		.cfi_def_cfa_offset 4
+ 376 003e BD46     		mov	sp, r7
+ 377              	.LCFI15:
+ 378              		.cfi_def_cfa_register 13
+ 379              		@ sp needed
+ 380 0040 80BC     		pop	{r7}
+ 381              	.LCFI16:
+ 382              		.cfi_restore 7
+ 383              		.cfi_def_cfa_offset 0
+ 384 0042 7047     		bx	lr
+ 385              		.cfi_endproc
+ 386              	.LFE30:
+ 388              		.section	.text.ReadNWords,"ax",%progbits
+ 389              		.align	1
+ 390              		.global	ReadNWords
+ 391              		.syntax unified
+ 392              		.thumb
+ 393              		.thumb_func
+ 395              	ReadNWords:
+ 396              	.LFB31:
+ 103:common/rtos/common/utils/rvnet.c **** //======================================================================
+ 104:common/rtos/common/utils/rvnet.c **** RVNET_DATATYPE ReadNWords(uint8 *pxPack) {
+ 397              		.loc 1 104 42
+ 398              		.cfi_startproc
+ 399              		@ args = 0, pretend = 0, frame = 16
+ 400              		@ frame_needed = 1, uses_anonymous_args = 0
+ 401 0000 80B5     		push	{r7, lr}
+ 402              	.LCFI17:
+ 403              		.cfi_def_cfa_offset 8
+ 404              		.cfi_offset 7, -8
+ 405              		.cfi_offset 14, -4
+ 406 0002 84B0     		sub	sp, sp, #16
+ 407              	.LCFI18:
+ 408              		.cfi_def_cfa_offset 24
+ 409 0004 00AF     		add	r7, sp, #0
+ 410              	.LCFI19:
+ 411              		.cfi_def_cfa_register 7
+ 412 0006 7860     		str	r0, [r7, #4]
+ 105:common/rtos/common/utils/rvnet.c **** 	volatile uint16 base, wnum;
+ 106:common/rtos/common/utils/rvnet.c **** 	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ ï¿½ï¿½ï¿½ï¿½ï
+ 107:common/rtos/common/utils/rvnet.c **** 	base = *(pxPack) << 8;
+ 413              		.loc 1 107 9
+ 414 0008 7B68     		ldr	r3, [r7, #4]
+ 415 000a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 416 000c 9BB2     		uxth	r3, r3
+ 417              		.loc 1 107 19
+ 418 000e 1B02     		lsls	r3, r3, #8
+ 419 0010 9BB2     		uxth	r3, r3
+ 420              		.loc 1 107 7
+ 421 0012 FB81     		strh	r3, [r7, #14]	@ movhi
+ 108:common/rtos/common/utils/rvnet.c **** 	base += *(pxPack + 1);
+ 422              		.loc 1 108 19
+ 423 0014 7B68     		ldr	r3, [r7, #4]
+ 424 0016 0133     		adds	r3, r3, #1
+ 425              		.loc 1 108 10
+ 426 0018 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 427 001a 9AB2     		uxth	r2, r3
+ 428              		.loc 1 108 7
+ 429 001c FB89     		ldrh	r3, [r7, #14]	@ movhi
+ 430 001e 9BB2     		uxth	r3, r3
+ 431 0020 1344     		add	r3, r3, r2
+ 432 0022 9BB2     		uxth	r3, r3
+ 433 0024 FB81     		strh	r3, [r7, #14]	@ movhi
+ 109:common/rtos/common/utils/rvnet.c **** 	wnum = *(pxPack + 2) << 8;
+ 434              		.loc 1 109 18
+ 435 0026 7B68     		ldr	r3, [r7, #4]
+ 436 0028 0233     		adds	r3, r3, #2
+ 437              		.loc 1 109 9
+ 438 002a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 439 002c 9BB2     		uxth	r3, r3
+ 440              		.loc 1 109 23
+ 441 002e 1B02     		lsls	r3, r3, #8
+ 442 0030 9BB2     		uxth	r3, r3
+ 443              		.loc 1 109 7
+ 444 0032 BB81     		strh	r3, [r7, #12]	@ movhi
+ 110:common/rtos/common/utils/rvnet.c **** 	wnum += *(pxPack + 3);
+ 445              		.loc 1 110 19
+ 446 0034 7B68     		ldr	r3, [r7, #4]
+ 447 0036 0333     		adds	r3, r3, #3
+ 448              		.loc 1 110 10
+ 449 0038 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 450 003a 9AB2     		uxth	r2, r3
+ 451              		.loc 1 110 7
+ 452 003c BB89     		ldrh	r3, [r7, #12]	@ movhi
+ 453 003e 9BB2     		uxth	r3, r3
+ 454 0040 1344     		add	r3, r3, r2
+ 455 0042 9BB2     		uxth	r3, r3
+ 456 0044 BB81     		strh	r3, [r7, #12]	@ movhi
+ 111:common/rtos/common/utils/rvnet.c **** 	if (wnum > 123) {
+ 457              		.loc 1 111 11
+ 458 0046 BB89     		ldrh	r3, [r7, #12]	@ movhi
+ 459 0048 9BB2     		uxth	r3, r3
+ 460              		.loc 1 111 5
+ 461 004a 7B2B     		cmp	r3, #123
+ 462 004c 04D9     		bls	.L22
+ 112:common/rtos/common/utils/rvnet.c **** 		return ErrorAddress(pxPack);
+ 463              		.loc 1 112 10
+ 464 004e 7868     		ldr	r0, [r7, #4]
+ 465 0050 184B     		ldr	r3, .L25
+ 466 0052 9847     		blx	r3
+ 467              	.LVL8:
+ 468 0054 0346     		mov	r3, r0
+ 469 0056 29E0     		b	.L23
+ 470              	.L22:
+ 113:common/rtos/common/utils/rvnet.c **** 	}
+ 114:common/rtos/common/utils/rvnet.c **** 	*pxPack = (unsigned char) (wnum * 2);
+ 471              		.loc 1 114 12
+ 472 0058 BB89     		ldrh	r3, [r7, #12]	@ movhi
+ 473 005a 9BB2     		uxth	r3, r3
+ 474 005c DBB2     		uxtb	r3, r3
+ 475 005e 5B00     		lsls	r3, r3, #1
+ 476 0060 DAB2     		uxtb	r2, r3
+ 477              		.loc 1 114 10
+ 478 0062 7B68     		ldr	r3, [r7, #4]
+ 479 0064 1A70     		strb	r2, [r3]
+ 115:common/rtos/common/utils/rvnet.c **** 	if (MemGetWords(base, (uint16*) (pxPack + 1), wnum) == 0) {
+ 480              		.loc 1 115 6
+ 481 0066 FB89     		ldrh	r3, [r7, #14]	@ movhi
+ 482 0068 98B2     		uxth	r0, r3
+ 483              		.loc 1 115 42
+ 484 006a 7B68     		ldr	r3, [r7, #4]
+ 485 006c 0133     		adds	r3, r3, #1
+ 486              		.loc 1 115 6
+ 487 006e BA89     		ldrh	r2, [r7, #12]	@ movhi
+ 488 0070 92B2     		uxth	r2, r2
+ 489 0072 1946     		mov	r1, r3
+ 490 0074 104B     		ldr	r3, .L25+4
+ 491 0076 9847     		blx	r3
+ 492              	.LVL9:
+ 493 0078 0346     		mov	r3, r0
+ 494              		.loc 1 115 54
+ 495 007a 83F00103 		eor	r3, r3, #1
+ 496 007e DBB2     		uxtb	r3, r3
+ 497              		.loc 1 115 5
+ 498 0080 002B     		cmp	r3, #0
+ 499 0082 04D0     		beq	.L24
+ 116:common/rtos/common/utils/rvnet.c **** 		return ErrorAddress(pxPack);
+ 500              		.loc 1 116 10
+ 501 0084 7868     		ldr	r0, [r7, #4]
+ 502 0086 0B4B     		ldr	r3, .L25
+ 503 0088 9847     		blx	r3
+ 504              	.LVL10:
+ 505 008a 0346     		mov	r3, r0
+ 506 008c 0EE0     		b	.L23
+ 507              	.L24:
+ 117:common/rtos/common/utils/rvnet.c **** 	}
+ 118:common/rtos/common/utils/rvnet.c **** 	SwapBuffer(pxPack + 1, wnum);
+ 508              		.loc 1 118 2
+ 509 008e 7B68     		ldr	r3, [r7, #4]
+ 510 0090 0133     		adds	r3, r3, #1
+ 511 0092 BA89     		ldrh	r2, [r7, #12]	@ movhi
+ 512 0094 92B2     		uxth	r2, r2
+ 513 0096 1146     		mov	r1, r2
+ 514 0098 1846     		mov	r0, r3
+ 515 009a 084B     		ldr	r3, .L25+8
+ 516 009c 9847     		blx	r3
+ 517              	.LVL11:
+ 119:common/rtos/common/utils/rvnet.c **** 	return (RVNET_DATATYPE) (wnum * 2 + 1);
+ 518              		.loc 1 119 9
+ 519 009e BB89     		ldrh	r3, [r7, #12]	@ movhi
+ 520 00a0 9BB2     		uxth	r3, r3
+ 521 00a2 DBB2     		uxtb	r3, r3
+ 522 00a4 5B00     		lsls	r3, r3, #1
+ 523 00a6 DBB2     		uxtb	r3, r3
+ 524 00a8 0133     		adds	r3, r3, #1
+ 525 00aa DBB2     		uxtb	r3, r3
+ 526              	.L23:
+ 120:common/rtos/common/utils/rvnet.c **** }
+ 527              		.loc 1 120 1
+ 528 00ac 1846     		mov	r0, r3
+ 529 00ae 1037     		adds	r7, r7, #16
+ 530              	.LCFI20:
+ 531              		.cfi_def_cfa_offset 8
+ 532 00b0 BD46     		mov	sp, r7
+ 533              	.LCFI21:
+ 534              		.cfi_def_cfa_register 13
+ 535              		@ sp needed
+ 536 00b2 80BD     		pop	{r7, pc}
+ 537              	.L26:
+ 538              		.align	2
+ 539              	.L25:
+ 540 00b4 00000000 		.word	ErrorAddress
+ 541 00b8 00000000 		.word	MemGetWords
+ 542 00bc 00000000 		.word	SwapBuffer
+ 543              		.cfi_endproc
+ 544              	.LFE31:
+ 546              		.section	.text.WriteNWords,"ax",%progbits
+ 547              		.align	1
+ 548              		.global	WriteNWords
+ 549              		.syntax unified
+ 550              		.thumb
+ 551              		.thumb_func
+ 553              	WriteNWords:
+ 554              	.LFB32:
+ 121:common/rtos/common/utils/rvnet.c **** //======================================================================
+ 122:common/rtos/common/utils/rvnet.c **** RVNET_DATATYPE WriteNWords(unsigned char *pxPack) {
+ 555              		.loc 1 122 51
+ 556              		.cfi_startproc
+ 557              		@ args = 0, pretend = 0, frame = 16
+ 558              		@ frame_needed = 1, uses_anonymous_args = 0
+ 559 0000 80B5     		push	{r7, lr}
+ 560              	.LCFI22:
+ 561              		.cfi_def_cfa_offset 8
+ 562              		.cfi_offset 7, -8
+ 563              		.cfi_offset 14, -4
+ 564 0002 84B0     		sub	sp, sp, #16
+ 565              	.LCFI23:
+ 566              		.cfi_def_cfa_offset 24
+ 567 0004 00AF     		add	r7, sp, #0
+ 568              	.LCFI24:
+ 569              		.cfi_def_cfa_register 7
+ 570 0006 7860     		str	r0, [r7, #4]
+ 123:common/rtos/common/utils/rvnet.c **** 	volatile uint16 base, wnum;
+ 124:common/rtos/common/utils/rvnet.c **** 	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ ï¿½ï¿½ï¿½ï¿½ï
+ 125:common/rtos/common/utils/rvnet.c **** 	base = *(pxPack) << 8;
+ 571              		.loc 1 125 9
+ 572 0008 7B68     		ldr	r3, [r7, #4]
+ 573 000a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 574 000c 9BB2     		uxth	r3, r3
+ 575              		.loc 1 125 19
+ 576 000e 1B02     		lsls	r3, r3, #8
+ 577 0010 9BB2     		uxth	r3, r3
+ 578              		.loc 1 125 7
+ 579 0012 BB81     		strh	r3, [r7, #12]	@ movhi
+ 126:common/rtos/common/utils/rvnet.c **** 	base += *(pxPack + 1);
+ 580              		.loc 1 126 19
+ 581 0014 7B68     		ldr	r3, [r7, #4]
+ 582 0016 0133     		adds	r3, r3, #1
+ 583              		.loc 1 126 10
+ 584 0018 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 585 001a 9AB2     		uxth	r2, r3
+ 586              		.loc 1 126 7
+ 587 001c BB89     		ldrh	r3, [r7, #12]	@ movhi
+ 588 001e 9BB2     		uxth	r3, r3
+ 589 0020 1344     		add	r3, r3, r2
+ 590 0022 9BB2     		uxth	r3, r3
+ 591 0024 BB81     		strh	r3, [r7, #12]	@ movhi
+ 127:common/rtos/common/utils/rvnet.c **** 	wnum = *(pxPack + 2) << 8;
+ 592              		.loc 1 127 18
+ 593 0026 7B68     		ldr	r3, [r7, #4]
+ 594 0028 0233     		adds	r3, r3, #2
+ 595              		.loc 1 127 9
+ 596 002a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 597 002c 9BB2     		uxth	r3, r3
+ 598              		.loc 1 127 23
+ 599 002e 1B02     		lsls	r3, r3, #8
+ 600 0030 9BB2     		uxth	r3, r3
+ 601              		.loc 1 127 7
+ 602 0032 7B81     		strh	r3, [r7, #10]	@ movhi
+ 128:common/rtos/common/utils/rvnet.c **** 	wnum += *(pxPack + 3);
+ 603              		.loc 1 128 19
+ 604 0034 7B68     		ldr	r3, [r7, #4]
+ 605 0036 0333     		adds	r3, r3, #3
+ 606              		.loc 1 128 10
+ 607 0038 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 608 003a 9AB2     		uxth	r2, r3
+ 609              		.loc 1 128 7
+ 610 003c 7B89     		ldrh	r3, [r7, #10]	@ movhi
+ 611 003e 9BB2     		uxth	r3, r3
+ 612 0040 1344     		add	r3, r3, r2
+ 613 0042 9BB2     		uxth	r3, r3
+ 614 0044 7B81     		strh	r3, [r7, #10]	@ movhi
+ 129:common/rtos/common/utils/rvnet.c **** 	if (wnum > 123) {
+ 615              		.loc 1 129 11
+ 616 0046 7B89     		ldrh	r3, [r7, #10]	@ movhi
+ 617 0048 9BB2     		uxth	r3, r3
+ 618              		.loc 1 129 5
+ 619 004a 7B2B     		cmp	r3, #123
+ 620 004c 04D9     		bls	.L28
+ 130:common/rtos/common/utils/rvnet.c **** 		return ErrorAddress(pxPack);
+ 621              		.loc 1 130 10
+ 622 004e 7868     		ldr	r0, [r7, #4]
+ 623 0050 134B     		ldr	r3, .L31
+ 624 0052 9847     		blx	r3
+ 625              	.LVL12:
+ 626 0054 0346     		mov	r3, r0
+ 627 0056 1FE0     		b	.L29
+ 628              	.L28:
+ 131:common/rtos/common/utils/rvnet.c **** 	}
+ 132:common/rtos/common/utils/rvnet.c **** 	SwapBuffer(pxPack + 5, wnum);
+ 629              		.loc 1 132 20
+ 630 0058 7B68     		ldr	r3, [r7, #4]
+ 631 005a 0533     		adds	r3, r3, #5
+ 632              		.loc 1 132 2
+ 633 005c 7A89     		ldrh	r2, [r7, #10]	@ movhi
+ 634 005e 92B2     		uxth	r2, r2
+ 635 0060 1146     		mov	r1, r2
+ 636 0062 1846     		mov	r0, r3
+ 637 0064 0F4B     		ldr	r3, .L31+4
+ 638 0066 9847     		blx	r3
+ 639              	.LVL13:
+ 133:common/rtos/common/utils/rvnet.c **** 	portENTER_CRITICAL();
+ 640              		.loc 1 133 2
+ 641 0068 0F4B     		ldr	r3, .L31+8
+ 642 006a 9847     		blx	r3
+ 643              	.LVL14:
+ 134:common/rtos/common/utils/rvnet.c **** 	bool x = MemSetWords(base, pxPack + 5, wnum);
+ 644              		.loc 1 134 11
+ 645 006c BB89     		ldrh	r3, [r7, #12]	@ movhi
+ 646 006e 98B2     		uxth	r0, r3
+ 647              		.loc 1 134 36
+ 648 0070 7B68     		ldr	r3, [r7, #4]
+ 649 0072 0533     		adds	r3, r3, #5
+ 650              		.loc 1 134 11
+ 651 0074 7A89     		ldrh	r2, [r7, #10]	@ movhi
+ 652 0076 92B2     		uxth	r2, r2
+ 653 0078 1946     		mov	r1, r3
+ 654 007a 0C4B     		ldr	r3, .L31+12
+ 655 007c 9847     		blx	r3
+ 656              	.LVL15:
+ 657 007e 0346     		mov	r3, r0
+ 658 0080 FB73     		strb	r3, [r7, #15]
+ 135:common/rtos/common/utils/rvnet.c **** 	portEXIT_CRITICAL();
+ 659              		.loc 1 135 2
+ 660 0082 0B4B     		ldr	r3, .L31+16
+ 661 0084 9847     		blx	r3
+ 662              	.LVL16:
+ 136:common/rtos/common/utils/rvnet.c **** 	if (x) {
+ 663              		.loc 1 136 5
+ 664 0086 FB7B     		ldrb	r3, [r7, #15]	@ zero_extendqisi2
+ 665 0088 002B     		cmp	r3, #0
+ 666 008a 01D0     		beq	.L30
+ 137:common/rtos/common/utils/rvnet.c **** 		return 4;
+ 667              		.loc 1 137 10
+ 668 008c 0423     		movs	r3, #4
+ 669 008e 03E0     		b	.L29
+ 670              	.L30:
+ 138:common/rtos/common/utils/rvnet.c **** 	} else {
+ 139:common/rtos/common/utils/rvnet.c **** 		return ErrorAddress(pxPack);
+ 671              		.loc 1 139 10
+ 672 0090 7868     		ldr	r0, [r7, #4]
+ 673 0092 034B     		ldr	r3, .L31
+ 674 0094 9847     		blx	r3
+ 675              	.LVL17:
+ 676 0096 0346     		mov	r3, r0
+ 677              	.L29:
+ 140:common/rtos/common/utils/rvnet.c **** 	}
+ 141:common/rtos/common/utils/rvnet.c **** }
+ 678              		.loc 1 141 1
+ 679 0098 1846     		mov	r0, r3
+ 680 009a 1037     		adds	r7, r7, #16
+ 681              	.LCFI25:
+ 682              		.cfi_def_cfa_offset 8
+ 683 009c BD46     		mov	sp, r7
+ 684              	.LCFI26:
+ 685              		.cfi_def_cfa_register 13
+ 686              		@ sp needed
+ 687 009e 80BD     		pop	{r7, pc}
+ 688              	.L32:
+ 689              		.align	2
+ 690              	.L31:
+ 691 00a0 00000000 		.word	ErrorAddress
+ 692 00a4 00000000 		.word	SwapBuffer
+ 693 00a8 00000000 		.word	vPortEnterCritical
+ 694 00ac 00000000 		.word	MemSetWords
+ 695 00b0 00000000 		.word	vPortExitCritical
+ 696              		.cfi_endproc
+ 697              	.LFE32:
+ 699              		.section	.text.ReadNBits,"ax",%progbits
+ 700              		.align	1
+ 701              		.global	ReadNBits
+ 702              		.syntax unified
+ 703              		.thumb
+ 704              		.thumb_func
+ 706              	ReadNBits:
+ 707              	.LFB33:
+ 142:common/rtos/common/utils/rvnet.c **** //======================================================================
+ 143:common/rtos/common/utils/rvnet.c **** RVNET_DATATYPE ReadNBits(unsigned char *pxPack) {
+ 708              		.loc 1 143 49
+ 709              		.cfi_startproc
+ 710              		@ args = 0, pretend = 0, frame = 16
+ 711              		@ frame_needed = 1, uses_anonymous_args = 0
+ 712 0000 80B5     		push	{r7, lr}
+ 713              	.LCFI27:
+ 714              		.cfi_def_cfa_offset 8
+ 715              		.cfi_offset 7, -8
+ 716              		.cfi_offset 14, -4
+ 717 0002 84B0     		sub	sp, sp, #16
+ 718              	.LCFI28:
+ 719              		.cfi_def_cfa_offset 24
+ 720 0004 00AF     		add	r7, sp, #0
+ 721              	.LCFI29:
+ 722              		.cfi_def_cfa_register 7
+ 723 0006 7860     		str	r0, [r7, #4]
+ 144:common/rtos/common/utils/rvnet.c **** 	volatile uint16 base, wnum;
+ 145:common/rtos/common/utils/rvnet.c **** 	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ ï¿½ï¿½ï¿½ï¿½ï
+ 146:common/rtos/common/utils/rvnet.c **** 	base = *(pxPack) << 8;
+ 724              		.loc 1 146 9
+ 725 0008 7B68     		ldr	r3, [r7, #4]
+ 726 000a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 727 000c 9BB2     		uxth	r3, r3
+ 728              		.loc 1 146 19
+ 729 000e 1B02     		lsls	r3, r3, #8
+ 730 0010 9BB2     		uxth	r3, r3
+ 731              		.loc 1 146 7
+ 732 0012 FB81     		strh	r3, [r7, #14]	@ movhi
+ 147:common/rtos/common/utils/rvnet.c **** 	base += *(pxPack + 1);
+ 733              		.loc 1 147 19
+ 734 0014 7B68     		ldr	r3, [r7, #4]
+ 735 0016 0133     		adds	r3, r3, #1
+ 736              		.loc 1 147 10
+ 737 0018 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 738 001a 9AB2     		uxth	r2, r3
+ 739              		.loc 1 147 7
+ 740 001c FB89     		ldrh	r3, [r7, #14]	@ movhi
+ 741 001e 9BB2     		uxth	r3, r3
+ 742 0020 1344     		add	r3, r3, r2
+ 743 0022 9BB2     		uxth	r3, r3
+ 744 0024 FB81     		strh	r3, [r7, #14]	@ movhi
+ 148:common/rtos/common/utils/rvnet.c **** 	wnum = *(pxPack + 2) << 8;
+ 745              		.loc 1 148 18
+ 746 0026 7B68     		ldr	r3, [r7, #4]
+ 747 0028 0233     		adds	r3, r3, #2
+ 748              		.loc 1 148 9
+ 749 002a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 750 002c 9BB2     		uxth	r3, r3
+ 751              		.loc 1 148 23
+ 752 002e 1B02     		lsls	r3, r3, #8
+ 753 0030 9BB2     		uxth	r3, r3
+ 754              		.loc 1 148 7
+ 755 0032 BB81     		strh	r3, [r7, #12]	@ movhi
+ 149:common/rtos/common/utils/rvnet.c **** 	wnum += *(pxPack + 3);
+ 756              		.loc 1 149 19
+ 757 0034 7B68     		ldr	r3, [r7, #4]
+ 758 0036 0333     		adds	r3, r3, #3
+ 759              		.loc 1 149 10
+ 760 0038 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 761 003a 9AB2     		uxth	r2, r3
+ 762              		.loc 1 149 7
+ 763 003c BB89     		ldrh	r3, [r7, #12]	@ movhi
+ 764 003e 9BB2     		uxth	r3, r3
+ 765 0040 1344     		add	r3, r3, r2
+ 766 0042 9BB2     		uxth	r3, r3
+ 767 0044 BB81     		strh	r3, [r7, #12]	@ movhi
+ 150:common/rtos/common/utils/rvnet.c **** 	*pxPack = ((wnum / 8) & 0xff);
+ 768              		.loc 1 150 10
+ 769 0046 BB89     		ldrh	r3, [r7, #12]	@ movhi
+ 770 0048 9BB2     		uxth	r3, r3
+ 771 004a DB08     		lsrs	r3, r3, #3
+ 772 004c 9BB2     		uxth	r3, r3
+ 773 004e DAB2     		uxtb	r2, r3
+ 774 0050 7B68     		ldr	r3, [r7, #4]
+ 775 0052 1A70     		strb	r2, [r3]
+ 151:common/rtos/common/utils/rvnet.c **** 	base /= 16;
+ 776              		.loc 1 151 7
+ 777 0054 FB89     		ldrh	r3, [r7, #14]	@ movhi
+ 778 0056 9BB2     		uxth	r3, r3
+ 779 0058 1B09     		lsrs	r3, r3, #4
+ 780 005a 9BB2     		uxth	r3, r3
+ 781 005c FB81     		strh	r3, [r7, #14]	@ movhi
+ 152:common/rtos/common/utils/rvnet.c **** 	wnum /= 16;
+ 782              		.loc 1 152 7
+ 783 005e BB89     		ldrh	r3, [r7, #12]	@ movhi
+ 784 0060 9BB2     		uxth	r3, r3
+ 785 0062 1B09     		lsrs	r3, r3, #4
+ 786 0064 9BB2     		uxth	r3, r3
+ 787 0066 BB81     		strh	r3, [r7, #12]	@ movhi
+ 153:common/rtos/common/utils/rvnet.c **** 	if (wnum > 123) {
+ 788              		.loc 1 153 11
+ 789 0068 BB89     		ldrh	r3, [r7, #12]	@ movhi
+ 790 006a 9BB2     		uxth	r3, r3
+ 791              		.loc 1 153 5
+ 792 006c 7B2B     		cmp	r3, #123
+ 793 006e 04D9     		bls	.L34
+ 154:common/rtos/common/utils/rvnet.c **** 		return ErrorAddress(pxPack);
+ 794              		.loc 1 154 10
+ 795 0070 7868     		ldr	r0, [r7, #4]
+ 796 0072 114B     		ldr	r3, .L37
+ 797 0074 9847     		blx	r3
+ 798              	.LVL18:
+ 799 0076 0346     		mov	r3, r0
+ 800 0078 1AE0     		b	.L35
+ 801              	.L34:
+ 155:common/rtos/common/utils/rvnet.c **** 	}
+ 156:common/rtos/common/utils/rvnet.c **** 	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ 157:common/rtos/common/utils/rvnet.c **** 	// Eï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ RAM    -------------------------------------------------
+ 158:common/rtos/common/utils/rvnet.c **** 
+ 159:common/rtos/common/utils/rvnet.c **** 	if (MemGetWords(base, pxPack + 1, wnum) == 0) {
+ 802              		.loc 1 159 6
+ 803 007a FB89     		ldrh	r3, [r7, #14]	@ movhi
+ 804 007c 98B2     		uxth	r0, r3
+ 805              		.loc 1 159 31
+ 806 007e 7B68     		ldr	r3, [r7, #4]
+ 807 0080 0133     		adds	r3, r3, #1
+ 808              		.loc 1 159 6
+ 809 0082 BA89     		ldrh	r2, [r7, #12]	@ movhi
+ 810 0084 92B2     		uxth	r2, r2
+ 811 0086 1946     		mov	r1, r3
+ 812 0088 0C4B     		ldr	r3, .L37+4
+ 813 008a 9847     		blx	r3
+ 814              	.LVL19:
+ 815 008c 0346     		mov	r3, r0
+ 816              		.loc 1 159 42
+ 817 008e 83F00103 		eor	r3, r3, #1
+ 818 0092 DBB2     		uxtb	r3, r3
+ 819              		.loc 1 159 5
+ 820 0094 002B     		cmp	r3, #0
+ 821 0096 04D0     		beq	.L36
+ 160:common/rtos/common/utils/rvnet.c **** 		return ErrorAddress(pxPack);
+ 822              		.loc 1 160 10
+ 823 0098 7868     		ldr	r0, [r7, #4]
+ 824 009a 074B     		ldr	r3, .L37
+ 825 009c 9847     		blx	r3
+ 826              	.LVL20:
+ 827 009e 0346     		mov	r3, r0
+ 828 00a0 06E0     		b	.L35
+ 829              	.L36:
+ 161:common/rtos/common/utils/rvnet.c **** 	}
+ 162:common/rtos/common/utils/rvnet.c **** 	return (RVNET_DATATYPE) (wnum * 2 + 1);
+ 830              		.loc 1 162 9
+ 831 00a2 BB89     		ldrh	r3, [r7, #12]	@ movhi
+ 832 00a4 9BB2     		uxth	r3, r3
+ 833 00a6 DBB2     		uxtb	r3, r3
+ 834 00a8 5B00     		lsls	r3, r3, #1
+ 835 00aa DBB2     		uxtb	r3, r3
+ 836 00ac 0133     		adds	r3, r3, #1
+ 837 00ae DBB2     		uxtb	r3, r3
+ 838              	.L35:
+ 163:common/rtos/common/utils/rvnet.c **** }
+ 839              		.loc 1 163 1
+ 840 00b0 1846     		mov	r0, r3
+ 841 00b2 1037     		adds	r7, r7, #16
+ 842              	.LCFI30:
+ 843              		.cfi_def_cfa_offset 8
+ 844 00b4 BD46     		mov	sp, r7
+ 845              	.LCFI31:
+ 846              		.cfi_def_cfa_register 13
+ 847              		@ sp needed
+ 848 00b6 80BD     		pop	{r7, pc}
+ 849              	.L38:
+ 850              		.align	2
+ 851              	.L37:
+ 852 00b8 00000000 		.word	ErrorAddress
+ 853 00bc 00000000 		.word	MemGetWords
+ 854              		.cfi_endproc
+ 855              	.LFE33:
+ 857              		.section	.text.WriteBit,"ax",%progbits
+ 858              		.align	1
+ 859              		.global	WriteBit
+ 860              		.syntax unified
+ 861              		.thumb
+ 862              		.thumb_func
+ 864              	WriteBit:
+ 865              	.LFB34:
+ 164:common/rtos/common/utils/rvnet.c **** //======================================================================
+ 165:common/rtos/common/utils/rvnet.c **** RVNET_DATATYPE WriteBit(unsigned char *pxPack) {
+ 866              		.loc 1 165 48
+ 867              		.cfi_startproc
+ 868              		@ args = 0, pretend = 0, frame = 16
+ 869              		@ frame_needed = 1, uses_anonymous_args = 0
+ 870 0000 80B5     		push	{r7, lr}
+ 871              	.LCFI32:
+ 872              		.cfi_def_cfa_offset 8
+ 873              		.cfi_offset 7, -8
+ 874              		.cfi_offset 14, -4
+ 875 0002 84B0     		sub	sp, sp, #16
+ 876              	.LCFI33:
+ 877              		.cfi_def_cfa_offset 24
+ 878 0004 00AF     		add	r7, sp, #0
+ 879              	.LCFI34:
+ 880              		.cfi_def_cfa_register 7
+ 881 0006 7860     		str	r0, [r7, #4]
+ 166:common/rtos/common/utils/rvnet.c **** 	volatile uint16 base, wnum;
+ 167:common/rtos/common/utils/rvnet.c **** 	uint16 temp_word;
+ 168:common/rtos/common/utils/rvnet.c **** 	uint16 bit_shift;
+ 169:common/rtos/common/utils/rvnet.c **** 	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ ï¿½ï¿½ï¿½ï¿½ï
+ 170:common/rtos/common/utils/rvnet.c **** 	base = *(pxPack) << 8;
+ 882              		.loc 1 170 9
+ 883 0008 7B68     		ldr	r3, [r7, #4]
+ 884 000a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 885 000c 9BB2     		uxth	r3, r3
+ 886              		.loc 1 170 19
+ 887 000e 1B02     		lsls	r3, r3, #8
+ 888 0010 9BB2     		uxth	r3, r3
+ 889              		.loc 1 170 7
+ 890 0012 BB81     		strh	r3, [r7, #12]	@ movhi
+ 171:common/rtos/common/utils/rvnet.c **** 	base += *(pxPack + 1);
+ 891              		.loc 1 171 19
+ 892 0014 7B68     		ldr	r3, [r7, #4]
+ 893 0016 0133     		adds	r3, r3, #1
+ 894              		.loc 1 171 10
+ 895 0018 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 896 001a 9AB2     		uxth	r2, r3
+ 897              		.loc 1 171 7
+ 898 001c BB89     		ldrh	r3, [r7, #12]	@ movhi
+ 899 001e 9BB2     		uxth	r3, r3
+ 900 0020 1344     		add	r3, r3, r2
+ 901 0022 9BB2     		uxth	r3, r3
+ 902 0024 BB81     		strh	r3, [r7, #12]	@ movhi
+ 172:common/rtos/common/utils/rvnet.c **** 	wnum = *(pxPack + 2) << 8;
+ 903              		.loc 1 172 18
+ 904 0026 7B68     		ldr	r3, [r7, #4]
+ 905 0028 0233     		adds	r3, r3, #2
+ 906              		.loc 1 172 9
+ 907 002a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 908 002c 9BB2     		uxth	r3, r3
+ 909              		.loc 1 172 23
+ 910 002e 1B02     		lsls	r3, r3, #8
+ 911 0030 9BB2     		uxth	r3, r3
+ 912              		.loc 1 172 7
+ 913 0032 7B81     		strh	r3, [r7, #10]	@ movhi
+ 173:common/rtos/common/utils/rvnet.c **** 	wnum += *(pxPack + 3);
+ 914              		.loc 1 173 19
+ 915 0034 7B68     		ldr	r3, [r7, #4]
+ 916 0036 0333     		adds	r3, r3, #3
+ 917              		.loc 1 173 10
+ 918 0038 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 919 003a 9AB2     		uxth	r2, r3
+ 920              		.loc 1 173 7
+ 921 003c 7B89     		ldrh	r3, [r7, #10]	@ movhi
+ 922 003e 9BB2     		uxth	r3, r3
+ 923 0040 1344     		add	r3, r3, r2
+ 924 0042 9BB2     		uxth	r3, r3
+ 925 0044 7B81     		strh	r3, [r7, #10]	@ movhi
+ 174:common/rtos/common/utils/rvnet.c **** 	bit_shift = base % 16;
+ 926              		.loc 1 174 19
+ 927 0046 BB89     		ldrh	r3, [r7, #12]	@ movhi
+ 928 0048 9BB2     		uxth	r3, r3
+ 929              		.loc 1 174 12
+ 930 004a 03F00F03 		and	r3, r3, #15
+ 931 004e FB81     		strh	r3, [r7, #14]	@ movhi
+ 175:common/rtos/common/utils/rvnet.c **** 	base /= 16;
+ 932              		.loc 1 175 7
+ 933 0050 BB89     		ldrh	r3, [r7, #12]	@ movhi
+ 934 0052 9BB2     		uxth	r3, r3
+ 935 0054 1B09     		lsrs	r3, r3, #4
+ 936 0056 9BB2     		uxth	r3, r3
+ 937 0058 BB81     		strh	r3, [r7, #12]	@ movhi
+ 176:common/rtos/common/utils/rvnet.c **** 	//if(wnum >123){return ErrorAddress(pxPack);}
+ 177:common/rtos/common/utils/rvnet.c **** 	// wnum.word /= 16;
+ 178:common/rtos/common/utils/rvnet.c **** 	if (MemGetWords(base, &temp_word, 1) == 0) {
+ 938              		.loc 1 178 6
+ 939 005a BB89     		ldrh	r3, [r7, #12]	@ movhi
+ 940 005c 9BB2     		uxth	r3, r3
+ 941 005e 07F10801 		add	r1, r7, #8
+ 942 0062 0122     		movs	r2, #1
+ 943 0064 1846     		mov	r0, r3
+ 944 0066 224B     		ldr	r3, .L46
+ 945 0068 9847     		blx	r3
+ 946              	.LVL21:
+ 947 006a 0346     		mov	r3, r0
+ 948              		.loc 1 178 39
+ 949 006c 83F00103 		eor	r3, r3, #1
+ 950 0070 DBB2     		uxtb	r3, r3
+ 951              		.loc 1 178 5
+ 952 0072 002B     		cmp	r3, #0
+ 953 0074 04D0     		beq	.L40
+ 179:common/rtos/common/utils/rvnet.c **** 		return ErrorAddress(pxPack);
+ 954              		.loc 1 179 10
+ 955 0076 7868     		ldr	r0, [r7, #4]
+ 956 0078 1E4B     		ldr	r3, .L46+4
+ 957 007a 9847     		blx	r3
+ 958              	.LVL22:
+ 959 007c 0346     		mov	r3, r0
+ 960 007e 32E0     		b	.L45
+ 961              	.L40:
+ 180:common/rtos/common/utils/rvnet.c **** 	}
+ 181:common/rtos/common/utils/rvnet.c **** 	if ((wnum & 0xFF00) == 0)
+ 962              		.loc 1 181 12
+ 963 0080 7B89     		ldrh	r3, [r7, #10]	@ movhi
+ 964 0082 9BB2     		uxth	r3, r3
+ 965 0084 03F47F43 		and	r3, r3, #65280
+ 966              		.loc 1 181 5
+ 967 0088 002B     		cmp	r3, #0
+ 968 008a 0DD1     		bne	.L42
+ 182:common/rtos/common/utils/rvnet.c **** 		temp_word &= ~(1 << bit_shift);
+ 969              		.loc 1 182 20
+ 970 008c FB89     		ldrh	r3, [r7, #14]
+ 971 008e 0122     		movs	r2, #1
+ 972 0090 02FA03F3 		lsl	r3, r2, r3
+ 973              		.loc 1 182 13
+ 974 0094 1BB2     		sxth	r3, r3
+ 975 0096 DB43     		mvns	r3, r3
+ 976 0098 1AB2     		sxth	r2, r3
+ 977 009a 3B89     		ldrh	r3, [r7, #8]
+ 978 009c 1BB2     		sxth	r3, r3
+ 979 009e 1340     		ands	r3, r3, r2
+ 980 00a0 1BB2     		sxth	r3, r3
+ 981 00a2 9BB2     		uxth	r3, r3
+ 982 00a4 3B81     		strh	r3, [r7, #8]	@ movhi
+ 983 00a6 0AE0     		b	.L43
+ 984              	.L42:
+ 183:common/rtos/common/utils/rvnet.c **** 	else
+ 184:common/rtos/common/utils/rvnet.c **** 		temp_word |= (1 << bit_shift);
+ 985              		.loc 1 184 19
+ 986 00a8 FB89     		ldrh	r3, [r7, #14]
+ 987 00aa 0122     		movs	r2, #1
+ 988 00ac 02FA03F3 		lsl	r3, r2, r3
+ 989              		.loc 1 184 13
+ 990 00b0 1AB2     		sxth	r2, r3
+ 991 00b2 3B89     		ldrh	r3, [r7, #8]
+ 992 00b4 1BB2     		sxth	r3, r3
+ 993 00b6 1343     		orrs	r3, r3, r2
+ 994 00b8 1BB2     		sxth	r3, r3
+ 995 00ba 9BB2     		uxth	r3, r3
+ 996 00bc 3B81     		strh	r3, [r7, #8]	@ movhi
+ 997              	.L43:
+ 185:common/rtos/common/utils/rvnet.c **** 	if (MemSetWords(base, &temp_word, 1) == 0) {
+ 998              		.loc 1 185 6
+ 999 00be BB89     		ldrh	r3, [r7, #12]	@ movhi
+ 1000 00c0 9BB2     		uxth	r3, r3
+ 1001 00c2 07F10801 		add	r1, r7, #8
+ 1002 00c6 0122     		movs	r2, #1
+ 1003 00c8 1846     		mov	r0, r3
+ 1004 00ca 0B4B     		ldr	r3, .L46+8
+ 1005 00cc 9847     		blx	r3
+ 1006              	.LVL23:
+ 1007 00ce 0346     		mov	r3, r0
+ 1008              		.loc 1 185 39
+ 1009 00d0 83F00103 		eor	r3, r3, #1
+ 1010 00d4 DBB2     		uxtb	r3, r3
+ 1011              		.loc 1 185 5
+ 1012 00d6 002B     		cmp	r3, #0
+ 1013 00d8 04D0     		beq	.L44
+ 186:common/rtos/common/utils/rvnet.c **** 		return ErrorAddress(pxPack);
+ 1014              		.loc 1 186 10
+ 1015 00da 7868     		ldr	r0, [r7, #4]
+ 1016 00dc 054B     		ldr	r3, .L46+4
+ 1017 00de 9847     		blx	r3
+ 1018              	.LVL24:
+ 1019 00e0 0346     		mov	r3, r0
+ 1020 00e2 00E0     		b	.L45
+ 1021              	.L44:
+ 187:common/rtos/common/utils/rvnet.c **** 	}
+ 188:common/rtos/common/utils/rvnet.c **** 	return 4;
+ 1022              		.loc 1 188 9
+ 1023 00e4 0423     		movs	r3, #4
+ 1024              	.L45:
+ 189:common/rtos/common/utils/rvnet.c **** }
+ 1025              		.loc 1 189 1 discriminator 1
+ 1026 00e6 1846     		mov	r0, r3
+ 1027 00e8 1037     		adds	r7, r7, #16
+ 1028              	.LCFI35:
+ 1029              		.cfi_def_cfa_offset 8
+ 1030 00ea BD46     		mov	sp, r7
+ 1031              	.LCFI36:
+ 1032              		.cfi_def_cfa_register 13
+ 1033              		@ sp needed
+ 1034 00ec 80BD     		pop	{r7, pc}
+ 1035              	.L47:
+ 1036 00ee 00BF     		.align	2
+ 1037              	.L46:
+ 1038 00f0 00000000 		.word	MemGetWords
+ 1039 00f4 00000000 		.word	ErrorAddress
+ 1040 00f8 00000000 		.word	MemSetWords
+ 1041              		.cfi_endproc
+ 1042              	.LFE34:
+ 1044              		.section	.text.ErrorAddress,"ax",%progbits
+ 1045              		.align	1
+ 1046              		.global	ErrorAddress
+ 1047              		.syntax unified
+ 1048              		.thumb
+ 1049              		.thumb_func
+ 1051              	ErrorAddress:
+ 1052              	.LFB35:
+ 190:common/rtos/common/utils/rvnet.c **** //======================================================================
+ 191:common/rtos/common/utils/rvnet.c **** 
+ 192:common/rtos/common/utils/rvnet.c **** RVNET_DATATYPE ErrorAddress(unsigned char *pxPack) {
+ 1053              		.loc 1 192 52
+ 1054              		.cfi_startproc
+ 1055              		@ args = 0, pretend = 0, frame = 8
+ 1056              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1057              		@ link register save eliminated.
+ 1058 0000 80B4     		push	{r7}
+ 1059              	.LCFI37:
+ 1060              		.cfi_def_cfa_offset 4
+ 1061              		.cfi_offset 7, -4
+ 1062 0002 83B0     		sub	sp, sp, #12
+ 1063              	.LCFI38:
+ 1064              		.cfi_def_cfa_offset 16
+ 1065 0004 00AF     		add	r7, sp, #0
+ 1066              	.LCFI39:
+ 1067              		.cfi_def_cfa_register 7
+ 1068 0006 7860     		str	r0, [r7, #4]
+ 193:common/rtos/common/utils/rvnet.c **** 	*(pxPack - 1) |= 0x80;
+ 1069              		.loc 1 193 16
+ 1070 0008 7B68     		ldr	r3, [r7, #4]
+ 1071 000a 013B     		subs	r3, r3, #1
+ 1072 000c 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 1073 000e 7B68     		ldr	r3, [r7, #4]
+ 1074 0010 013B     		subs	r3, r3, #1
+ 1075 0012 62F07F02 		orn	r2, r2, #127
+ 1076 0016 D2B2     		uxtb	r2, r2
+ 1077 0018 1A70     		strb	r2, [r3]
+ 194:common/rtos/common/utils/rvnet.c **** 	return 0;
+ 1078              		.loc 1 194 9
+ 1079 001a 0023     		movs	r3, #0
+ 195:common/rtos/common/utils/rvnet.c **** }
+ 1080              		.loc 1 195 1
+ 1081 001c 1846     		mov	r0, r3
+ 1082 001e 0C37     		adds	r7, r7, #12
+ 1083              	.LCFI40:
+ 1084              		.cfi_def_cfa_offset 4
+ 1085 0020 BD46     		mov	sp, r7
+ 1086              	.LCFI41:
+ 1087              		.cfi_def_cfa_register 13
+ 1088              		@ sp needed
+ 1089 0022 80BC     		pop	{r7}
+ 1090              	.LCFI42:
+ 1091              		.cfi_restore 7
+ 1092              		.cfi_def_cfa_offset 0
+ 1093 0024 7047     		bx	lr
+ 1094              		.cfi_endproc
+ 1095              	.LFE35:
+ 1097              		.text
+ 1098              	.Letext0:
+ 1099              		.file 2 "common/rtos/common/utils/typedef.h"
+ 1100              		.file 3 "common/rtos/common/utils/rvnet.h"
+ 1101              		.file 4 "common/rtos/common/utils/memman.h"
+ 1102              		.file 5 "common/rtos/portable/GCC/ARM_CM3/portmacro.h"
+ 1103              		.file 6 "common/rtos/common/utils/crc.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 rvnet.c
+C:\Users\Admin\AppData\Local\Temp\ccwRpebR.s:18     .text.SwapBuffer:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccwRpebR.s:24     .text.SwapBuffer:00000000 SwapBuffer
+C:\Users\Admin\AppData\Local\Temp\ccwRpebR.s:94     .text.RVnetSlaveProcess:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccwRpebR.s:100    .text.RVnetSlaveProcess:00000000 RVnetSlaveProcess
+C:\Users\Admin\AppData\Local\Temp\ccwRpebR.s:159    .text.RVnetSlaveProcess:00000048 $d
+C:\Users\Admin\AppData\Local\Temp\ccwRpebR.s:176    .text.RVnetSlaveProcess:0000008c $t
+C:\Users\Admin\AppData\Local\Temp\ccwRpebR.s:301    .text.RVnetSlaveProcess:00000120 $d
+C:\Users\Admin\AppData\Local\Temp\ccwRpebR.s:319    .text.ReadDeviceID:00000000 ReadDeviceID
+C:\Users\Admin\AppData\Local\Temp\ccwRpebR.s:706    .text.ReadNBits:00000000 ReadNBits
+C:\Users\Admin\AppData\Local\Temp\ccwRpebR.s:395    .text.ReadNWords:00000000 ReadNWords
+C:\Users\Admin\AppData\Local\Temp\ccwRpebR.s:864    .text.WriteBit:00000000 WriteBit
+C:\Users\Admin\AppData\Local\Temp\ccwRpebR.s:553    .text.WriteNWords:00000000 WriteNWords
+C:\Users\Admin\AppData\Local\Temp\ccwRpebR.s:1051   .text.ErrorAddress:00000000 ErrorAddress
+C:\Users\Admin\AppData\Local\Temp\ccwRpebR.s:313    .text.ReadDeviceID:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccwRpebR.s:389    .text.ReadNWords:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccwRpebR.s:540    .text.ReadNWords:000000b4 $d
+C:\Users\Admin\AppData\Local\Temp\ccwRpebR.s:547    .text.WriteNWords:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccwRpebR.s:691    .text.WriteNWords:000000a0 $d
+C:\Users\Admin\AppData\Local\Temp\ccwRpebR.s:700    .text.ReadNBits:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccwRpebR.s:852    .text.ReadNBits:000000b8 $d
+C:\Users\Admin\AppData\Local\Temp\ccwRpebR.s:858    .text.WriteBit:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccwRpebR.s:1038   .text.WriteBit:000000f0 $d
+C:\Users\Admin\AppData\Local\Temp\ccwRpebR.s:1045   .text.ErrorAddress:00000000 $t
+
+UNDEFINED SYMBOLS
+CheckCRC
+SetCRC
+MemGetWords
+vPortEnterCritical
+MemSetWords
+vPortExitCritical

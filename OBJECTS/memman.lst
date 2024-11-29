@@ -1,0 +1,764 @@
+   1              		.cpu cortex-m3
+   2              		.arch armv7-m
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"memman.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.global	MemManReadAccessError
+  18              		.section	.bss.MemManReadAccessError,"aw",%nobits
+  19              		.align	1
+  22              	MemManReadAccessError:
+  23 0000 0000     		.space	2
+  24              		.global	MemManWriteAccessError
+  25              		.section	.bss.MemManWriteAccessError,"aw",%nobits
+  26              		.align	1
+  29              	MemManWriteAccessError:
+  30 0000 0000     		.space	2
+  31              		.global	memunit
+  32              		.section	.bss.memunit,"aw",%nobits
+  33              		.align	2
+  36              	memunit:
+  37 0000 00000000 		.space	120
+  37      00000000 
+  37      00000000 
+  37      00000000 
+  37      00000000 
+  38              		.section	.rodata
+  39              		.align	2
+  40              	.LC0:
+  41 0000 4D4D5F52 		.ascii	"MM_ReadAccess\000"
+  41      65616441 
+  41      63636573 
+  41      7300
+  42 000e 0000     		.align	2
+  43              	.LC1:
+  44 0010 4D4D5F57 		.ascii	"MM_WriteAccess\000"
+  44      72697465 
+  44      41636365 
+  44      737300
+  45              		.section	.text.MemManInit,"ax",%progbits
+  46              		.align	1
+  47              		.global	MemManInit
+  48              		.syntax unified
+  49              		.thumb
+  50              		.thumb_func
+  52              	MemManInit:
+  53              	.LFB27:
+  54              		.file 1 "common/rtos/common/utils/memman.c"
+   1:common/rtos/common/utils/memman.c **** //********************************************************
+   2:common/rtos/common/utils/memman.c **** //    Проект      :
+   3:common/rtos/common/utils/memman.c **** //    Версия      : 1.0.
+   4:common/rtos/common/utils/memman.c **** //    Дата        : 29.03.2009
+   5:common/rtos/common/utils/memman.c **** //    Автор       : Копачевский Юрий Иванович.
+   6:common/rtos/common/utils/memman.c **** //    Компания    : БЭМН
+   7:common/rtos/common/utils/memman.c **** //    Файл        :
+   8:common/rtos/common/utils/memman.c **** //    Комментарии :
+   9:common/rtos/common/utils/memman.c **** //    Среда разработки : IAR
+  10:common/rtos/common/utils/memman.c **** //*********************************************************
+  11:common/rtos/common/utils/memman.c **** //    Процессор           :
+  12:common/rtos/common/utils/memman.c **** //    Частота процессора  :
+  13:common/rtos/common/utils/memman.c **** //    Тип программы       : Приложение
+  14:common/rtos/common/utils/memman.c **** //    Модель памяти       :
+  15:common/rtos/common/utils/memman.c **** //*********************************************************
+  16:common/rtos/common/utils/memman.c **** #include "error.h"
+  17:common/rtos/common/utils/memman.c **** #include "memman.h"
+  18:common/rtos/common/utils/memman.c **** 
+  19:common/rtos/common/utils/memman.c **** ErrorHandle MemManReadAccessError;
+  20:common/rtos/common/utils/memman.c **** ErrorHandle MemManWriteAccessError;
+  21:common/rtos/common/utils/memman.c **** 
+  22:common/rtos/common/utils/memman.c **** 
+  23:common/rtos/common/utils/memman.c **** MEMUNIT memunit[MEMUNITS_NUM];
+  24:common/rtos/common/utils/memman.c **** int GetDefaultHandler( uint16, uint16*, uint16) ;
+  25:common/rtos/common/utils/memman.c **** int SetDefaultHandler( uint16, uint16*, uint16);
+  26:common/rtos/common/utils/memman.c **** 
+  27:common/rtos/common/utils/memman.c **** bool MemManInit()
+  28:common/rtos/common/utils/memman.c ****   {
+  55              		.loc 1 28 3
+  56              		.cfi_startproc
+  57              		@ args = 0, pretend = 0, frame = 16
+  58              		@ frame_needed = 1, uses_anonymous_args = 0
+  59 0000 80B5     		push	{r7, lr}
+  60              	.LCFI0:
+  61              		.cfi_def_cfa_offset 8
+  62              		.cfi_offset 7, -8
+  63              		.cfi_offset 14, -4
+  64 0002 84B0     		sub	sp, sp, #16
+  65              	.LCFI1:
+  66              		.cfi_def_cfa_offset 24
+  67 0004 00AF     		add	r7, sp, #0
+  68              	.LCFI2:
+  69              		.cfi_def_cfa_register 7
+  29:common/rtos/common/utils/memman.c ****     int i = MEMUNITS_NUM;
+  70              		.loc 1 29 9
+  71 0006 0623     		movs	r3, #6
+  72 0008 FB60     		str	r3, [r7, #12]
+  30:common/rtos/common/utils/memman.c ****     bool rezult = false;
+  73              		.loc 1 30 10
+  74 000a 0023     		movs	r3, #0
+  75 000c FB71     		strb	r3, [r7, #7]
+  31:common/rtos/common/utils/memman.c ****     MEMUNIT *pxMemunit = &memunit[0];
+  76              		.loc 1 31 14
+  77 000e 184B     		ldr	r3, .L5
+  78 0010 BB60     		str	r3, [r7, #8]
+  32:common/rtos/common/utils/memman.c ****     while (i--)
+  79              		.loc 1 32 11
+  80 0012 13E0     		b	.L2
+  81              	.L3:
+  33:common/rtos/common/utils/memman.c ****       {
+  34:common/rtos/common/utils/memman.c ****         pxMemunit->startaddr = 0x0;
+  82              		.loc 1 34 30
+  83 0014 BB68     		ldr	r3, [r7, #8]
+  84 0016 0022     		movs	r2, #0
+  85 0018 1A60     		str	r2, [r3]
+  35:common/rtos/common/utils/memman.c ****         pxMemunit->endaddr = 0x0;
+  86              		.loc 1 35 28
+  87 001a BB68     		ldr	r3, [r7, #8]
+  88 001c 0022     		movs	r2, #0
+  89 001e 5A60     		str	r2, [r3, #4]
+  36:common/rtos/common/utils/memman.c ****         pxMemunit->GetMem = GetDefaultHandler;
+  90              		.loc 1 36 27
+  91 0020 BB68     		ldr	r3, [r7, #8]
+  92 0022 144A     		ldr	r2, .L5+4
+  93 0024 DA60     		str	r2, [r3, #12]
+  37:common/rtos/common/utils/memman.c ****         pxMemunit->SetMem = SetDefaultHandler;
+  94              		.loc 1 37 27
+  95 0026 BB68     		ldr	r3, [r7, #8]
+  96 0028 134A     		ldr	r2, .L5+8
+  97 002a 1A61     		str	r2, [r3, #16]
+  38:common/rtos/common/utils/memman.c ****         pxMemunit->xMutex = xSemaphoreCreateMutex() ;
+  98              		.loc 1 38 29
+  99 002c 134B     		ldr	r3, .L5+12
+ 100 002e 9847     		blx	r3
+ 101              	.LVL0:
+ 102 0030 0246     		mov	r2, r0
+ 103              		.loc 1 38 27
+ 104 0032 BB68     		ldr	r3, [r7, #8]
+ 105 0034 9A60     		str	r2, [r3, #8]
+  39:common/rtos/common/utils/memman.c ****         pxMemunit++;
+ 106              		.loc 1 39 18
+ 107 0036 BB68     		ldr	r3, [r7, #8]
+ 108 0038 1433     		adds	r3, r3, #20
+ 109 003a BB60     		str	r3, [r7, #8]
+ 110              	.L2:
+  32:common/rtos/common/utils/memman.c ****       {
+ 111              		.loc 1 32 13
+ 112 003c FB68     		ldr	r3, [r7, #12]
+ 113 003e 5A1E     		subs	r2, r3, #1
+ 114 0040 FA60     		str	r2, [r7, #12]
+  32:common/rtos/common/utils/memman.c ****       {
+ 115              		.loc 1 32 11
+ 116 0042 002B     		cmp	r3, #0
+ 117 0044 E6D1     		bne	.L3
+  40:common/rtos/common/utils/memman.c ****       }
+  41:common/rtos/common/utils/memman.c ****     rezult = true;
+ 118              		.loc 1 41 12
+ 119 0046 0123     		movs	r3, #1
+ 120 0048 FB71     		strb	r3, [r7, #7]
+  42:common/rtos/common/utils/memman.c ****     MemManReadAccessError = ErrorCreate("MM_ReadAccess");
+ 121              		.loc 1 42 29
+ 122 004a 0D48     		ldr	r0, .L5+16
+ 123 004c 0D4B     		ldr	r3, .L5+20
+ 124 004e 9847     		blx	r3
+ 125              	.LVL1:
+ 126 0050 0346     		mov	r3, r0
+ 127 0052 1A46     		mov	r2, r3
+ 128              		.loc 1 42 27
+ 129 0054 0C4B     		ldr	r3, .L5+24
+ 130 0056 1A80     		strh	r2, [r3]	@ movhi
+  43:common/rtos/common/utils/memman.c ****     MemManWriteAccessError = ErrorCreate("MM_WriteAccess");
+ 131              		.loc 1 43 30
+ 132 0058 0C48     		ldr	r0, .L5+28
+ 133 005a 0A4B     		ldr	r3, .L5+20
+ 134 005c 9847     		blx	r3
+ 135              	.LVL2:
+ 136 005e 0346     		mov	r3, r0
+ 137 0060 1A46     		mov	r2, r3
+ 138              		.loc 1 43 28
+ 139 0062 0B4B     		ldr	r3, .L5+32
+ 140 0064 1A80     		strh	r2, [r3]	@ movhi
+  44:common/rtos/common/utils/memman.c ****     return rezult;
+ 141              		.loc 1 44 12
+ 142 0066 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+  45:common/rtos/common/utils/memman.c **** 
+  46:common/rtos/common/utils/memman.c ****   }
+ 143              		.loc 1 46 3
+ 144 0068 1846     		mov	r0, r3
+ 145 006a 1037     		adds	r7, r7, #16
+ 146              	.LCFI3:
+ 147              		.cfi_def_cfa_offset 8
+ 148 006c BD46     		mov	sp, r7
+ 149              	.LCFI4:
+ 150              		.cfi_def_cfa_register 13
+ 151              		@ sp needed
+ 152 006e 80BD     		pop	{r7, pc}
+ 153              	.L6:
+ 154              		.align	2
+ 155              	.L5:
+ 156 0070 00000000 		.word	memunit
+ 157 0074 00000000 		.word	GetDefaultHandler
+ 158 0078 00000000 		.word	SetDefaultHandler
+ 159 007c 00000000 		.word	xQueueCreateMutex
+ 160 0080 00000000 		.word	.LC0
+ 161 0084 00000000 		.word	ErrorCreate
+ 162 0088 00000000 		.word	MemManReadAccessError
+ 163 008c 10000000 		.word	.LC1
+ 164 0090 00000000 		.word	MemManWriteAccessError
+ 165              		.cfi_endproc
+ 166              	.LFE27:
+ 168              		.section	.text.CopyDataBytes,"ax",%progbits
+ 169              		.align	1
+ 170              		.global	CopyDataBytes
+ 171              		.syntax unified
+ 172              		.thumb
+ 173              		.thumb_func
+ 175              	CopyDataBytes:
+ 176              	.LFB28:
+  47:common/rtos/common/utils/memman.c **** void CopyDataBytes(uint8 *pxSRC, uint8 *pxDSN, uint16 BytesNum)
+  48:common/rtos/common/utils/memman.c ****   {
+ 177              		.loc 1 48 3
+ 178              		.cfi_startproc
+ 179              		@ args = 0, pretend = 0, frame = 16
+ 180              		@ frame_needed = 1, uses_anonymous_args = 0
+ 181              		@ link register save eliminated.
+ 182 0000 80B4     		push	{r7}
+ 183              	.LCFI5:
+ 184              		.cfi_def_cfa_offset 4
+ 185              		.cfi_offset 7, -4
+ 186 0002 85B0     		sub	sp, sp, #20
+ 187              	.LCFI6:
+ 188              		.cfi_def_cfa_offset 24
+ 189 0004 00AF     		add	r7, sp, #0
+ 190              	.LCFI7:
+ 191              		.cfi_def_cfa_register 7
+ 192 0006 F860     		str	r0, [r7, #12]
+ 193 0008 B960     		str	r1, [r7, #8]
+ 194 000a 1346     		mov	r3, r2
+ 195 000c FB80     		strh	r3, [r7, #6]	@ movhi
+  49:common/rtos/common/utils/memman.c ****     while (BytesNum--)
+ 196              		.loc 1 49 11
+ 197 000e 07E0     		b	.L8
+ 198              	.L9:
+  50:common/rtos/common/utils/memman.c ****       {
+  51:common/rtos/common/utils/memman.c ****         *(pxDSN++) = *(pxSRC++);
+ 199              		.loc 1 51 29
+ 200 0010 FA68     		ldr	r2, [r7, #12]
+ 201 0012 531C     		adds	r3, r2, #1
+ 202 0014 FB60     		str	r3, [r7, #12]
+ 203              		.loc 1 51 16
+ 204 0016 BB68     		ldr	r3, [r7, #8]
+ 205 0018 591C     		adds	r1, r3, #1
+ 206 001a B960     		str	r1, [r7, #8]
+ 207              		.loc 1 51 22
+ 208 001c 1278     		ldrb	r2, [r2]	@ zero_extendqisi2
+ 209              		.loc 1 51 20
+ 210 001e 1A70     		strb	r2, [r3]
+ 211              	.L8:
+  49:common/rtos/common/utils/memman.c ****     while (BytesNum--)
+ 212              		.loc 1 49 20
+ 213 0020 FB88     		ldrh	r3, [r7, #6]
+ 214 0022 5A1E     		subs	r2, r3, #1
+ 215 0024 FA80     		strh	r2, [r7, #6]	@ movhi
+  49:common/rtos/common/utils/memman.c ****     while (BytesNum--)
+ 216              		.loc 1 49 11
+ 217 0026 002B     		cmp	r3, #0
+ 218 0028 F2D1     		bne	.L9
+  52:common/rtos/common/utils/memman.c ****       }
+  53:common/rtos/common/utils/memman.c ****   }
+ 219              		.loc 1 53 3
+ 220 002a 00BF     		nop
+ 221 002c 00BF     		nop
+ 222 002e 1437     		adds	r7, r7, #20
+ 223              	.LCFI8:
+ 224              		.cfi_def_cfa_offset 4
+ 225 0030 BD46     		mov	sp, r7
+ 226              	.LCFI9:
+ 227              		.cfi_def_cfa_register 13
+ 228              		@ sp needed
+ 229 0032 80BC     		pop	{r7}
+ 230              	.LCFI10:
+ 231              		.cfi_restore 7
+ 232              		.cfi_def_cfa_offset 0
+ 233 0034 7047     		bx	lr
+ 234              		.cfi_endproc
+ 235              	.LFE28:
+ 237              		.section	.text.GetDefaultHandler,"ax",%progbits
+ 238              		.align	1
+ 239              		.global	GetDefaultHandler
+ 240              		.syntax unified
+ 241              		.thumb
+ 242              		.thumb_func
+ 244              	GetDefaultHandler:
+ 245              	.LFB29:
+  54:common/rtos/common/utils/memman.c **** //==============================================================================
+  55:common/rtos/common/utils/memman.c **** int GetDefaultHandler(uint16 addr, uint16* pxDsn, uint16 len)
+  56:common/rtos/common/utils/memman.c ****   {
+ 246              		.loc 1 56 3
+ 247              		.cfi_startproc
+ 248              		@ args = 0, pretend = 0, frame = 8
+ 249              		@ frame_needed = 1, uses_anonymous_args = 0
+ 250              		@ link register save eliminated.
+ 251 0000 80B4     		push	{r7}
+ 252              	.LCFI11:
+ 253              		.cfi_def_cfa_offset 4
+ 254              		.cfi_offset 7, -4
+ 255 0002 83B0     		sub	sp, sp, #12
+ 256              	.LCFI12:
+ 257              		.cfi_def_cfa_offset 16
+ 258 0004 00AF     		add	r7, sp, #0
+ 259              	.LCFI13:
+ 260              		.cfi_def_cfa_register 7
+ 261 0006 0346     		mov	r3, r0
+ 262 0008 3960     		str	r1, [r7]
+ 263 000a FB80     		strh	r3, [r7, #6]	@ movhi
+ 264 000c 1346     		mov	r3, r2	@ movhi
+ 265 000e BB80     		strh	r3, [r7, #4]	@ movhi
+  57:common/rtos/common/utils/memman.c ****     return false;
+ 266              		.loc 1 57 12
+ 267 0010 0023     		movs	r3, #0
+  58:common/rtos/common/utils/memman.c ****   }
+ 268              		.loc 1 58 3
+ 269 0012 1846     		mov	r0, r3
+ 270 0014 0C37     		adds	r7, r7, #12
+ 271              	.LCFI14:
+ 272              		.cfi_def_cfa_offset 4
+ 273 0016 BD46     		mov	sp, r7
+ 274              	.LCFI15:
+ 275              		.cfi_def_cfa_register 13
+ 276              		@ sp needed
+ 277 0018 80BC     		pop	{r7}
+ 278              	.LCFI16:
+ 279              		.cfi_restore 7
+ 280              		.cfi_def_cfa_offset 0
+ 281 001a 7047     		bx	lr
+ 282              		.cfi_endproc
+ 283              	.LFE29:
+ 285              		.section	.text.SetDefaultHandler,"ax",%progbits
+ 286              		.align	1
+ 287              		.global	SetDefaultHandler
+ 288              		.syntax unified
+ 289              		.thumb
+ 290              		.thumb_func
+ 292              	SetDefaultHandler:
+ 293              	.LFB30:
+  59:common/rtos/common/utils/memman.c **** int SetDefaultHandler(uint16 addr, uint16* pxDsn, uint16 len)
+  60:common/rtos/common/utils/memman.c ****   {
+ 294              		.loc 1 60 3
+ 295              		.cfi_startproc
+ 296              		@ args = 0, pretend = 0, frame = 8
+ 297              		@ frame_needed = 1, uses_anonymous_args = 0
+ 298              		@ link register save eliminated.
+ 299 0000 80B4     		push	{r7}
+ 300              	.LCFI17:
+ 301              		.cfi_def_cfa_offset 4
+ 302              		.cfi_offset 7, -4
+ 303 0002 83B0     		sub	sp, sp, #12
+ 304              	.LCFI18:
+ 305              		.cfi_def_cfa_offset 16
+ 306 0004 00AF     		add	r7, sp, #0
+ 307              	.LCFI19:
+ 308              		.cfi_def_cfa_register 7
+ 309 0006 0346     		mov	r3, r0
+ 310 0008 3960     		str	r1, [r7]
+ 311 000a FB80     		strh	r3, [r7, #6]	@ movhi
+ 312 000c 1346     		mov	r3, r2	@ movhi
+ 313 000e BB80     		strh	r3, [r7, #4]	@ movhi
+  61:common/rtos/common/utils/memman.c ****     return false;
+ 314              		.loc 1 61 12
+ 315 0010 0023     		movs	r3, #0
+  62:common/rtos/common/utils/memman.c ****   }
+ 316              		.loc 1 62 3
+ 317 0012 1846     		mov	r0, r3
+ 318 0014 0C37     		adds	r7, r7, #12
+ 319              	.LCFI20:
+ 320              		.cfi_def_cfa_offset 4
+ 321 0016 BD46     		mov	sp, r7
+ 322              	.LCFI21:
+ 323              		.cfi_def_cfa_register 13
+ 324              		@ sp needed
+ 325 0018 80BC     		pop	{r7}
+ 326              	.LCFI22:
+ 327              		.cfi_restore 7
+ 328              		.cfi_def_cfa_offset 0
+ 329 001a 7047     		bx	lr
+ 330              		.cfi_endproc
+ 331              	.LFE30:
+ 333              		.section	.text.MemGetWords,"ax",%progbits
+ 334              		.align	1
+ 335              		.global	MemGetWords
+ 336              		.syntax unified
+ 337              		.thumb
+ 338              		.thumb_func
+ 340              	MemGetWords:
+ 341              	.LFB31:
+  63:common/rtos/common/utils/memman.c **** 
+  64:common/rtos/common/utils/memman.c **** bool MemGetWords(uint16 addr, uint16* pxDsn, uint16 len)
+  65:common/rtos/common/utils/memman.c ****   {
+ 342              		.loc 1 65 3
+ 343              		.cfi_startproc
+ 344              		@ args = 0, pretend = 0, frame = 24
+ 345              		@ frame_needed = 1, uses_anonymous_args = 0
+ 346 0000 90B5     		push	{r4, r7, lr}
+ 347              	.LCFI23:
+ 348              		.cfi_def_cfa_offset 12
+ 349              		.cfi_offset 4, -12
+ 350              		.cfi_offset 7, -8
+ 351              		.cfi_offset 14, -4
+ 352 0002 87B0     		sub	sp, sp, #28
+ 353              	.LCFI24:
+ 354              		.cfi_def_cfa_offset 40
+ 355 0004 00AF     		add	r7, sp, #0
+ 356              	.LCFI25:
+ 357              		.cfi_def_cfa_register 7
+ 358 0006 0346     		mov	r3, r0
+ 359 0008 3960     		str	r1, [r7]
+ 360 000a FB80     		strh	r3, [r7, #6]	@ movhi
+ 361 000c 1346     		mov	r3, r2	@ movhi
+ 362 000e BB80     		strh	r3, [r7, #4]	@ movhi
+  66:common/rtos/common/utils/memman.c ****     int i = MEMUNITS_NUM;
+ 363              		.loc 1 66 9
+ 364 0010 0623     		movs	r3, #6
+ 365 0012 7B61     		str	r3, [r7, #20]
+  67:common/rtos/common/utils/memman.c ****     bool rezult = false;
+ 366              		.loc 1 67 10
+ 367 0014 0023     		movs	r3, #0
+ 368 0016 FB74     		strb	r3, [r7, #19]
+  68:common/rtos/common/utils/memman.c ****     MEMUNIT *pxMemunit = &memunit[0];
+ 369              		.loc 1 68 14
+ 370 0018 1F4B     		ldr	r3, .L19
+ 371 001a FB60     		str	r3, [r7, #12]
+  69:common/rtos/common/utils/memman.c ****     while (i--)
+ 372              		.loc 1 69 11
+ 373 001c 32E0     		b	.L15
+ 374              	.L17:
+  70:common/rtos/common/utils/memman.c ****       {
+  71:common/rtos/common/utils/memman.c ****         if ((addr >= pxMemunit->startaddr) && ((addr + len)
+ 375              		.loc 1 71 19
+ 376 001e FA88     		ldrh	r2, [r7, #6]
+ 377              		.loc 1 71 31
+ 378 0020 FB68     		ldr	r3, [r7, #12]
+ 379 0022 1B68     		ldr	r3, [r3]
+ 380              		.loc 1 71 12
+ 381 0024 9A42     		cmp	r2, r3
+ 382 0026 2AD3     		bcc	.L16
+ 383              		.loc 1 71 54 discriminator 1
+ 384 0028 FA88     		ldrh	r2, [r7, #6]
+ 385 002a BB88     		ldrh	r3, [r7, #4]
+ 386 002c 1344     		add	r3, r3, r2
+ 387 002e 1A46     		mov	r2, r3
+  72:common/rtos/common/utils/memman.c ****             < pxMemunit->endaddr))
+ 388              		.loc 1 72 24 discriminator 1
+ 389 0030 FB68     		ldr	r3, [r7, #12]
+ 390 0032 5B68     		ldr	r3, [r3, #4]
+  71:common/rtos/common/utils/memman.c ****             < pxMemunit->endaddr))
+ 391              		.loc 1 71 44 discriminator 1
+ 392 0034 9A42     		cmp	r2, r3
+ 393 0036 22D2     		bcs	.L16
+  73:common/rtos/common/utils/memman.c ****           {
+  74:common/rtos/common/utils/memman.c ****             if (pxMemunit->xMutex != NULL)
+ 394              		.loc 1 74 26
+ 395 0038 FB68     		ldr	r3, [r7, #12]
+ 396 003a 9B68     		ldr	r3, [r3, #8]
+ 397              		.loc 1 74 16
+ 398 003c 002B     		cmp	r3, #0
+ 399 003e 1ED0     		beq	.L16
+  75:common/rtos/common/utils/memman.c ****               {
+  76:common/rtos/common/utils/memman.c ****                 if (xSemaphoreTake(pxMemunit->xMutex, (portTickType) 2000)
+ 400              		.loc 1 76 21
+ 401 0040 FB68     		ldr	r3, [r7, #12]
+ 402 0042 9868     		ldr	r0, [r3, #8]
+ 403 0044 0023     		movs	r3, #0
+ 404 0046 4FF4FA62 		mov	r2, #2000
+ 405 004a 0021     		movs	r1, #0
+ 406 004c 134C     		ldr	r4, .L19+4
+ 407 004e A047     		blx	r4
+ 408              	.LVL3:
+ 409 0050 0346     		mov	r3, r0
+ 410              		.loc 1 76 20
+ 411 0052 012B     		cmp	r3, #1
+ 412 0054 13D1     		bne	.L16
+  77:common/rtos/common/utils/memman.c ****                     == pdTRUE)
+  78:common/rtos/common/utils/memman.c ****                   {
+  79:common/rtos/common/utils/memman.c ****                     rezult = pxMemunit->GetMem(addr - pxMemunit->startaddr, pxDsn, len);
+ 413              		.loc 1 79 39
+ 414 0056 FB68     		ldr	r3, [r7, #12]
+ 415 0058 DB68     		ldr	r3, [r3, #12]
+ 416              		.loc 1 79 64
+ 417 005a FA68     		ldr	r2, [r7, #12]
+ 418 005c 1268     		ldr	r2, [r2]
+ 419              		.loc 1 79 30
+ 420 005e 92B2     		uxth	r2, r2
+ 421 0060 F988     		ldrh	r1, [r7, #6]	@ movhi
+ 422 0062 8A1A     		subs	r2, r1, r2
+ 423 0064 90B2     		uxth	r0, r2
+ 424 0066 BA88     		ldrh	r2, [r7, #4]
+ 425 0068 3968     		ldr	r1, [r7]
+ 426 006a 9847     		blx	r3
+ 427              	.LVL4:
+ 428 006c 0346     		mov	r3, r0
+ 429 006e FB74     		strb	r3, [r7, #19]
+  80:common/rtos/common/utils/memman.c ****                     xSemaphoreGive(pxMemunit->xMutex);
+ 430              		.loc 1 80 21
+ 431 0070 FB68     		ldr	r3, [r7, #12]
+ 432 0072 9868     		ldr	r0, [r3, #8]
+ 433 0074 0023     		movs	r3, #0
+ 434 0076 0022     		movs	r2, #0
+ 435 0078 0021     		movs	r1, #0
+ 436 007a 094C     		ldr	r4, .L19+8
+ 437 007c A047     		blx	r4
+ 438              	.LVL5:
+ 439              	.L16:
+  81:common/rtos/common/utils/memman.c ****                   }
+  82:common/rtos/common/utils/memman.c ****               }
+  83:common/rtos/common/utils/memman.c ****           }
+  84:common/rtos/common/utils/memman.c ****         pxMemunit++;
+ 440              		.loc 1 84 18
+ 441 007e FB68     		ldr	r3, [r7, #12]
+ 442 0080 1433     		adds	r3, r3, #20
+ 443 0082 FB60     		str	r3, [r7, #12]
+ 444              	.L15:
+  69:common/rtos/common/utils/memman.c ****       {
+ 445              		.loc 1 69 13
+ 446 0084 7B69     		ldr	r3, [r7, #20]
+ 447 0086 5A1E     		subs	r2, r3, #1
+ 448 0088 7A61     		str	r2, [r7, #20]
+  69:common/rtos/common/utils/memman.c ****       {
+ 449              		.loc 1 69 11
+ 450 008a 002B     		cmp	r3, #0
+ 451 008c C7D1     		bne	.L17
+  85:common/rtos/common/utils/memman.c ****       }
+  86:common/rtos/common/utils/memman.c ****    return rezult;
+ 452              		.loc 1 86 11
+ 453 008e FB7C     		ldrb	r3, [r7, #19]	@ zero_extendqisi2
+  87:common/rtos/common/utils/memman.c ****   }
+ 454              		.loc 1 87 3
+ 455 0090 1846     		mov	r0, r3
+ 456 0092 1C37     		adds	r7, r7, #28
+ 457              	.LCFI26:
+ 458              		.cfi_def_cfa_offset 12
+ 459 0094 BD46     		mov	sp, r7
+ 460              	.LCFI27:
+ 461              		.cfi_def_cfa_register 13
+ 462              		@ sp needed
+ 463 0096 90BD     		pop	{r4, r7, pc}
+ 464              	.L20:
+ 465              		.align	2
+ 466              	.L19:
+ 467 0098 00000000 		.word	memunit
+ 468 009c 00000000 		.word	xQueueGenericReceive
+ 469 00a0 00000000 		.word	xQueueGenericSend
+ 470              		.cfi_endproc
+ 471              	.LFE31:
+ 473              		.section	.text.MemSetWords,"ax",%progbits
+ 474              		.align	1
+ 475              		.global	MemSetWords
+ 476              		.syntax unified
+ 477              		.thumb
+ 478              		.thumb_func
+ 480              	MemSetWords:
+ 481              	.LFB32:
+  88:common/rtos/common/utils/memman.c **** //==============================================================================
+  89:common/rtos/common/utils/memman.c **** bool MemSetWords(uint16 addr, uint16 *pxSrc, uint16 len)
+  90:common/rtos/common/utils/memman.c ****   {
+ 482              		.loc 1 90 3
+ 483              		.cfi_startproc
+ 484              		@ args = 0, pretend = 0, frame = 24
+ 485              		@ frame_needed = 1, uses_anonymous_args = 0
+ 486 0000 90B5     		push	{r4, r7, lr}
+ 487              	.LCFI28:
+ 488              		.cfi_def_cfa_offset 12
+ 489              		.cfi_offset 4, -12
+ 490              		.cfi_offset 7, -8
+ 491              		.cfi_offset 14, -4
+ 492 0002 87B0     		sub	sp, sp, #28
+ 493              	.LCFI29:
+ 494              		.cfi_def_cfa_offset 40
+ 495 0004 00AF     		add	r7, sp, #0
+ 496              	.LCFI30:
+ 497              		.cfi_def_cfa_register 7
+ 498 0006 0346     		mov	r3, r0
+ 499 0008 3960     		str	r1, [r7]
+ 500 000a FB80     		strh	r3, [r7, #6]	@ movhi
+ 501 000c 1346     		mov	r3, r2	@ movhi
+ 502 000e BB80     		strh	r3, [r7, #4]	@ movhi
+  91:common/rtos/common/utils/memman.c ****     int i = MEMUNITS_NUM;
+ 503              		.loc 1 91 9
+ 504 0010 0623     		movs	r3, #6
+ 505 0012 7B61     		str	r3, [r7, #20]
+  92:common/rtos/common/utils/memman.c ****     bool rezult = false;
+ 506              		.loc 1 92 10
+ 507 0014 0023     		movs	r3, #0
+ 508 0016 FB74     		strb	r3, [r7, #19]
+  93:common/rtos/common/utils/memman.c ****     MEMUNIT *pxMemunit = &memunit[0];
+ 509              		.loc 1 93 14
+ 510 0018 1F4B     		ldr	r3, .L26
+ 511 001a FB60     		str	r3, [r7, #12]
+  94:common/rtos/common/utils/memman.c ****     while (i--)
+ 512              		.loc 1 94 11
+ 513 001c 32E0     		b	.L22
+ 514              	.L24:
+  95:common/rtos/common/utils/memman.c ****       {
+  96:common/rtos/common/utils/memman.c ****         if ((addr >= pxMemunit->startaddr) && ((addr + len)
+ 515              		.loc 1 96 19
+ 516 001e FA88     		ldrh	r2, [r7, #6]
+ 517              		.loc 1 96 31
+ 518 0020 FB68     		ldr	r3, [r7, #12]
+ 519 0022 1B68     		ldr	r3, [r3]
+ 520              		.loc 1 96 12
+ 521 0024 9A42     		cmp	r2, r3
+ 522 0026 2AD3     		bcc	.L23
+ 523              		.loc 1 96 54 discriminator 1
+ 524 0028 FA88     		ldrh	r2, [r7, #6]
+ 525 002a BB88     		ldrh	r3, [r7, #4]
+ 526 002c 1344     		add	r3, r3, r2
+ 527 002e 1A46     		mov	r2, r3
+  97:common/rtos/common/utils/memman.c ****             < pxMemunit->endaddr))
+ 528              		.loc 1 97 24 discriminator 1
+ 529 0030 FB68     		ldr	r3, [r7, #12]
+ 530 0032 5B68     		ldr	r3, [r3, #4]
+  96:common/rtos/common/utils/memman.c ****             < pxMemunit->endaddr))
+ 531              		.loc 1 96 44 discriminator 1
+ 532 0034 9A42     		cmp	r2, r3
+ 533 0036 22D2     		bcs	.L23
+  98:common/rtos/common/utils/memman.c ****           {
+  99:common/rtos/common/utils/memman.c ****             if (pxMemunit->xMutex != NULL)
+ 534              		.loc 1 99 26
+ 535 0038 FB68     		ldr	r3, [r7, #12]
+ 536 003a 9B68     		ldr	r3, [r3, #8]
+ 537              		.loc 1 99 16
+ 538 003c 002B     		cmp	r3, #0
+ 539 003e 1ED0     		beq	.L23
+ 100:common/rtos/common/utils/memman.c ****               {
+ 101:common/rtos/common/utils/memman.c ****                 if (xSemaphoreTake(pxMemunit->xMutex, (portTickType) 2000)
+ 540              		.loc 1 101 21
+ 541 0040 FB68     		ldr	r3, [r7, #12]
+ 542 0042 9868     		ldr	r0, [r3, #8]
+ 543 0044 0023     		movs	r3, #0
+ 544 0046 4FF4FA62 		mov	r2, #2000
+ 545 004a 0021     		movs	r1, #0
+ 546 004c 134C     		ldr	r4, .L26+4
+ 547 004e A047     		blx	r4
+ 548              	.LVL6:
+ 549 0050 0346     		mov	r3, r0
+ 550              		.loc 1 101 20
+ 551 0052 012B     		cmp	r3, #1
+ 552 0054 13D1     		bne	.L23
+ 102:common/rtos/common/utils/memman.c ****                     == pdTRUE)
+ 103:common/rtos/common/utils/memman.c ****                   {
+ 104:common/rtos/common/utils/memman.c ****                     rezult = pxMemunit->SetMem(addr - pxMemunit->startaddr, pxSrc, len);
+ 553              		.loc 1 104 39
+ 554 0056 FB68     		ldr	r3, [r7, #12]
+ 555 0058 1B69     		ldr	r3, [r3, #16]
+ 556              		.loc 1 104 64
+ 557 005a FA68     		ldr	r2, [r7, #12]
+ 558 005c 1268     		ldr	r2, [r2]
+ 559              		.loc 1 104 30
+ 560 005e 92B2     		uxth	r2, r2
+ 561 0060 F988     		ldrh	r1, [r7, #6]	@ movhi
+ 562 0062 8A1A     		subs	r2, r1, r2
+ 563 0064 90B2     		uxth	r0, r2
+ 564 0066 BA88     		ldrh	r2, [r7, #4]
+ 565 0068 3968     		ldr	r1, [r7]
+ 566 006a 9847     		blx	r3
+ 567              	.LVL7:
+ 568 006c 0346     		mov	r3, r0
+ 569 006e FB74     		strb	r3, [r7, #19]
+ 105:common/rtos/common/utils/memman.c ****                     xSemaphoreGive(pxMemunit->xMutex);
+ 570              		.loc 1 105 21
+ 571 0070 FB68     		ldr	r3, [r7, #12]
+ 572 0072 9868     		ldr	r0, [r3, #8]
+ 573 0074 0023     		movs	r3, #0
+ 574 0076 0022     		movs	r2, #0
+ 575 0078 0021     		movs	r1, #0
+ 576 007a 094C     		ldr	r4, .L26+8
+ 577 007c A047     		blx	r4
+ 578              	.LVL8:
+ 579              	.L23:
+ 106:common/rtos/common/utils/memman.c ****                   }
+ 107:common/rtos/common/utils/memman.c ****               }
+ 108:common/rtos/common/utils/memman.c ****           }
+ 109:common/rtos/common/utils/memman.c ****         pxMemunit++;
+ 580              		.loc 1 109 18
+ 581 007e FB68     		ldr	r3, [r7, #12]
+ 582 0080 1433     		adds	r3, r3, #20
+ 583 0082 FB60     		str	r3, [r7, #12]
+ 584              	.L22:
+  94:common/rtos/common/utils/memman.c ****       {
+ 585              		.loc 1 94 13
+ 586 0084 7B69     		ldr	r3, [r7, #20]
+ 587 0086 5A1E     		subs	r2, r3, #1
+ 588 0088 7A61     		str	r2, [r7, #20]
+  94:common/rtos/common/utils/memman.c ****       {
+ 589              		.loc 1 94 11
+ 590 008a 002B     		cmp	r3, #0
+ 591 008c C7D1     		bne	.L24
+ 110:common/rtos/common/utils/memman.c ****       }
+ 111:common/rtos/common/utils/memman.c ****       return rezult;
+ 592              		.loc 1 111 14
+ 593 008e FB7C     		ldrb	r3, [r7, #19]	@ zero_extendqisi2
+ 112:common/rtos/common/utils/memman.c ****   }
+ 594              		.loc 1 112 3
+ 595 0090 1846     		mov	r0, r3
+ 596 0092 1C37     		adds	r7, r7, #28
+ 597              	.LCFI31:
+ 598              		.cfi_def_cfa_offset 12
+ 599 0094 BD46     		mov	sp, r7
+ 600              	.LCFI32:
+ 601              		.cfi_def_cfa_register 13
+ 602              		@ sp needed
+ 603 0096 90BD     		pop	{r4, r7, pc}
+ 604              	.L27:
+ 605              		.align	2
+ 606              	.L26:
+ 607 0098 00000000 		.word	memunit
+ 608 009c 00000000 		.word	xQueueGenericReceive
+ 609 00a0 00000000 		.word	xQueueGenericSend
+ 610              		.cfi_endproc
+ 611              	.LFE32:
+ 613              		.text
+ 614              	.Letext0:
+ 615              		.file 2 "common/rtos/common/utils/typedef.h"
+ 616              		.file 3 "common/rtos/common/utils/error.h"
+ 617              		.file 4 "common/rtos/portable/GCC/ARM_CM3/portmacro.h"
+ 618              		.file 5 "common/rtos/include/queue.h"
+ 619              		.file 6 "common/rtos/include/semphr.h"
+ 620              		.file 7 "common/rtos/common/utils/memman.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 memman.c
+C:\Users\Admin\AppData\Local\Temp\cc5EOtLu.s:22     .bss.MemManReadAccessError:00000000 MemManReadAccessError
+C:\Users\Admin\AppData\Local\Temp\cc5EOtLu.s:19     .bss.MemManReadAccessError:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\cc5EOtLu.s:29     .bss.MemManWriteAccessError:00000000 MemManWriteAccessError
+C:\Users\Admin\AppData\Local\Temp\cc5EOtLu.s:26     .bss.MemManWriteAccessError:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\cc5EOtLu.s:36     .bss.memunit:00000000 memunit
+C:\Users\Admin\AppData\Local\Temp\cc5EOtLu.s:33     .bss.memunit:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\cc5EOtLu.s:39     .rodata:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\cc5EOtLu.s:46     .text.MemManInit:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc5EOtLu.s:52     .text.MemManInit:00000000 MemManInit
+C:\Users\Admin\AppData\Local\Temp\cc5EOtLu.s:156    .text.MemManInit:00000070 $d
+C:\Users\Admin\AppData\Local\Temp\cc5EOtLu.s:244    .text.GetDefaultHandler:00000000 GetDefaultHandler
+C:\Users\Admin\AppData\Local\Temp\cc5EOtLu.s:292    .text.SetDefaultHandler:00000000 SetDefaultHandler
+C:\Users\Admin\AppData\Local\Temp\cc5EOtLu.s:169    .text.CopyDataBytes:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc5EOtLu.s:175    .text.CopyDataBytes:00000000 CopyDataBytes
+C:\Users\Admin\AppData\Local\Temp\cc5EOtLu.s:238    .text.GetDefaultHandler:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc5EOtLu.s:286    .text.SetDefaultHandler:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc5EOtLu.s:334    .text.MemGetWords:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc5EOtLu.s:340    .text.MemGetWords:00000000 MemGetWords
+C:\Users\Admin\AppData\Local\Temp\cc5EOtLu.s:467    .text.MemGetWords:00000098 $d
+C:\Users\Admin\AppData\Local\Temp\cc5EOtLu.s:474    .text.MemSetWords:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc5EOtLu.s:480    .text.MemSetWords:00000000 MemSetWords
+C:\Users\Admin\AppData\Local\Temp\cc5EOtLu.s:607    .text.MemSetWords:00000098 $d
+
+UNDEFINED SYMBOLS
+xQueueCreateMutex
+ErrorCreate
+xQueueGenericReceive
+xQueueGenericSend

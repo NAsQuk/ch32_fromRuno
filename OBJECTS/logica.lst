@@ -1,0 +1,139 @@
+   1              		.cpu cortex-m3
+   2              		.arch armv7-m
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"logica.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.section	.text.vLogicaTask,"ax",%progbits
+  18              		.align	1
+  19              		.global	vLogicaTask
+  20              		.syntax unified
+  21              		.thumb
+  22              		.thumb_func
+  24              	vLogicaTask:
+  25              	.LFB27:
+  26              		.file 1 "tasks/logica.c"
+   1:tasks/logica.c **** #include <stdlib.h>
+   2:tasks/logica.c **** #include "logica.h"
+   3:tasks/logica.c **** #include "FreeRTOS.h"
+   4:tasks/logica.c **** #include "task.h"
+   5:tasks/logica.c **** #include "translator.h"
+   6:tasks/logica.c **** #include "gprscon.h"
+   7:tasks/logica.c **** #include "stm32f10x_flash.h"
+   8:tasks/logica.c **** #include "usermemory.h"
+   9:tasks/logica.c **** #include "rtclock.h"
+  10:tasks/logica.c **** 
+  11:tasks/logica.c **** void vLogicaTask(void *pvParameters) {
+  27              		.loc 1 11 38
+  28              		.cfi_startproc
+  29              		@ args = 0, pretend = 0, frame = 16
+  30              		@ frame_needed = 1, uses_anonymous_args = 0
+  31 0000 80B5     		push	{r7, lr}
+  32              	.LCFI0:
+  33              		.cfi_def_cfa_offset 8
+  34              		.cfi_offset 7, -8
+  35              		.cfi_offset 14, -4
+  36 0002 84B0     		sub	sp, sp, #16
+  37              	.LCFI1:
+  38              		.cfi_def_cfa_offset 24
+  39 0004 00AF     		add	r7, sp, #0
+  40              	.LCFI2:
+  41              		.cfi_def_cfa_register 7
+  42 0006 7860     		str	r0, [r7, #4]
+  12:tasks/logica.c **** 
+  13:tasks/logica.c **** 	int heapSize = 0;
+  43              		.loc 1 13 6
+  44 0008 0023     		movs	r3, #0
+  45 000a FB60     		str	r3, [r7, #12]
+  14:tasks/logica.c **** 	rtcInit();
+  46              		.loc 1 14 2
+  47 000c 0A4B     		ldr	r3, .L3
+  48 000e 9847     		blx	r3
+  49              	.LVL0:
+  15:tasks/logica.c **** 	vTaskDelay(500);
+  50              		.loc 1 15 2
+  51 0010 4FF4FA70 		mov	r0, #500
+  52 0014 094B     		ldr	r3, .L3+4
+  53 0016 9847     		blx	r3
+  54              	.LVL1:
+  55              	.L2:
+  16:tasks/logica.c **** 	while (1) {
+  17:tasks/logica.c **** 		heapSize = xPortGetFreeHeapSize();
+  56              		.loc 1 17 14 discriminator 1
+  57 0018 094B     		ldr	r3, .L3+8
+  58 001a 9847     		blx	r3
+  59              	.LVL2:
+  60 001c 0346     		mov	r3, r0
+  61              		.loc 1 17 12 discriminator 1
+  62 001e FB60     		str	r3, [r7, #12]
+  18:tasks/logica.c **** 		heapSize += 0;
+  19:tasks/logica.c **** 		BKP_WriteBackupRegister(BKP_DR7, 50);
+  63              		.loc 1 19 3 discriminator 1
+  64 0020 3221     		movs	r1, #50
+  65 0022 1C20     		movs	r0, #28
+  66 0024 074B     		ldr	r3, .L3+12
+  67 0026 9847     		blx	r3
+  68              	.LVL3:
+  20:tasks/logica.c **** 		//JrnlClear();
+  21:tasks/logica.c **** 		IWDG_ReloadCounter();
+  69              		.loc 1 21 3 discriminator 1
+  70 0028 074B     		ldr	r3, .L3+16
+  71 002a 9847     		blx	r3
+  72              	.LVL4:
+  22:tasks/logica.c **** 		DoProgram();
+  73              		.loc 1 22 3 discriminator 1
+  74 002c 074B     		ldr	r3, .L3+20
+  75 002e 9847     		blx	r3
+  76              	.LVL5:
+  23:tasks/logica.c **** 		vTaskDelay(20);
+  77              		.loc 1 23 3 discriminator 1
+  78 0030 1420     		movs	r0, #20
+  79 0032 024B     		ldr	r3, .L3+4
+  80 0034 9847     		blx	r3
+  81              	.LVL6:
+  17:tasks/logica.c **** 		heapSize += 0;
+  82              		.loc 1 17 12 discriminator 1
+  83 0036 EFE7     		b	.L2
+  84              	.L4:
+  85              		.align	2
+  86              	.L3:
+  87 0038 00000000 		.word	rtcInit
+  88 003c 00000000 		.word	vTaskDelay
+  89 0040 00000000 		.word	xPortGetFreeHeapSize
+  90 0044 00000000 		.word	BKP_WriteBackupRegister
+  91 0048 00000000 		.word	IWDG_ReloadCounter
+  92 004c 00000000 		.word	DoProgram
+  93              		.cfi_endproc
+  94              	.LFE27:
+  96              		.text
+  97              	.Letext0:
+  98              		.file 2 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+  99              		.file 3 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 100              		.file 4 "common/rtos/include/task.h"
+ 101              		.file 5 "common/rtos/include/portable.h"
+ 102              		.file 6 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_bkp.h"
+ 103              		.file 7 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_iwdg.h"
+ 104              		.file 8 "./src/translator.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 logica.c
+C:\Users\Admin\AppData\Local\Temp\ccoOwxXr.s:18     .text.vLogicaTask:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccoOwxXr.s:24     .text.vLogicaTask:00000000 vLogicaTask
+C:\Users\Admin\AppData\Local\Temp\ccoOwxXr.s:87     .text.vLogicaTask:00000038 $d
+
+UNDEFINED SYMBOLS
+rtcInit
+vTaskDelay
+xPortGetFreeHeapSize
+BKP_WriteBackupRegister
+IWDG_ReloadCounter
+DoProgram

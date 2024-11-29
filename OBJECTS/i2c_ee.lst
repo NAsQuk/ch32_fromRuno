@@ -1,0 +1,3670 @@
+   1              		.cpu cortex-m3
+   2              		.arch armv7-m
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"i2c_ee.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.global	EEPROM_ADDRESS
+  18              		.section	.bss.EEPROM_ADDRESS,"aw",%nobits
+  19              		.align	1
+  22              	EEPROM_ADDRESS:
+  23 0000 0000     		.space	2
+  24              		.section	.text.I2C_Configuration,"ax",%progbits
+  25              		.align	1
+  26              		.global	I2C_Configuration
+  27              		.syntax unified
+  28              		.thumb
+  29              		.thumb_func
+  31              	I2C_Configuration:
+  32              	.LFB27:
+  33              		.file 1 "src/i2c_ee.c"
+   1:src/i2c_ee.c  **** /******************** (C) COPYRIGHT 2008 STMicroelectronics ********************
+   2:src/i2c_ee.c  ****  * File Name          : i2c_ee.c
+   3:src/i2c_ee.c  ****  * Author             : MCD Application Team
+   4:src/i2c_ee.c  ****  * Version            : V2.0.3
+   5:src/i2c_ee.c  ****  * Date               : 09/22/2008
+   6:src/i2c_ee.c  ****  * Description        : This file provides a set of functions needed to manage the
+   7:src/i2c_ee.c  ****  *                      communication between I2C peripheral and I2C M24C08 EEPROM.
+   8:src/i2c_ee.c  ****  ********************************************************************************
+   9:src/i2c_ee.c  ****  * THE PRESENT FIRMWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING CUSTOMERS
+  10:src/i2c_ee.c  ****  * WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER FOR THEM TO SAVE TIME.
+  11:src/i2c_ee.c  ****  * AS A RESULT, STMICROELECTRONICS SHALL NOT BE HELD LIABLE FOR ANY DIRECT,
+  12:src/i2c_ee.c  ****  * INDIRECT OR CONSEQUENTIAL DAMAGES WITH RESPECT TO ANY CLAIMS ARISING FROM THE
+  13:src/i2c_ee.c  ****  * CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE CODING
+  14:src/i2c_ee.c  ****  * INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
+  15:src/i2c_ee.c  ****  *******************************************************************************/
+  16:src/i2c_ee.c  **** 
+  17:src/i2c_ee.c  **** /* Includes ------------------------------------------------------------------*/
+  18:src/i2c_ee.c  **** #include "i2c_ee.h"
+  19:src/i2c_ee.c  **** #include "portmacro.h"
+  20:src/i2c_ee.c  **** #include "board.h"
+  21:src/i2c_ee.c  **** 
+  22:src/i2c_ee.c  **** /* Private typedef -----------------------------------------------------------*/
+  23:src/i2c_ee.c  **** /* Private define ------------------------------------------------------------*/
+  24:src/i2c_ee.c  **** #define I2C_Speed              100000
+  25:src/i2c_ee.c  **** #define I2C1_SLAVE_ADDRESS7    0xA2
+  26:src/i2c_ee.c  **** #define I2C_PageSize           32
+  27:src/i2c_ee.c  **** 
+  28:src/i2c_ee.c  **** #define MIOS32_IIC0_SCL_PORT    GPIOB
+  29:src/i2c_ee.c  **** #define MIOS32_IIC0_SCL_PIN     GPIO_Pin_8
+  30:src/i2c_ee.c  **** #define MIOS32_IIC0_SDA_PORT    GPIOB
+  31:src/i2c_ee.c  **** #define MIOS32_IIC0_SDA_PIN     GPIO_Pin_9
+  32:src/i2c_ee.c  **** 
+  33:src/i2c_ee.c  **** /* Private macro -------------------------------------------------------------*/
+  34:src/i2c_ee.c  **** /* Private variables ---------------------------------------------------------*/
+  35:src/i2c_ee.c  **** u16 EEPROM_ADDRESS;
+  36:src/i2c_ee.c  **** 
+  37:src/i2c_ee.c  **** /* Private function prototypes -----------------------------------------------*/
+  38:src/i2c_ee.c  **** void GPIO_Configuration(void);
+  39:src/i2c_ee.c  **** void I2C_Configuration(void);
+  40:src/i2c_ee.c  **** 
+  41:src/i2c_ee.c  **** /*******************************************************************************
+  42:src/i2c_ee.c  ****  * Function Name  : I2C_Configuration
+  43:src/i2c_ee.c  ****  * Description    : I2C Configuration
+  44:src/i2c_ee.c  ****  * Input          : None
+  45:src/i2c_ee.c  ****  * Output         : None
+  46:src/i2c_ee.c  ****  * Return         : None
+  47:src/i2c_ee.c  ****  *******************************************************************************/
+  48:src/i2c_ee.c  **** void I2C_Configuration(void) {
+  34              		.loc 1 48 30
+  35              		.cfi_startproc
+  36              		@ args = 0, pretend = 0, frame = 16
+  37              		@ frame_needed = 1, uses_anonymous_args = 0
+  38 0000 80B5     		push	{r7, lr}
+  39              	.LCFI0:
+  40              		.cfi_def_cfa_offset 8
+  41              		.cfi_offset 7, -8
+  42              		.cfi_offset 14, -4
+  43 0002 84B0     		sub	sp, sp, #16
+  44              	.LCFI1:
+  45              		.cfi_def_cfa_offset 24
+  46 0004 00AF     		add	r7, sp, #0
+  47              	.LCFI2:
+  48              		.cfi_def_cfa_register 7
+  49:src/i2c_ee.c  **** 
+  50:src/i2c_ee.c  **** 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1, ENABLE);
+  49              		.loc 1 50 2
+  50 0006 0121     		movs	r1, #1
+  51 0008 4FF40010 		mov	r0, #2097152
+  52 000c 124B     		ldr	r3, .L2
+  53 000e 9847     		blx	r3
+  54              	.LVL0:
+  51:src/i2c_ee.c  **** 
+  52:src/i2c_ee.c  **** 	/* GPIO Periph clock enable */
+  53:src/i2c_ee.c  **** 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
+  55              		.loc 1 53 2
+  56 0010 0121     		movs	r1, #1
+  57 0012 0820     		movs	r0, #8
+  58 0014 114B     		ldr	r3, .L2+4
+  59 0016 9847     		blx	r3
+  60              	.LVL1:
+  54:src/i2c_ee.c  **** 
+  55:src/i2c_ee.c  **** 	I2C_InitTypeDef I2C_InitStructure;
+  56:src/i2c_ee.c  **** 
+  57:src/i2c_ee.c  **** 	/* I2C configuration */
+  58:src/i2c_ee.c  **** 	I2C_InitStructure.I2C_Mode = I2C_Mode_I2C;
+  61              		.loc 1 58 29
+  62 0018 0023     		movs	r3, #0
+  63 001a BB80     		strh	r3, [r7, #4]	@ movhi
+  59:src/i2c_ee.c  **** 	I2C_InitStructure.I2C_DutyCycle = I2C_DutyCycle_2;
+  64              		.loc 1 59 34
+  65 001c 4BF6FF73 		movw	r3, #49151
+  66 0020 FB80     		strh	r3, [r7, #6]	@ movhi
+  60:src/i2c_ee.c  **** 	I2C_InitStructure.I2C_OwnAddress1 = I2C1_SLAVE_ADDRESS7;
+  67              		.loc 1 60 36
+  68 0022 A223     		movs	r3, #162
+  69 0024 3B81     		strh	r3, [r7, #8]	@ movhi
+  61:src/i2c_ee.c  **** 	I2C_InitStructure.I2C_Ack = I2C_Ack_Enable;
+  70              		.loc 1 61 28
+  71 0026 4FF48063 		mov	r3, #1024
+  72 002a 7B81     		strh	r3, [r7, #10]	@ movhi
+  62:src/i2c_ee.c  **** 	I2C_InitStructure.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
+  73              		.loc 1 62 44
+  74 002c 4FF48043 		mov	r3, #16384
+  75 0030 BB81     		strh	r3, [r7, #12]	@ movhi
+  63:src/i2c_ee.c  **** 	I2C_InitStructure.I2C_ClockSpeed = I2C_Speed;
+  76              		.loc 1 63 35
+  77 0032 0B4B     		ldr	r3, .L2+8
+  78 0034 3B60     		str	r3, [r7]
+  64:src/i2c_ee.c  **** 
+  65:src/i2c_ee.c  **** 	/* I2C Peripheral Enable */
+  66:src/i2c_ee.c  **** 	I2C_Cmd(I2C1, ENABLE);
+  79              		.loc 1 66 2
+  80 0036 0121     		movs	r1, #1
+  81 0038 0A48     		ldr	r0, .L2+12
+  82 003a 0B4B     		ldr	r3, .L2+16
+  83 003c 9847     		blx	r3
+  84              	.LVL2:
+  67:src/i2c_ee.c  **** 	/* Apply I2C configuration after enabling it */
+  68:src/i2c_ee.c  **** 	I2C_Init(I2C1, &I2C_InitStructure);
+  85              		.loc 1 68 2
+  86 003e 3B46     		mov	r3, r7
+  87 0040 1946     		mov	r1, r3
+  88 0042 0848     		ldr	r0, .L2+12
+  89 0044 094B     		ldr	r3, .L2+20
+  90 0046 9847     		blx	r3
+  91              	.LVL3:
+  69:src/i2c_ee.c  **** 	I2C_AcknowledgeConfig(I2C1, ENABLE);
+  92              		.loc 1 69 2
+  93 0048 0121     		movs	r1, #1
+  94 004a 0648     		ldr	r0, .L2+12
+  95 004c 084B     		ldr	r3, .L2+24
+  96 004e 9847     		blx	r3
+  97              	.LVL4:
+  70:src/i2c_ee.c  **** }
+  98              		.loc 1 70 1
+  99 0050 00BF     		nop
+ 100 0052 1037     		adds	r7, r7, #16
+ 101              	.LCFI3:
+ 102              		.cfi_def_cfa_offset 8
+ 103 0054 BD46     		mov	sp, r7
+ 104              	.LCFI4:
+ 105              		.cfi_def_cfa_register 13
+ 106              		@ sp needed
+ 107 0056 80BD     		pop	{r7, pc}
+ 108              	.L3:
+ 109              		.align	2
+ 110              	.L2:
+ 111 0058 00000000 		.word	RCC_APB1PeriphClockCmd
+ 112 005c 00000000 		.word	RCC_APB2PeriphClockCmd
+ 113 0060 A0860100 		.word	100000
+ 114 0064 00540040 		.word	1073763328
+ 115 0068 00000000 		.word	I2C_Cmd
+ 116 006c 00000000 		.word	I2C_Init
+ 117 0070 00000000 		.word	I2C_AcknowledgeConfig
+ 118              		.cfi_endproc
+ 119              	.LFE27:
+ 121              		.section	.text.I2C_EE_Init,"ax",%progbits
+ 122              		.align	1
+ 123              		.global	I2C_EE_Init
+ 124              		.syntax unified
+ 125              		.thumb
+ 126              		.thumb_func
+ 128              	I2C_EE_Init:
+ 129              	.LFB28:
+  71:src/i2c_ee.c  **** 
+  72:src/i2c_ee.c  **** /*******************************************************************************
+  73:src/i2c_ee.c  ****  * Function Name  : I2C_EE_Init
+  74:src/i2c_ee.c  ****  * Description    : Initializes peripherals used by the I2C EEPROM driver.
+  75:src/i2c_ee.c  ****  * Input          : None
+  76:src/i2c_ee.c  ****  * Output         : None
+  77:src/i2c_ee.c  ****  * Return         : None
+  78:src/i2c_ee.c  ****  *******************************************************************************/
+  79:src/i2c_ee.c  **** void I2C_EE_Init() {
+ 130              		.loc 1 79 20
+ 131              		.cfi_startproc
+ 132              		@ args = 0, pretend = 0, frame = 0
+ 133              		@ frame_needed = 1, uses_anonymous_args = 0
+ 134 0000 80B5     		push	{r7, lr}
+ 135              	.LCFI5:
+ 136              		.cfi_def_cfa_offset 8
+ 137              		.cfi_offset 7, -8
+ 138              		.cfi_offset 14, -4
+ 139 0002 00AF     		add	r7, sp, #0
+ 140              	.LCFI6:
+ 141              		.cfi_def_cfa_register 7
+  80:src/i2c_ee.c  **** 	/* GPIO configuration */
+  81:src/i2c_ee.c  **** 	//GPIO_Configuration();
+  82:src/i2c_ee.c  **** 	/* I2C configuration */
+  83:src/i2c_ee.c  **** 	I2C_Configuration();
+ 142              		.loc 1 83 2
+ 143 0004 034B     		ldr	r3, .L5
+ 144 0006 9847     		blx	r3
+ 145              	.LVL5:
+  84:src/i2c_ee.c  **** 
+  85:src/i2c_ee.c  **** 	/* depending on the EEPROM Address selected in the i2c_ee.h file */
+  86:src/i2c_ee.c  **** 
+  87:src/i2c_ee.c  **** 	/* Select the EEPROM Block0 to write on */
+  88:src/i2c_ee.c  **** 	EEPROM_ADDRESS = 0xA0;
+ 146              		.loc 1 88 17
+ 147 0008 034B     		ldr	r3, .L5+4
+ 148 000a A022     		movs	r2, #160
+ 149 000c 1A80     		strh	r2, [r3]	@ movhi
+  89:src/i2c_ee.c  **** }
+ 150              		.loc 1 89 1
+ 151 000e 00BF     		nop
+ 152 0010 80BD     		pop	{r7, pc}
+ 153              	.L6:
+ 154 0012 00BF     		.align	2
+ 155              	.L5:
+ 156 0014 00000000 		.word	I2C_Configuration
+ 157 0018 00000000 		.word	EEPROM_ADDRESS
+ 158              		.cfi_endproc
+ 159              	.LFE28:
+ 161              		.section	.text.I2C_EE_BufferWrite,"ax",%progbits
+ 162              		.align	1
+ 163              		.global	I2C_EE_BufferWrite
+ 164              		.syntax unified
+ 165              		.thumb
+ 166              		.thumb_func
+ 168              	I2C_EE_BufferWrite:
+ 169              	.LFB29:
+  90:src/i2c_ee.c  **** 
+  91:src/i2c_ee.c  **** /*******************************************************************************
+  92:src/i2c_ee.c  ****  * Function Name  : I2C_EE_BufferWrite
+  93:src/i2c_ee.c  ****  * Description    : Writes buffer of data to the I2C EEPROM.
+  94:src/i2c_ee.c  ****  * Input          : - pBuffer : pointer to the buffer  containing the data to be
+  95:src/i2c_ee.c  ****  *                    written to the EEPROM.
+  96:src/i2c_ee.c  ****  *                  - WriteAddr : EEPROM's internal address to write to.
+  97:src/i2c_ee.c  ****  *                  - NumByteToWrite : number of bytes to write to the EEPROM.
+  98:src/i2c_ee.c  ****  * Output         : None
+  99:src/i2c_ee.c  ****  * Return         : None
+ 100:src/i2c_ee.c  ****  *******************************************************************************/
+ 101:src/i2c_ee.c  **** bool I2C_EE_BufferWrite(u8 *pBuffer, u16 WriteAddr, u16 NumByteToWrite) {
+ 170              		.loc 1 101 73
+ 171              		.cfi_startproc
+ 172              		@ args = 0, pretend = 0, frame = 16
+ 173              		@ frame_needed = 1, uses_anonymous_args = 0
+ 174 0000 80B5     		push	{r7, lr}
+ 175              	.LCFI7:
+ 176              		.cfi_def_cfa_offset 8
+ 177              		.cfi_offset 7, -8
+ 178              		.cfi_offset 14, -4
+ 179 0002 84B0     		sub	sp, sp, #16
+ 180              	.LCFI8:
+ 181              		.cfi_def_cfa_offset 24
+ 182 0004 00AF     		add	r7, sp, #0
+ 183              	.LCFI9:
+ 184              		.cfi_def_cfa_register 7
+ 185 0006 7860     		str	r0, [r7, #4]
+ 186 0008 0B46     		mov	r3, r1
+ 187 000a 7B80     		strh	r3, [r7, #2]	@ movhi
+ 188 000c 1346     		mov	r3, r2	@ movhi
+ 189 000e 3B80     		strh	r3, [r7]	@ movhi
+ 102:src/i2c_ee.c  **** 	BKP_WriteBackupRegister(BKP_DR7, 21);
+ 190              		.loc 1 102 2
+ 191 0010 1521     		movs	r1, #21
+ 192 0012 1C20     		movs	r0, #28
+ 193 0014 4D4B     		ldr	r3, .L18
+ 194 0016 9847     		blx	r3
+ 195              	.LVL6:
+ 103:src/i2c_ee.c  **** 	u8 NumOfPage = 0, NumOfSingle = 0, Addr = 0, count = 0;
+ 196              		.loc 1 103 5
+ 197 0018 0023     		movs	r3, #0
+ 198 001a FB73     		strb	r3, [r7, #15]
+ 199              		.loc 1 103 20
+ 200 001c 0023     		movs	r3, #0
+ 201 001e BB73     		strb	r3, [r7, #14]
+ 202              		.loc 1 103 37
+ 203 0020 0023     		movs	r3, #0
+ 204 0022 7B73     		strb	r3, [r7, #13]
+ 205              		.loc 1 103 47
+ 206 0024 0023     		movs	r3, #0
+ 207 0026 3B73     		strb	r3, [r7, #12]
+ 104:src/i2c_ee.c  **** 
+ 105:src/i2c_ee.c  **** 	Addr = WriteAddr % I2C_PageSize;
+ 208              		.loc 1 105 19
+ 209 0028 7B88     		ldrh	r3, [r7, #2]	@ movhi
+ 210 002a DBB2     		uxtb	r3, r3
+ 211              		.loc 1 105 7
+ 212 002c 03F01F03 		and	r3, r3, #31
+ 213 0030 7B73     		strb	r3, [r7, #13]
+ 106:src/i2c_ee.c  **** 	count = I2C_PageSize - Addr;
+ 214              		.loc 1 106 8
+ 215 0032 7B7B     		ldrb	r3, [r7, #13]
+ 216 0034 C3F12003 		rsb	r3, r3, #32
+ 217 0038 3B73     		strb	r3, [r7, #12]
+ 107:src/i2c_ee.c  **** 	NumOfPage = NumByteToWrite / I2C_PageSize;
+ 218              		.loc 1 107 12
+ 219 003a 3B88     		ldrh	r3, [r7]
+ 220 003c 5B09     		lsrs	r3, r3, #5
+ 221 003e 9BB2     		uxth	r3, r3
+ 222 0040 FB73     		strb	r3, [r7, #15]
+ 108:src/i2c_ee.c  **** 	NumOfSingle = NumByteToWrite % I2C_PageSize;
+ 223              		.loc 1 108 31
+ 224 0042 3B88     		ldrh	r3, [r7]	@ movhi
+ 225 0044 DBB2     		uxtb	r3, r3
+ 226              		.loc 1 108 14
+ 227 0046 03F01F03 		and	r3, r3, #31
+ 228 004a BB73     		strb	r3, [r7, #14]
+ 109:src/i2c_ee.c  **** 
+ 110:src/i2c_ee.c  **** 	/* If WriteAddr is I2C_PageSize aligned  */
+ 111:src/i2c_ee.c  **** 	if (Addr == 0) {
+ 229              		.loc 1 111 5
+ 230 004c 7B7B     		ldrb	r3, [r7, #13]	@ zero_extendqisi2
+ 231 004e 002B     		cmp	r3, #0
+ 232 0050 2AD1     		bne	.L8
+ 112:src/i2c_ee.c  **** 		/* If NumByteToWrite  I2C_PageSize */
+ 113:src/i2c_ee.c  **** 		if (NumOfPage == 0) {
+ 233              		.loc 1 113 6
+ 234 0052 FB7B     		ldrb	r3, [r7, #15]	@ zero_extendqisi2
+ 235 0054 002B     		cmp	r3, #0
+ 236 0056 16D1     		bne	.L11
+ 114:src/i2c_ee.c  **** 			I2C_EE_PageWrite(pBuffer, WriteAddr, NumOfSingle);
+ 237              		.loc 1 114 4
+ 238 0058 BA7B     		ldrb	r2, [r7, #14]	@ zero_extendqisi2
+ 239 005a 7B88     		ldrh	r3, [r7, #2]
+ 240 005c 1946     		mov	r1, r3
+ 241 005e 7868     		ldr	r0, [r7, #4]
+ 242 0060 3B4B     		ldr	r3, .L18+4
+ 243 0062 9847     		blx	r3
+ 244              	.LVL7:
+ 115:src/i2c_ee.c  **** 			I2C_EE_WaitEepromStandbyState();
+ 245              		.loc 1 115 4
+ 246 0064 3B4B     		ldr	r3, .L18+8
+ 247 0066 9847     		blx	r3
+ 248              	.LVL8:
+ 249 0068 6BE0     		b	.L10
+ 250              	.L12:
+ 116:src/i2c_ee.c  **** 		}
+ 117:src/i2c_ee.c  **** 		/* If NumByteToWrite > I2C_PageSize */
+ 118:src/i2c_ee.c  **** 		else {
+ 119:src/i2c_ee.c  **** 			while (NumOfPage--) {
+ 120:src/i2c_ee.c  **** 				I2C_EE_PageWrite(pBuffer, WriteAddr, I2C_PageSize);
+ 251              		.loc 1 120 5
+ 252 006a 7B88     		ldrh	r3, [r7, #2]
+ 253 006c 2022     		movs	r2, #32
+ 254 006e 1946     		mov	r1, r3
+ 255 0070 7868     		ldr	r0, [r7, #4]
+ 256 0072 374B     		ldr	r3, .L18+4
+ 257 0074 9847     		blx	r3
+ 258              	.LVL9:
+ 121:src/i2c_ee.c  **** 				I2C_EE_WaitEepromStandbyState();
+ 259              		.loc 1 121 5
+ 260 0076 374B     		ldr	r3, .L18+8
+ 261 0078 9847     		blx	r3
+ 262              	.LVL10:
+ 122:src/i2c_ee.c  **** 				WriteAddr += I2C_PageSize;
+ 263              		.loc 1 122 15
+ 264 007a 7B88     		ldrh	r3, [r7, #2]	@ movhi
+ 265 007c 2033     		adds	r3, r3, #32
+ 266 007e 7B80     		strh	r3, [r7, #2]	@ movhi
+ 123:src/i2c_ee.c  **** 				pBuffer += I2C_PageSize;
+ 267              		.loc 1 123 13
+ 268 0080 7B68     		ldr	r3, [r7, #4]
+ 269 0082 2033     		adds	r3, r3, #32
+ 270 0084 7B60     		str	r3, [r7, #4]
+ 271              	.L11:
+ 119:src/i2c_ee.c  **** 				I2C_EE_PageWrite(pBuffer, WriteAddr, I2C_PageSize);
+ 272              		.loc 1 119 20
+ 273 0086 FB7B     		ldrb	r3, [r7, #15]	@ zero_extendqisi2
+ 274 0088 5A1E     		subs	r2, r3, #1
+ 275 008a FA73     		strb	r2, [r7, #15]
+ 119:src/i2c_ee.c  **** 				I2C_EE_PageWrite(pBuffer, WriteAddr, I2C_PageSize);
+ 276              		.loc 1 119 10
+ 277 008c 002B     		cmp	r3, #0
+ 278 008e ECD1     		bne	.L12
+ 124:src/i2c_ee.c  **** 			}
+ 125:src/i2c_ee.c  **** 
+ 126:src/i2c_ee.c  **** 			if (NumOfSingle != 0) {
+ 279              		.loc 1 126 7
+ 280 0090 BB7B     		ldrb	r3, [r7, #14]	@ zero_extendqisi2
+ 281 0092 002B     		cmp	r3, #0
+ 282 0094 55D0     		beq	.L10
+ 127:src/i2c_ee.c  **** 				I2C_EE_PageWrite(pBuffer, WriteAddr, NumOfSingle);
+ 283              		.loc 1 127 5
+ 284 0096 BA7B     		ldrb	r2, [r7, #14]	@ zero_extendqisi2
+ 285 0098 7B88     		ldrh	r3, [r7, #2]
+ 286 009a 1946     		mov	r1, r3
+ 287 009c 7868     		ldr	r0, [r7, #4]
+ 288 009e 2C4B     		ldr	r3, .L18+4
+ 289 00a0 9847     		blx	r3
+ 290              	.LVL11:
+ 128:src/i2c_ee.c  **** 				I2C_EE_WaitEepromStandbyState();
+ 291              		.loc 1 128 5
+ 292 00a2 2C4B     		ldr	r3, .L18+8
+ 293 00a4 9847     		blx	r3
+ 294              	.LVL12:
+ 295 00a6 4CE0     		b	.L10
+ 296              	.L8:
+ 129:src/i2c_ee.c  **** 			}
+ 130:src/i2c_ee.c  **** 		}
+ 131:src/i2c_ee.c  **** 	}
+ 132:src/i2c_ee.c  **** 	/* If WriteAddr is not I2C_PageSize aligned  */
+ 133:src/i2c_ee.c  **** 	else {
+ 134:src/i2c_ee.c  **** 		/* If NumByteToWrite  I2C_PageSize */
+ 135:src/i2c_ee.c  **** 		if (NumOfPage == 0) {
+ 297              		.loc 1 135 6
+ 298 00a8 FB7B     		ldrb	r3, [r7, #15]	@ zero_extendqisi2
+ 299 00aa 002B     		cmp	r3, #0
+ 300 00ac 08D1     		bne	.L13
+ 136:src/i2c_ee.c  **** 			I2C_EE_PageWrite(pBuffer, WriteAddr, NumOfSingle);
+ 301              		.loc 1 136 4
+ 302 00ae BA7B     		ldrb	r2, [r7, #14]	@ zero_extendqisi2
+ 303 00b0 7B88     		ldrh	r3, [r7, #2]
+ 304 00b2 1946     		mov	r1, r3
+ 305 00b4 7868     		ldr	r0, [r7, #4]
+ 306 00b6 264B     		ldr	r3, .L18+4
+ 307 00b8 9847     		blx	r3
+ 308              	.LVL13:
+ 137:src/i2c_ee.c  **** 			I2C_EE_WaitEepromStandbyState();
+ 309              		.loc 1 137 4
+ 310 00ba 264B     		ldr	r3, .L18+8
+ 311 00bc 9847     		blx	r3
+ 312              	.LVL14:
+ 313 00be 40E0     		b	.L10
+ 314              	.L13:
+ 138:src/i2c_ee.c  **** 		}
+ 139:src/i2c_ee.c  **** 		/* If NumByteToWrite > I2C_PageSize */
+ 140:src/i2c_ee.c  **** 		else {
+ 141:src/i2c_ee.c  **** 			NumByteToWrite -= count;
+ 315              		.loc 1 141 19
+ 316 00c0 3B7B     		ldrb	r3, [r7, #12]	@ zero_extendqisi2
+ 317 00c2 9BB2     		uxth	r3, r3
+ 318 00c4 3A88     		ldrh	r2, [r7]	@ movhi
+ 319 00c6 D31A     		subs	r3, r2, r3
+ 320 00c8 3B80     		strh	r3, [r7]	@ movhi
+ 142:src/i2c_ee.c  **** 			NumOfPage = NumByteToWrite / I2C_PageSize;
+ 321              		.loc 1 142 14
+ 322 00ca 3B88     		ldrh	r3, [r7]
+ 323 00cc 5B09     		lsrs	r3, r3, #5
+ 324 00ce 9BB2     		uxth	r3, r3
+ 325 00d0 FB73     		strb	r3, [r7, #15]
+ 143:src/i2c_ee.c  **** 			NumOfSingle = NumByteToWrite % I2C_PageSize;
+ 326              		.loc 1 143 33
+ 327 00d2 3B88     		ldrh	r3, [r7]	@ movhi
+ 328 00d4 DBB2     		uxtb	r3, r3
+ 329              		.loc 1 143 16
+ 330 00d6 03F01F03 		and	r3, r3, #31
+ 331 00da BB73     		strb	r3, [r7, #14]
+ 144:src/i2c_ee.c  **** 
+ 145:src/i2c_ee.c  **** 			if (count != 0) {
+ 332              		.loc 1 145 7
+ 333 00dc 3B7B     		ldrb	r3, [r7, #12]	@ zero_extendqisi2
+ 334 00de 002B     		cmp	r3, #0
+ 335 00e0 1FD0     		beq	.L15
+ 146:src/i2c_ee.c  **** 				I2C_EE_PageWrite(pBuffer, WriteAddr, count);
+ 336              		.loc 1 146 5
+ 337 00e2 3A7B     		ldrb	r2, [r7, #12]	@ zero_extendqisi2
+ 338 00e4 7B88     		ldrh	r3, [r7, #2]
+ 339 00e6 1946     		mov	r1, r3
+ 340 00e8 7868     		ldr	r0, [r7, #4]
+ 341 00ea 194B     		ldr	r3, .L18+4
+ 342 00ec 9847     		blx	r3
+ 343              	.LVL15:
+ 147:src/i2c_ee.c  **** 				I2C_EE_WaitEepromStandbyState();
+ 344              		.loc 1 147 5
+ 345 00ee 194B     		ldr	r3, .L18+8
+ 346 00f0 9847     		blx	r3
+ 347              	.LVL16:
+ 148:src/i2c_ee.c  **** 				WriteAddr += count;
+ 348              		.loc 1 148 15
+ 349 00f2 3B7B     		ldrb	r3, [r7, #12]	@ zero_extendqisi2
+ 350 00f4 9AB2     		uxth	r2, r3
+ 351 00f6 7B88     		ldrh	r3, [r7, #2]	@ movhi
+ 352 00f8 1344     		add	r3, r3, r2
+ 353 00fa 7B80     		strh	r3, [r7, #2]	@ movhi
+ 149:src/i2c_ee.c  **** 				pBuffer += count;
+ 354              		.loc 1 149 13
+ 355 00fc 3B7B     		ldrb	r3, [r7, #12]	@ zero_extendqisi2
+ 356 00fe 7A68     		ldr	r2, [r7, #4]
+ 357 0100 1344     		add	r3, r3, r2
+ 358 0102 7B60     		str	r3, [r7, #4]
+ 150:src/i2c_ee.c  **** 			}
+ 151:src/i2c_ee.c  **** 
+ 152:src/i2c_ee.c  **** 			while (NumOfPage--) {
+ 359              		.loc 1 152 10
+ 360 0104 0DE0     		b	.L15
+ 361              	.L16:
+ 153:src/i2c_ee.c  **** 				I2C_EE_PageWrite(pBuffer, WriteAddr, I2C_PageSize);
+ 362              		.loc 1 153 5
+ 363 0106 7B88     		ldrh	r3, [r7, #2]
+ 364 0108 2022     		movs	r2, #32
+ 365 010a 1946     		mov	r1, r3
+ 366 010c 7868     		ldr	r0, [r7, #4]
+ 367 010e 104B     		ldr	r3, .L18+4
+ 368 0110 9847     		blx	r3
+ 369              	.LVL17:
+ 154:src/i2c_ee.c  **** 				I2C_EE_WaitEepromStandbyState();
+ 370              		.loc 1 154 5
+ 371 0112 104B     		ldr	r3, .L18+8
+ 372 0114 9847     		blx	r3
+ 373              	.LVL18:
+ 155:src/i2c_ee.c  **** 				WriteAddr += I2C_PageSize;
+ 374              		.loc 1 155 15
+ 375 0116 7B88     		ldrh	r3, [r7, #2]	@ movhi
+ 376 0118 2033     		adds	r3, r3, #32
+ 377 011a 7B80     		strh	r3, [r7, #2]	@ movhi
+ 156:src/i2c_ee.c  **** 				pBuffer += I2C_PageSize;
+ 378              		.loc 1 156 13
+ 379 011c 7B68     		ldr	r3, [r7, #4]
+ 380 011e 2033     		adds	r3, r3, #32
+ 381 0120 7B60     		str	r3, [r7, #4]
+ 382              	.L15:
+ 152:src/i2c_ee.c  **** 				I2C_EE_PageWrite(pBuffer, WriteAddr, I2C_PageSize);
+ 383              		.loc 1 152 20
+ 384 0122 FB7B     		ldrb	r3, [r7, #15]	@ zero_extendqisi2
+ 385 0124 5A1E     		subs	r2, r3, #1
+ 386 0126 FA73     		strb	r2, [r7, #15]
+ 152:src/i2c_ee.c  **** 				I2C_EE_PageWrite(pBuffer, WriteAddr, I2C_PageSize);
+ 387              		.loc 1 152 10
+ 388 0128 002B     		cmp	r3, #0
+ 389 012a ECD1     		bne	.L16
+ 157:src/i2c_ee.c  **** 			}
+ 158:src/i2c_ee.c  **** 			if (NumOfSingle != 0) {
+ 390              		.loc 1 158 7
+ 391 012c BB7B     		ldrb	r3, [r7, #14]	@ zero_extendqisi2
+ 392 012e 002B     		cmp	r3, #0
+ 393 0130 07D0     		beq	.L10
+ 159:src/i2c_ee.c  **** 				I2C_EE_PageWrite(pBuffer, WriteAddr, NumOfSingle);
+ 394              		.loc 1 159 5
+ 395 0132 BA7B     		ldrb	r2, [r7, #14]	@ zero_extendqisi2
+ 396 0134 7B88     		ldrh	r3, [r7, #2]
+ 397 0136 1946     		mov	r1, r3
+ 398 0138 7868     		ldr	r0, [r7, #4]
+ 399 013a 054B     		ldr	r3, .L18+4
+ 400 013c 9847     		blx	r3
+ 401              	.LVL19:
+ 160:src/i2c_ee.c  **** 				I2C_EE_WaitEepromStandbyState();
+ 402              		.loc 1 160 5
+ 403 013e 054B     		ldr	r3, .L18+8
+ 404 0140 9847     		blx	r3
+ 405              	.LVL20:
+ 406              	.L10:
+ 161:src/i2c_ee.c  **** 			}
+ 162:src/i2c_ee.c  **** 		}
+ 163:src/i2c_ee.c  **** 	}
+ 164:src/i2c_ee.c  **** 	return true;
+ 407              		.loc 1 164 9
+ 408 0142 0123     		movs	r3, #1
+ 165:src/i2c_ee.c  **** }
+ 409              		.loc 1 165 1
+ 410 0144 1846     		mov	r0, r3
+ 411 0146 1037     		adds	r7, r7, #16
+ 412              	.LCFI10:
+ 413              		.cfi_def_cfa_offset 8
+ 414 0148 BD46     		mov	sp, r7
+ 415              	.LCFI11:
+ 416              		.cfi_def_cfa_register 13
+ 417              		@ sp needed
+ 418 014a 80BD     		pop	{r7, pc}
+ 419              	.L19:
+ 420              		.align	2
+ 421              	.L18:
+ 422 014c 00000000 		.word	BKP_WriteBackupRegister
+ 423 0150 00000000 		.word	I2C_EE_PageWrite
+ 424 0154 00000000 		.word	I2C_EE_WaitEepromStandbyState
+ 425              		.cfi_endproc
+ 426              	.LFE29:
+ 428              		.section	.text.I2C_EE_ByteWrite,"ax",%progbits
+ 429              		.align	1
+ 430              		.global	I2C_EE_ByteWrite
+ 431              		.syntax unified
+ 432              		.thumb
+ 433              		.thumb_func
+ 435              	I2C_EE_ByteWrite:
+ 436              	.LFB30:
+ 166:src/i2c_ee.c  **** 
+ 167:src/i2c_ee.c  **** /*******************************************************************************
+ 168:src/i2c_ee.c  ****  * Function Name  : I2C_EE_ByteWrite
+ 169:src/i2c_ee.c  ****  * Description    : Writes one byte to the I2C EEPROM.
+ 170:src/i2c_ee.c  ****  * Input          : - pBuffer : pointer to the buffer  containing the data to be
+ 171:src/i2c_ee.c  ****  *                    written to the EEPROM.
+ 172:src/i2c_ee.c  ****  *                  - WriteAddr : EEPROM's internal address to write to.
+ 173:src/i2c_ee.c  ****  * Output         : None
+ 174:src/i2c_ee.c  ****  * Return         : None
+ 175:src/i2c_ee.c  ****  *******************************************************************************/
+ 176:src/i2c_ee.c  **** bool I2C_EE_ByteWrite(u8 *pBuffer, u16 WriteAddr) {
+ 437              		.loc 1 176 51
+ 438              		.cfi_startproc
+ 439              		@ args = 0, pretend = 0, frame = 16
+ 440              		@ frame_needed = 1, uses_anonymous_args = 0
+ 441 0000 80B5     		push	{r7, lr}
+ 442              	.LCFI12:
+ 443              		.cfi_def_cfa_offset 8
+ 444              		.cfi_offset 7, -8
+ 445              		.cfi_offset 14, -4
+ 446 0002 84B0     		sub	sp, sp, #16
+ 447              	.LCFI13:
+ 448              		.cfi_def_cfa_offset 24
+ 449 0004 00AF     		add	r7, sp, #0
+ 450              	.LCFI14:
+ 451              		.cfi_def_cfa_register 7
+ 452 0006 7860     		str	r0, [r7, #4]
+ 453 0008 0B46     		mov	r3, r1
+ 454 000a 7B80     		strh	r3, [r7, #2]	@ movhi
+ 177:src/i2c_ee.c  **** 	if (initMK == 1) {
+ 455              		.loc 1 177 13
+ 456 000c 914B     		ldr	r3, .L43
+ 457 000e 1B68     		ldr	r3, [r3]
+ 458              		.loc 1 177 5
+ 459 0010 012B     		cmp	r3, #1
+ 460 0012 40F08E80 		bne	.L21
+ 461              	.LBB2:
+ 178:src/i2c_ee.c  **** 		int counter = RETRY_NUMBER;
+ 462              		.loc 1 178 7
+ 463 0016 40F6B833 		movw	r3, #3000
+ 464 001a FB60     		str	r3, [r7, #12]
+ 179:src/i2c_ee.c  **** 		/* Send STRAT condition */
+ 180:src/i2c_ee.c  **** 		I2C_GenerateSTART(I2C1, ENABLE);
+ 465              		.loc 1 180 3
+ 466 001c 0121     		movs	r1, #1
+ 467 001e 8E48     		ldr	r0, .L43+4
+ 468 0020 8E4B     		ldr	r3, .L43+8
+ 469 0022 9847     		blx	r3
+ 470              	.LVL21:
+ 181:src/i2c_ee.c  **** 		BKP_WriteBackupRegister(BKP_DR7, 22);
+ 471              		.loc 1 181 3
+ 472 0024 1621     		movs	r1, #22
+ 473 0026 1C20     		movs	r0, #28
+ 474 0028 8D4B     		ldr	r3, .L43+12
+ 475 002a 9847     		blx	r3
+ 476              	.LVL22:
+ 182:src/i2c_ee.c  **** 		/* Test on EV5 and clear it */
+ 183:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) {
+ 477              		.loc 1 183 9
+ 478 002c 08E0     		b	.L22
+ 479              	.L24:
+ 184:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 480              		.loc 1 184 15
+ 481 002e FB68     		ldr	r3, [r7, #12]
+ 482 0030 5A1E     		subs	r2, r3, #1
+ 483 0032 FA60     		str	r2, [r7, #12]
+ 484              		.loc 1 184 7
+ 485 0034 002B     		cmp	r3, #0
+ 486 0036 03DC     		bgt	.L22
+ 185:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 487              		.loc 1 185 12
+ 488 0038 8A4B     		ldr	r3, .L43+16
+ 489 003a 9847     		blx	r3
+ 490              	.LVL23:
+ 491 003c 0346     		mov	r3, r0
+ 492 003e 05E1     		b	.L23
+ 493              	.L22:
+ 183:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 494              		.loc 1 183 11
+ 495 0040 8949     		ldr	r1, .L43+20
+ 496 0042 8548     		ldr	r0, .L43+4
+ 497 0044 894B     		ldr	r3, .L43+24
+ 498 0046 9847     		blx	r3
+ 499              	.LVL24:
+ 500 0048 0346     		mov	r3, r0
+ 183:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 501              		.loc 1 183 9
+ 502 004a 002B     		cmp	r3, #0
+ 503 004c EFD0     		beq	.L24
+ 186:src/i2c_ee.c  **** 		}
+ 187:src/i2c_ee.c  **** 
+ 188:src/i2c_ee.c  **** 		/* Send EEPROM address for write */
+ 189:src/i2c_ee.c  **** 		I2C_Send7bitAddress(I2C1, EEPROM_ADDRESS, I2C_Direction_Transmitter);
+ 504              		.loc 1 189 3
+ 505 004e 884B     		ldr	r3, .L43+28
+ 506 0050 1B88     		ldrh	r3, [r3]
+ 507 0052 DBB2     		uxtb	r3, r3
+ 508 0054 0022     		movs	r2, #0
+ 509 0056 1946     		mov	r1, r3
+ 510 0058 7F48     		ldr	r0, .L43+4
+ 511 005a 864B     		ldr	r3, .L43+32
+ 512 005c 9847     		blx	r3
+ 513              	.LVL25:
+ 190:src/i2c_ee.c  **** 
+ 191:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 514              		.loc 1 191 11
+ 515 005e 40F6B833 		movw	r3, #3000
+ 516 0062 FB60     		str	r3, [r7, #12]
+ 192:src/i2c_ee.c  **** 
+ 193:src/i2c_ee.c  **** 		while (!I2C_GetFlagStatus(I2C1, I2C_FLAG_ADDR)) {
+ 517              		.loc 1 193 9
+ 518 0064 08E0     		b	.L25
+ 519              	.L26:
+ 194:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 520              		.loc 1 194 15
+ 521 0066 FB68     		ldr	r3, [r7, #12]
+ 522 0068 5A1E     		subs	r2, r3, #1
+ 523 006a FA60     		str	r2, [r7, #12]
+ 524              		.loc 1 194 7
+ 525 006c 002B     		cmp	r3, #0
+ 526 006e 03DC     		bgt	.L25
+ 195:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 527              		.loc 1 195 12
+ 528 0070 7C4B     		ldr	r3, .L43+16
+ 529 0072 9847     		blx	r3
+ 530              	.LVL26:
+ 531 0074 0346     		mov	r3, r0
+ 532 0076 E9E0     		b	.L23
+ 533              	.L25:
+ 193:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 534              		.loc 1 193 11
+ 535 0078 7F49     		ldr	r1, .L43+36
+ 536 007a 7748     		ldr	r0, .L43+4
+ 537 007c 7F4B     		ldr	r3, .L43+40
+ 538 007e 9847     		blx	r3
+ 539              	.LVL27:
+ 540 0080 0346     		mov	r3, r0
+ 193:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 541              		.loc 1 193 9
+ 542 0082 002B     		cmp	r3, #0
+ 543 0084 EFD0     		beq	.L26
+ 196:src/i2c_ee.c  **** 		}
+ 197:src/i2c_ee.c  **** 
+ 198:src/i2c_ee.c  **** 		/* Test on EV6 and clear it */
+ 199:src/i2c_ee.c  **** 
+ 200:src/i2c_ee.c  **** 		//SR2_Tmp = I2C_ReadRegister(I2C1, I2C_Register_SR1);
+ 201:src/i2c_ee.c  **** 
+ 202:src/i2c_ee.c  **** 		/* Send the EEPROM's internal address to write to */
+ 203:src/i2c_ee.c  **** 		I2C_SendData(I2C1, (WriteAddr >> 8) & 0xFF);
+ 544              		.loc 1 203 3
+ 545 0086 7B88     		ldrh	r3, [r7, #2]
+ 546 0088 1B0A     		lsrs	r3, r3, #8
+ 547 008a 9BB2     		uxth	r3, r3
+ 548 008c DBB2     		uxtb	r3, r3
+ 549 008e 1946     		mov	r1, r3
+ 550 0090 7148     		ldr	r0, .L43+4
+ 551 0092 7B4B     		ldr	r3, .L43+44
+ 552 0094 9847     		blx	r3
+ 553              	.LVL28:
+ 204:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 554              		.loc 1 204 11
+ 555 0096 40F6B833 		movw	r3, #3000
+ 556 009a FB60     		str	r3, [r7, #12]
+ 205:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 557              		.loc 1 205 9
+ 558 009c 08E0     		b	.L27
+ 559              	.L28:
+ 206:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 560              		.loc 1 206 15
+ 561 009e FB68     		ldr	r3, [r7, #12]
+ 562 00a0 5A1E     		subs	r2, r3, #1
+ 563 00a2 FA60     		str	r2, [r7, #12]
+ 564              		.loc 1 206 7
+ 565 00a4 002B     		cmp	r3, #0
+ 566 00a6 03DC     		bgt	.L27
+ 207:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 567              		.loc 1 207 12
+ 568 00a8 6E4B     		ldr	r3, .L43+16
+ 569 00aa 9847     		blx	r3
+ 570              	.LVL29:
+ 571 00ac 0346     		mov	r3, r0
+ 572 00ae CDE0     		b	.L23
+ 573              	.L27:
+ 205:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 574              		.loc 1 205 11
+ 575 00b0 7449     		ldr	r1, .L43+48
+ 576 00b2 6948     		ldr	r0, .L43+4
+ 577 00b4 6D4B     		ldr	r3, .L43+24
+ 578 00b6 9847     		blx	r3
+ 579              	.LVL30:
+ 580 00b8 0346     		mov	r3, r0
+ 205:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 581              		.loc 1 205 9
+ 582 00ba 002B     		cmp	r3, #0
+ 583 00bc EFD0     		beq	.L28
+ 208:src/i2c_ee.c  **** 		}
+ 209:src/i2c_ee.c  **** 
+ 210:src/i2c_ee.c  **** 		I2C_SendData(I2C1, WriteAddr & 0xFF);
+ 584              		.loc 1 210 3
+ 585 00be 7B88     		ldrh	r3, [r7, #2]	@ movhi
+ 586 00c0 DBB2     		uxtb	r3, r3
+ 587 00c2 1946     		mov	r1, r3
+ 588 00c4 6448     		ldr	r0, .L43+4
+ 589 00c6 6E4B     		ldr	r3, .L43+44
+ 590 00c8 9847     		blx	r3
+ 591              	.LVL31:
+ 211:src/i2c_ee.c  **** 
+ 212:src/i2c_ee.c  **** 		/* Test on EV8 and clear it */
+ 213:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 592              		.loc 1 213 11
+ 593 00ca 40F6B833 		movw	r3, #3000
+ 594 00ce FB60     		str	r3, [r7, #12]
+ 214:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED))
+ 595              		.loc 1 214 9
+ 596 00d0 08E0     		b	.L29
+ 597              	.L30:
+ 215:src/i2c_ee.c  **** 
+ 216:src/i2c_ee.c  **** 		{
+ 217:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 598              		.loc 1 217 15
+ 599 00d2 FB68     		ldr	r3, [r7, #12]
+ 600 00d4 5A1E     		subs	r2, r3, #1
+ 601 00d6 FA60     		str	r2, [r7, #12]
+ 602              		.loc 1 217 7
+ 603 00d8 002B     		cmp	r3, #0
+ 604 00da 03DC     		bgt	.L29
+ 218:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 605              		.loc 1 218 12
+ 606 00dc 614B     		ldr	r3, .L43+16
+ 607 00de 9847     		blx	r3
+ 608              	.LVL32:
+ 609 00e0 0346     		mov	r3, r0
+ 610 00e2 B3E0     		b	.L23
+ 611              	.L29:
+ 214:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED))
+ 612              		.loc 1 214 11
+ 613 00e4 6749     		ldr	r1, .L43+48
+ 614 00e6 5C48     		ldr	r0, .L43+4
+ 615 00e8 604B     		ldr	r3, .L43+24
+ 616 00ea 9847     		blx	r3
+ 617              	.LVL33:
+ 618 00ec 0346     		mov	r3, r0
+ 214:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED))
+ 619              		.loc 1 214 9
+ 620 00ee 002B     		cmp	r3, #0
+ 621 00f0 EFD0     		beq	.L30
+ 219:src/i2c_ee.c  **** 		}
+ 220:src/i2c_ee.c  **** 
+ 221:src/i2c_ee.c  **** 		/* Send the byte to be written */
+ 222:src/i2c_ee.c  **** 		I2C_SendData(I2C1, *pBuffer);
+ 622              		.loc 1 222 3
+ 623 00f2 7B68     		ldr	r3, [r7, #4]
+ 624 00f4 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 625 00f6 1946     		mov	r1, r3
+ 626 00f8 5748     		ldr	r0, .L43+4
+ 627 00fa 614B     		ldr	r3, .L43+44
+ 628 00fc 9847     		blx	r3
+ 629              	.LVL34:
+ 223:src/i2c_ee.c  **** 
+ 224:src/i2c_ee.c  **** 		/* Test on EV8 and clear it */
+ 225:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 630              		.loc 1 225 11
+ 631 00fe 40F6B833 		movw	r3, #3000
+ 632 0102 FB60     		str	r3, [r7, #12]
+ 226:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 633              		.loc 1 226 9
+ 634 0104 08E0     		b	.L31
+ 635              	.L32:
+ 227:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 636              		.loc 1 227 15
+ 637 0106 FB68     		ldr	r3, [r7, #12]
+ 638 0108 5A1E     		subs	r2, r3, #1
+ 639 010a FA60     		str	r2, [r7, #12]
+ 640              		.loc 1 227 7
+ 641 010c 002B     		cmp	r3, #0
+ 642 010e 03DC     		bgt	.L31
+ 228:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 643              		.loc 1 228 12
+ 644 0110 544B     		ldr	r3, .L43+16
+ 645 0112 9847     		blx	r3
+ 646              	.LVL35:
+ 647 0114 0346     		mov	r3, r0
+ 648 0116 99E0     		b	.L23
+ 649              	.L31:
+ 226:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 650              		.loc 1 226 11
+ 651 0118 5A49     		ldr	r1, .L43+48
+ 652 011a 4F48     		ldr	r0, .L43+4
+ 653 011c 534B     		ldr	r3, .L43+24
+ 654 011e 9847     		blx	r3
+ 655              	.LVL36:
+ 656 0120 0346     		mov	r3, r0
+ 226:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 657              		.loc 1 226 9
+ 658 0122 002B     		cmp	r3, #0
+ 659 0124 EFD0     		beq	.L32
+ 229:src/i2c_ee.c  **** 		}
+ 230:src/i2c_ee.c  **** 
+ 231:src/i2c_ee.c  **** 		/* Send STOP condition */
+ 232:src/i2c_ee.c  **** 		I2C_GenerateSTOP(I2C1, ENABLE);
+ 660              		.loc 1 232 3
+ 661 0126 0121     		movs	r1, #1
+ 662 0128 4B48     		ldr	r0, .L43+4
+ 663 012a 574B     		ldr	r3, .L43+52
+ 664 012c 9847     		blx	r3
+ 665              	.LVL37:
+ 233:src/i2c_ee.c  **** 		return true;
+ 666              		.loc 1 233 10
+ 667 012e 0123     		movs	r3, #1
+ 668 0130 8CE0     		b	.L23
+ 669              	.L21:
+ 670              	.LBE2:
+ 671              	.LBB3:
+ 234:src/i2c_ee.c  **** 	} else {
+ 235:src/i2c_ee.c  **** 		int counter = RETRY_NUMBER;
+ 672              		.loc 1 235 7
+ 673 0132 40F6B833 		movw	r3, #3000
+ 674 0136 BB60     		str	r3, [r7, #8]
+ 236:src/i2c_ee.c  **** 		/* Send STRAT condition */
+ 237:src/i2c_ee.c  **** 		I2C_GenerateSTART(I2C1, ENABLE);
+ 675              		.loc 1 237 3
+ 676 0138 0121     		movs	r1, #1
+ 677 013a 4748     		ldr	r0, .L43+4
+ 678 013c 474B     		ldr	r3, .L43+8
+ 679 013e 9847     		blx	r3
+ 680              	.LVL38:
+ 238:src/i2c_ee.c  **** 		BKP_WriteBackupRegister(BKP_DR7, 22);
+ 681              		.loc 1 238 3
+ 682 0140 1621     		movs	r1, #22
+ 683 0142 1C20     		movs	r0, #28
+ 684 0144 464B     		ldr	r3, .L43+12
+ 685 0146 9847     		blx	r3
+ 686              	.LVL39:
+ 239:src/i2c_ee.c  **** 		/* Test on EV5 and clear it */
+ 240:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) {
+ 687              		.loc 1 240 9
+ 688 0148 08E0     		b	.L33
+ 689              	.L34:
+ 241:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 690              		.loc 1 241 15
+ 691 014a BB68     		ldr	r3, [r7, #8]
+ 692 014c 5A1E     		subs	r2, r3, #1
+ 693 014e BA60     		str	r2, [r7, #8]
+ 694              		.loc 1 241 7
+ 695 0150 002B     		cmp	r3, #0
+ 696 0152 03DC     		bgt	.L33
+ 242:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 697              		.loc 1 242 12
+ 698 0154 434B     		ldr	r3, .L43+16
+ 699 0156 9847     		blx	r3
+ 700              	.LVL40:
+ 701 0158 0346     		mov	r3, r0
+ 702 015a 77E0     		b	.L23
+ 703              	.L33:
+ 240:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 704              		.loc 1 240 11
+ 705 015c 4249     		ldr	r1, .L43+20
+ 706 015e 3E48     		ldr	r0, .L43+4
+ 707 0160 424B     		ldr	r3, .L43+24
+ 708 0162 9847     		blx	r3
+ 709              	.LVL41:
+ 710 0164 0346     		mov	r3, r0
+ 240:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 711              		.loc 1 240 9
+ 712 0166 002B     		cmp	r3, #0
+ 713 0168 EFD0     		beq	.L34
+ 243:src/i2c_ee.c  **** 		}
+ 244:src/i2c_ee.c  **** 
+ 245:src/i2c_ee.c  **** 		/* Send EEPROM address for write */
+ 246:src/i2c_ee.c  **** 		I2C_Send7bitAddress(I2C1, EEPROM_ADDRESS, I2C_Direction_Transmitter);
+ 714              		.loc 1 246 3
+ 715 016a 414B     		ldr	r3, .L43+28
+ 716 016c 1B88     		ldrh	r3, [r3]
+ 717 016e DBB2     		uxtb	r3, r3
+ 718 0170 0022     		movs	r2, #0
+ 719 0172 1946     		mov	r1, r3
+ 720 0174 3848     		ldr	r0, .L43+4
+ 721 0176 3F4B     		ldr	r3, .L43+32
+ 722 0178 9847     		blx	r3
+ 723              	.LVL42:
+ 247:src/i2c_ee.c  **** 
+ 248:src/i2c_ee.c  **** 		/* Test on EV6 and clear it */
+ 249:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 724              		.loc 1 249 11
+ 725 017a 40F6B833 		movw	r3, #3000
+ 726 017e BB60     		str	r3, [r7, #8]
+ 250:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) {
+ 727              		.loc 1 250 9
+ 728 0180 08E0     		b	.L35
+ 729              	.L36:
+ 251:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 730              		.loc 1 251 15
+ 731 0182 BB68     		ldr	r3, [r7, #8]
+ 732 0184 5A1E     		subs	r2, r3, #1
+ 733 0186 BA60     		str	r2, [r7, #8]
+ 734              		.loc 1 251 7
+ 735 0188 002B     		cmp	r3, #0
+ 736 018a 03DC     		bgt	.L35
+ 252:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 737              		.loc 1 252 12
+ 738 018c 354B     		ldr	r3, .L43+16
+ 739 018e 9847     		blx	r3
+ 740              	.LVL43:
+ 741 0190 0346     		mov	r3, r0
+ 742 0192 5BE0     		b	.L23
+ 743              	.L35:
+ 250:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) {
+ 744              		.loc 1 250 11
+ 745 0194 3D49     		ldr	r1, .L43+56
+ 746 0196 3048     		ldr	r0, .L43+4
+ 747 0198 344B     		ldr	r3, .L43+24
+ 748 019a 9847     		blx	r3
+ 749              	.LVL44:
+ 750 019c 0346     		mov	r3, r0
+ 250:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) {
+ 751              		.loc 1 250 9
+ 752 019e 002B     		cmp	r3, #0
+ 753 01a0 EFD0     		beq	.L36
+ 253:src/i2c_ee.c  **** 		}
+ 254:src/i2c_ee.c  **** 
+ 255:src/i2c_ee.c  **** 		/* Send the EEPROM's internal address to write to */
+ 256:src/i2c_ee.c  **** 		I2C_SendData(I2C1, (WriteAddr >> 8) & 0xFF);
+ 754              		.loc 1 256 3
+ 755 01a2 7B88     		ldrh	r3, [r7, #2]
+ 756 01a4 1B0A     		lsrs	r3, r3, #8
+ 757 01a6 9BB2     		uxth	r3, r3
+ 758 01a8 DBB2     		uxtb	r3, r3
+ 759 01aa 1946     		mov	r1, r3
+ 760 01ac 2A48     		ldr	r0, .L43+4
+ 761 01ae 344B     		ldr	r3, .L43+44
+ 762 01b0 9847     		blx	r3
+ 763              	.LVL45:
+ 257:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 764              		.loc 1 257 11
+ 765 01b2 40F6B833 		movw	r3, #3000
+ 766 01b6 BB60     		str	r3, [r7, #8]
+ 258:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 767              		.loc 1 258 9
+ 768 01b8 08E0     		b	.L37
+ 769              	.L38:
+ 259:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 770              		.loc 1 259 15
+ 771 01ba BB68     		ldr	r3, [r7, #8]
+ 772 01bc 5A1E     		subs	r2, r3, #1
+ 773 01be BA60     		str	r2, [r7, #8]
+ 774              		.loc 1 259 7
+ 775 01c0 002B     		cmp	r3, #0
+ 776 01c2 03DC     		bgt	.L37
+ 260:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 777              		.loc 1 260 12
+ 778 01c4 274B     		ldr	r3, .L43+16
+ 779 01c6 9847     		blx	r3
+ 780              	.LVL46:
+ 781 01c8 0346     		mov	r3, r0
+ 782 01ca 3FE0     		b	.L23
+ 783              	.L37:
+ 258:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 784              		.loc 1 258 11
+ 785 01cc 2D49     		ldr	r1, .L43+48
+ 786 01ce 2248     		ldr	r0, .L43+4
+ 787 01d0 264B     		ldr	r3, .L43+24
+ 788 01d2 9847     		blx	r3
+ 789              	.LVL47:
+ 790 01d4 0346     		mov	r3, r0
+ 258:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 791              		.loc 1 258 9
+ 792 01d6 002B     		cmp	r3, #0
+ 793 01d8 EFD0     		beq	.L38
+ 261:src/i2c_ee.c  **** 		}
+ 262:src/i2c_ee.c  **** 
+ 263:src/i2c_ee.c  **** 		I2C_SendData(I2C1, WriteAddr & 0xFF);
+ 794              		.loc 1 263 3
+ 795 01da 7B88     		ldrh	r3, [r7, #2]	@ movhi
+ 796 01dc DBB2     		uxtb	r3, r3
+ 797 01de 1946     		mov	r1, r3
+ 798 01e0 1D48     		ldr	r0, .L43+4
+ 799 01e2 274B     		ldr	r3, .L43+44
+ 800 01e4 9847     		blx	r3
+ 801              	.LVL48:
+ 264:src/i2c_ee.c  **** 
+ 265:src/i2c_ee.c  **** 		/* Test on EV8 and clear it */
+ 266:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 802              		.loc 1 266 11
+ 803 01e6 40F6B833 		movw	r3, #3000
+ 804 01ea BB60     		str	r3, [r7, #8]
+ 267:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 805              		.loc 1 267 9
+ 806 01ec 08E0     		b	.L39
+ 807              	.L40:
+ 268:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 808              		.loc 1 268 15
+ 809 01ee BB68     		ldr	r3, [r7, #8]
+ 810 01f0 5A1E     		subs	r2, r3, #1
+ 811 01f2 BA60     		str	r2, [r7, #8]
+ 812              		.loc 1 268 7
+ 813 01f4 002B     		cmp	r3, #0
+ 814 01f6 03DC     		bgt	.L39
+ 269:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 815              		.loc 1 269 12
+ 816 01f8 1A4B     		ldr	r3, .L43+16
+ 817 01fa 9847     		blx	r3
+ 818              	.LVL49:
+ 819 01fc 0346     		mov	r3, r0
+ 820 01fe 25E0     		b	.L23
+ 821              	.L39:
+ 267:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 822              		.loc 1 267 11
+ 823 0200 2049     		ldr	r1, .L43+48
+ 824 0202 1548     		ldr	r0, .L43+4
+ 825 0204 194B     		ldr	r3, .L43+24
+ 826 0206 9847     		blx	r3
+ 827              	.LVL50:
+ 828 0208 0346     		mov	r3, r0
+ 267:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 829              		.loc 1 267 9
+ 830 020a 002B     		cmp	r3, #0
+ 831 020c EFD0     		beq	.L40
+ 270:src/i2c_ee.c  **** 		}
+ 271:src/i2c_ee.c  **** 
+ 272:src/i2c_ee.c  **** 		/* Send the byte to be written */
+ 273:src/i2c_ee.c  **** 		I2C_SendData(I2C1, *pBuffer);
+ 832              		.loc 1 273 3
+ 833 020e 7B68     		ldr	r3, [r7, #4]
+ 834 0210 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 835 0212 1946     		mov	r1, r3
+ 836 0214 1048     		ldr	r0, .L43+4
+ 837 0216 1A4B     		ldr	r3, .L43+44
+ 838 0218 9847     		blx	r3
+ 839              	.LVL51:
+ 274:src/i2c_ee.c  **** 
+ 275:src/i2c_ee.c  **** 		/* Test on EV8 and clear it */
+ 276:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 840              		.loc 1 276 11
+ 841 021a 40F6B833 		movw	r3, #3000
+ 842 021e BB60     		str	r3, [r7, #8]
+ 277:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 843              		.loc 1 277 9
+ 844 0220 08E0     		b	.L41
+ 845              	.L42:
+ 278:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 846              		.loc 1 278 15
+ 847 0222 BB68     		ldr	r3, [r7, #8]
+ 848 0224 5A1E     		subs	r2, r3, #1
+ 849 0226 BA60     		str	r2, [r7, #8]
+ 850              		.loc 1 278 7
+ 851 0228 002B     		cmp	r3, #0
+ 852 022a 03DC     		bgt	.L41
+ 279:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 853              		.loc 1 279 12
+ 854 022c 0D4B     		ldr	r3, .L43+16
+ 855 022e 9847     		blx	r3
+ 856              	.LVL52:
+ 857 0230 0346     		mov	r3, r0
+ 858 0232 0BE0     		b	.L23
+ 859              	.L41:
+ 277:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 860              		.loc 1 277 11
+ 861 0234 1349     		ldr	r1, .L43+48
+ 862 0236 0848     		ldr	r0, .L43+4
+ 863 0238 0C4B     		ldr	r3, .L43+24
+ 864 023a 9847     		blx	r3
+ 865              	.LVL53:
+ 866 023c 0346     		mov	r3, r0
+ 277:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 867              		.loc 1 277 9
+ 868 023e 002B     		cmp	r3, #0
+ 869 0240 EFD0     		beq	.L42
+ 280:src/i2c_ee.c  **** 		}
+ 281:src/i2c_ee.c  **** 
+ 282:src/i2c_ee.c  **** 		/* Send STOP condition */
+ 283:src/i2c_ee.c  **** 		I2C_GenerateSTOP(I2C1, ENABLE);
+ 870              		.loc 1 283 3
+ 871 0242 0121     		movs	r1, #1
+ 872 0244 0448     		ldr	r0, .L43+4
+ 873 0246 104B     		ldr	r3, .L43+52
+ 874 0248 9847     		blx	r3
+ 875              	.LVL54:
+ 284:src/i2c_ee.c  **** 		return true;
+ 876              		.loc 1 284 10
+ 877 024a 0123     		movs	r3, #1
+ 878              	.L23:
+ 879              	.LBE3:
+ 285:src/i2c_ee.c  **** 
+ 286:src/i2c_ee.c  **** 	}
+ 287:src/i2c_ee.c  **** 
+ 288:src/i2c_ee.c  **** }
+ 880              		.loc 1 288 1
+ 881 024c 1846     		mov	r0, r3
+ 882 024e 1037     		adds	r7, r7, #16
+ 883              	.LCFI15:
+ 884              		.cfi_def_cfa_offset 8
+ 885 0250 BD46     		mov	sp, r7
+ 886              	.LCFI16:
+ 887              		.cfi_def_cfa_register 13
+ 888              		@ sp needed
+ 889 0252 80BD     		pop	{r7, pc}
+ 890              	.L44:
+ 891              		.align	2
+ 892              	.L43:
+ 893 0254 00000000 		.word	initMK
+ 894 0258 00540040 		.word	1073763328
+ 895 025c 00000000 		.word	I2C_GenerateSTART
+ 896 0260 00000000 		.word	BKP_WriteBackupRegister
+ 897 0264 00000000 		.word	I2C_EE_Relaunch
+ 898 0268 01000300 		.word	196609
+ 899 026c 00000000 		.word	I2C_CheckEvent
+ 900 0270 00000000 		.word	EEPROM_ADDRESS
+ 901 0274 00000000 		.word	I2C_Send7bitAddress
+ 902 0278 02000010 		.word	268435458
+ 903 027c 00000000 		.word	I2C_GetFlagStatus
+ 904 0280 00000000 		.word	I2C_SendData
+ 905 0284 84000700 		.word	458884
+ 906 0288 00000000 		.word	I2C_GenerateSTOP
+ 907 028c 82000700 		.word	458882
+ 908              		.cfi_endproc
+ 909              	.LFE30:
+ 911              		.section	.text.I2C_EE_PageWrite,"ax",%progbits
+ 912              		.align	1
+ 913              		.global	I2C_EE_PageWrite
+ 914              		.syntax unified
+ 915              		.thumb
+ 916              		.thumb_func
+ 918              	I2C_EE_PageWrite:
+ 919              	.LFB31:
+ 289:src/i2c_ee.c  **** 
+ 290:src/i2c_ee.c  **** /*******************************************************************************
+ 291:src/i2c_ee.c  ****  * Function Name  : I2C_EE_PageWrite
+ 292:src/i2c_ee.c  ****  * Description    : Writes more than one byte to the EEPROM with a single WRITE
+ 293:src/i2c_ee.c  ****  *                  cycle. The number of byte can't exceed the EEPROM page size.
+ 294:src/i2c_ee.c  ****  * Input          : - pBuffer : pointer to the buffer containing the data to be
+ 295:src/i2c_ee.c  ****  *                    written to the EEPROM.
+ 296:src/i2c_ee.c  ****  *                  - WriteAddr : EEPROM's internal address to write to.
+ 297:src/i2c_ee.c  ****  *                  - NumByteToWrite : number of bytes to write to the EEPROM.
+ 298:src/i2c_ee.c  ****  * Output         : None
+ 299:src/i2c_ee.c  ****  * Return         : None
+ 300:src/i2c_ee.c  ****  *******************************************************************************/
+ 301:src/i2c_ee.c  **** bool I2C_EE_PageWrite(u8 *pBuffer, u16 WriteAddr, u8 NumByteToWrite) {
+ 920              		.loc 1 301 70
+ 921              		.cfi_startproc
+ 922              		@ args = 0, pretend = 0, frame = 16
+ 923              		@ frame_needed = 1, uses_anonymous_args = 0
+ 924 0000 80B5     		push	{r7, lr}
+ 925              	.LCFI17:
+ 926              		.cfi_def_cfa_offset 8
+ 927              		.cfi_offset 7, -8
+ 928              		.cfi_offset 14, -4
+ 929 0002 84B0     		sub	sp, sp, #16
+ 930              	.LCFI18:
+ 931              		.cfi_def_cfa_offset 24
+ 932 0004 00AF     		add	r7, sp, #0
+ 933              	.LCFI19:
+ 934              		.cfi_def_cfa_register 7
+ 935 0006 7860     		str	r0, [r7, #4]
+ 936 0008 0B46     		mov	r3, r1
+ 937 000a 7B80     		strh	r3, [r7, #2]	@ movhi
+ 938 000c 1346     		mov	r3, r2
+ 939 000e 7B70     		strb	r3, [r7, #1]
+ 302:src/i2c_ee.c  **** 	if (initMK == 1) {
+ 940              		.loc 1 302 13
+ 941 0010 8C4B     		ldr	r3, .L73
+ 942 0012 1B68     		ldr	r3, [r3]
+ 943              		.loc 1 302 5
+ 944 0014 012B     		cmp	r3, #1
+ 945 0016 40F09480 		bne	.L46
+ 946              	.LBB4:
+ 303:src/i2c_ee.c  **** 		int counter = RETRY_NUMBER;
+ 947              		.loc 1 303 7
+ 948 001a 40F6B833 		movw	r3, #3000
+ 949 001e FB60     		str	r3, [r7, #12]
+ 304:src/i2c_ee.c  **** 		/* While the bus is busy */
+ 305:src/i2c_ee.c  **** 		while (I2C_GetFlagStatus(I2C1, I2C_FLAG_BUSY)) {
+ 950              		.loc 1 305 9
+ 951 0020 08E0     		b	.L47
+ 952              	.L49:
+ 306:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 953              		.loc 1 306 15
+ 954 0022 FB68     		ldr	r3, [r7, #12]
+ 955 0024 5A1E     		subs	r2, r3, #1
+ 956 0026 FA60     		str	r2, [r7, #12]
+ 957              		.loc 1 306 7
+ 958 0028 002B     		cmp	r3, #0
+ 959 002a 03DC     		bgt	.L47
+ 307:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 960              		.loc 1 307 12
+ 961 002c 864B     		ldr	r3, .L73+4
+ 962 002e 9847     		blx	r3
+ 963              	.LVL55:
+ 964 0030 0346     		mov	r3, r0
+ 965 0032 4AE1     		b	.L48
+ 966              	.L47:
+ 305:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 967              		.loc 1 305 10
+ 968 0034 4FF40031 		mov	r1, #131072
+ 969 0038 8448     		ldr	r0, .L73+8
+ 970 003a 854B     		ldr	r3, .L73+12
+ 971 003c 9847     		blx	r3
+ 972              	.LVL56:
+ 973 003e 0346     		mov	r3, r0
+ 305:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 974              		.loc 1 305 9
+ 975 0040 002B     		cmp	r3, #0
+ 976 0042 EED1     		bne	.L49
+ 308:src/i2c_ee.c  **** 		}
+ 309:src/i2c_ee.c  **** 
+ 310:src/i2c_ee.c  **** 		/* Send START condition */
+ 311:src/i2c_ee.c  **** 		I2C_GenerateSTART(I2C1, ENABLE);
+ 977              		.loc 1 311 3
+ 978 0044 0121     		movs	r1, #1
+ 979 0046 8148     		ldr	r0, .L73+8
+ 980 0048 824B     		ldr	r3, .L73+16
+ 981 004a 9847     		blx	r3
+ 982              	.LVL57:
+ 312:src/i2c_ee.c  **** 
+ 313:src/i2c_ee.c  **** 		/* Test on EV5 and clear it */
+ 314:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 983              		.loc 1 314 11
+ 984 004c 40F6B833 		movw	r3, #3000
+ 985 0050 FB60     		str	r3, [r7, #12]
+ 315:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) {
+ 986              		.loc 1 315 9
+ 987 0052 08E0     		b	.L50
+ 988              	.L51:
+ 316:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 989              		.loc 1 316 15
+ 990 0054 FB68     		ldr	r3, [r7, #12]
+ 991 0056 5A1E     		subs	r2, r3, #1
+ 992 0058 FA60     		str	r2, [r7, #12]
+ 993              		.loc 1 316 7
+ 994 005a 002B     		cmp	r3, #0
+ 995 005c 03DC     		bgt	.L50
+ 317:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 996              		.loc 1 317 12
+ 997 005e 7A4B     		ldr	r3, .L73+4
+ 998 0060 9847     		blx	r3
+ 999              	.LVL58:
+ 1000 0062 0346     		mov	r3, r0
+ 1001 0064 31E1     		b	.L48
+ 1002              	.L50:
+ 315:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) {
+ 1003              		.loc 1 315 11
+ 1004 0066 7C49     		ldr	r1, .L73+20
+ 1005 0068 7848     		ldr	r0, .L73+8
+ 1006 006a 7C4B     		ldr	r3, .L73+24
+ 1007 006c 9847     		blx	r3
+ 1008              	.LVL59:
+ 1009 006e 0346     		mov	r3, r0
+ 315:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) {
+ 1010              		.loc 1 315 9
+ 1011 0070 002B     		cmp	r3, #0
+ 1012 0072 EFD0     		beq	.L51
+ 318:src/i2c_ee.c  **** 		}
+ 319:src/i2c_ee.c  **** 
+ 320:src/i2c_ee.c  **** 		/* Send EEPROM address for write */
+ 321:src/i2c_ee.c  **** 		I2C_Send7bitAddress(I2C1, EEPROM_ADDRESS, I2C_Direction_Transmitter);
+ 1013              		.loc 1 321 3
+ 1014 0074 7A4B     		ldr	r3, .L73+28
+ 1015 0076 1B88     		ldrh	r3, [r3]
+ 1016 0078 DBB2     		uxtb	r3, r3
+ 1017 007a 0022     		movs	r2, #0
+ 1018 007c 1946     		mov	r1, r3
+ 1019 007e 7348     		ldr	r0, .L73+8
+ 1020 0080 784B     		ldr	r3, .L73+32
+ 1021 0082 9847     		blx	r3
+ 1022              	.LVL60:
+ 322:src/i2c_ee.c  **** 
+ 323:src/i2c_ee.c  **** 		/* Read I2C1 SR1 register*/
+ 324:src/i2c_ee.c  **** 		// SR2_Tmp = I2C_ReadRegister(I2C1, I2C_Register_SR1);
+ 325:src/i2c_ee.c  **** 		//  I2C_ClearFlag(I2C1, I2C_FLAG_ADDR);
+ 326:src/i2c_ee.c  **** 		/* Send the EEPROM's internal address to write to */
+ 327:src/i2c_ee.c  **** 		I2C_SendData(I2C1, (WriteAddr >> 8) & 0xFF);
+ 1023              		.loc 1 327 3
+ 1024 0084 7B88     		ldrh	r3, [r7, #2]
+ 1025 0086 1B0A     		lsrs	r3, r3, #8
+ 1026 0088 9BB2     		uxth	r3, r3
+ 1027 008a DBB2     		uxtb	r3, r3
+ 1028 008c 1946     		mov	r1, r3
+ 1029 008e 6F48     		ldr	r0, .L73+8
+ 1030 0090 754B     		ldr	r3, .L73+36
+ 1031 0092 9847     		blx	r3
+ 1032              	.LVL61:
+ 328:src/i2c_ee.c  **** 
+ 329:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 1033              		.loc 1 329 11
+ 1034 0094 40F6B833 		movw	r3, #3000
+ 1035 0098 FB60     		str	r3, [r7, #12]
+ 330:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 1036              		.loc 1 330 9
+ 1037 009a 08E0     		b	.L52
+ 1038              	.L53:
+ 331:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 1039              		.loc 1 331 15
+ 1040 009c FB68     		ldr	r3, [r7, #12]
+ 1041 009e 5A1E     		subs	r2, r3, #1
+ 1042 00a0 FA60     		str	r2, [r7, #12]
+ 1043              		.loc 1 331 7
+ 1044 00a2 002B     		cmp	r3, #0
+ 1045 00a4 03DC     		bgt	.L52
+ 332:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 1046              		.loc 1 332 12
+ 1047 00a6 684B     		ldr	r3, .L73+4
+ 1048 00a8 9847     		blx	r3
+ 1049              	.LVL62:
+ 1050 00aa 0346     		mov	r3, r0
+ 1051 00ac 0DE1     		b	.L48
+ 1052              	.L52:
+ 330:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 1053              		.loc 1 330 11
+ 1054 00ae 6F49     		ldr	r1, .L73+40
+ 1055 00b0 6648     		ldr	r0, .L73+8
+ 1056 00b2 6A4B     		ldr	r3, .L73+24
+ 1057 00b4 9847     		blx	r3
+ 1058              	.LVL63:
+ 1059 00b6 0346     		mov	r3, r0
+ 330:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 1060              		.loc 1 330 9
+ 1061 00b8 002B     		cmp	r3, #0
+ 1062 00ba EFD0     		beq	.L53
+ 333:src/i2c_ee.c  **** 		}
+ 334:src/i2c_ee.c  **** 
+ 335:src/i2c_ee.c  **** 		I2C_SendData(I2C1, WriteAddr & 0xFF);
+ 1063              		.loc 1 335 3
+ 1064 00bc 7B88     		ldrh	r3, [r7, #2]	@ movhi
+ 1065 00be DBB2     		uxtb	r3, r3
+ 1066 00c0 1946     		mov	r1, r3
+ 1067 00c2 6248     		ldr	r0, .L73+8
+ 1068 00c4 684B     		ldr	r3, .L73+36
+ 1069 00c6 9847     		blx	r3
+ 1070              	.LVL64:
+ 336:src/i2c_ee.c  **** 
+ 337:src/i2c_ee.c  **** 		/* Test on EV8 and clear it */
+ 338:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 1071              		.loc 1 338 11
+ 1072 00c8 40F6B833 		movw	r3, #3000
+ 1073 00cc FB60     		str	r3, [r7, #12]
+ 339:src/i2c_ee.c  **** 
+ 340:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED))
+ 1074              		.loc 1 340 9
+ 1075 00ce 08E0     		b	.L54
+ 1076              	.L55:
+ 341:src/i2c_ee.c  **** 
+ 342:src/i2c_ee.c  **** 		{
+ 343:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 1077              		.loc 1 343 15
+ 1078 00d0 FB68     		ldr	r3, [r7, #12]
+ 1079 00d2 5A1E     		subs	r2, r3, #1
+ 1080 00d4 FA60     		str	r2, [r7, #12]
+ 1081              		.loc 1 343 7
+ 1082 00d6 002B     		cmp	r3, #0
+ 1083 00d8 03DC     		bgt	.L54
+ 344:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 1084              		.loc 1 344 12
+ 1085 00da 5B4B     		ldr	r3, .L73+4
+ 1086 00dc 9847     		blx	r3
+ 1087              	.LVL65:
+ 1088 00de 0346     		mov	r3, r0
+ 1089 00e0 F3E0     		b	.L48
+ 1090              	.L54:
+ 340:src/i2c_ee.c  **** 
+ 1091              		.loc 1 340 11
+ 1092 00e2 6249     		ldr	r1, .L73+40
+ 1093 00e4 5948     		ldr	r0, .L73+8
+ 1094 00e6 5D4B     		ldr	r3, .L73+24
+ 1095 00e8 9847     		blx	r3
+ 1096              	.LVL66:
+ 1097 00ea 0346     		mov	r3, r0
+ 340:src/i2c_ee.c  **** 
+ 1098              		.loc 1 340 9
+ 1099 00ec 002B     		cmp	r3, #0
+ 1100 00ee EFD0     		beq	.L55
+ 345:src/i2c_ee.c  **** 		}
+ 346:src/i2c_ee.c  **** 
+ 347:src/i2c_ee.c  **** 		/* While there is data to be written */
+ 348:src/i2c_ee.c  **** 		while (NumByteToWrite--) {
+ 1101              		.loc 1 348 9
+ 1102 00f0 1CE0     		b	.L56
+ 1103              	.L58:
+ 349:src/i2c_ee.c  **** 			/* Send the current byte */
+ 350:src/i2c_ee.c  **** 			I2C_SendData(I2C1, *pBuffer);
+ 1104              		.loc 1 350 4
+ 1105 00f2 7B68     		ldr	r3, [r7, #4]
+ 1106 00f4 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1107 00f6 1946     		mov	r1, r3
+ 1108 00f8 5448     		ldr	r0, .L73+8
+ 1109 00fa 5B4B     		ldr	r3, .L73+36
+ 1110 00fc 9847     		blx	r3
+ 1111              	.LVL67:
+ 351:src/i2c_ee.c  **** 
+ 352:src/i2c_ee.c  **** 			/* Point to the next byte to be written */
+ 353:src/i2c_ee.c  **** 			pBuffer++;
+ 1112              		.loc 1 353 11
+ 1113 00fe 7B68     		ldr	r3, [r7, #4]
+ 1114 0100 0133     		adds	r3, r3, #1
+ 1115 0102 7B60     		str	r3, [r7, #4]
+ 354:src/i2c_ee.c  **** 			counter = RETRY_NUMBER;
+ 1116              		.loc 1 354 12
+ 1117 0104 40F6B833 		movw	r3, #3000
+ 1118 0108 FB60     		str	r3, [r7, #12]
+ 355:src/i2c_ee.c  **** 			while (!I2C_GetFlagStatus(I2C1, I2C_FLAG_TXE))
+ 1119              		.loc 1 355 10
+ 1120 010a 00BF     		nop
+ 1121              	.L57:
+ 1122              		.loc 1 355 12 discriminator 1
+ 1123 010c 5849     		ldr	r1, .L73+44
+ 1124 010e 4F48     		ldr	r0, .L73+8
+ 1125 0110 4F4B     		ldr	r3, .L73+12
+ 1126 0112 9847     		blx	r3
+ 1127              	.LVL68:
+ 1128 0114 0346     		mov	r3, r0
+ 1129              		.loc 1 355 10 discriminator 1
+ 1130 0116 002B     		cmp	r3, #0
+ 1131 0118 F8D0     		beq	.L57
+ 356:src/i2c_ee.c  **** 				;
+ 357:src/i2c_ee.c  **** 			{
+ 358:src/i2c_ee.c  **** 				if (counter-- <= 0)
+ 1132              		.loc 1 358 16
+ 1133 011a FB68     		ldr	r3, [r7, #12]
+ 1134 011c 5A1E     		subs	r2, r3, #1
+ 1135 011e FA60     		str	r2, [r7, #12]
+ 1136              		.loc 1 358 8
+ 1137 0120 002B     		cmp	r3, #0
+ 1138 0122 03DC     		bgt	.L56
+ 359:src/i2c_ee.c  **** 					return I2C_EE_Relaunch();
+ 1139              		.loc 1 359 13
+ 1140 0124 484B     		ldr	r3, .L73+4
+ 1141 0126 9847     		blx	r3
+ 1142              	.LVL69:
+ 1143 0128 0346     		mov	r3, r0
+ 1144 012a CEE0     		b	.L48
+ 1145              	.L56:
+ 348:src/i2c_ee.c  **** 			/* Send the current byte */
+ 1146              		.loc 1 348 24
+ 1147 012c 7B78     		ldrb	r3, [r7, #1]	@ zero_extendqisi2
+ 1148 012e 5A1E     		subs	r2, r3, #1
+ 1149 0130 7A70     		strb	r2, [r7, #1]
+ 348:src/i2c_ee.c  **** 			/* Send the current byte */
+ 1150              		.loc 1 348 9
+ 1151 0132 002B     		cmp	r3, #0
+ 1152 0134 DDD1     		bne	.L58
+ 360:src/i2c_ee.c  **** 			}
+ 361:src/i2c_ee.c  **** 
+ 362:src/i2c_ee.c  **** 			/* Test on EV8 and clear it */
+ 363:src/i2c_ee.c  **** 
+ 364:src/i2c_ee.c  **** 		}
+ 365:src/i2c_ee.c  **** 
+ 366:src/i2c_ee.c  **** 		/* Send STOP condition */
+ 367:src/i2c_ee.c  **** 		I2C_GenerateSTOP(I2C1, ENABLE);
+ 1153              		.loc 1 367 3
+ 1154 0136 0121     		movs	r1, #1
+ 1155 0138 4448     		ldr	r0, .L73+8
+ 1156 013a 4E4B     		ldr	r3, .L73+48
+ 1157 013c 9847     		blx	r3
+ 1158              	.LVL70:
+ 368:src/i2c_ee.c  **** 		return true;
+ 1159              		.loc 1 368 10
+ 1160 013e 0123     		movs	r3, #1
+ 1161 0140 C3E0     		b	.L48
+ 1162              	.L46:
+ 1163              	.LBE4:
+ 1164              	.LBB5:
+ 369:src/i2c_ee.c  **** 	} else {
+ 370:src/i2c_ee.c  **** 		int counter = RETRY_NUMBER;
+ 1165              		.loc 1 370 7
+ 1166 0142 40F6B833 		movw	r3, #3000
+ 1167 0146 BB60     		str	r3, [r7, #8]
+ 371:src/i2c_ee.c  **** 		/* While the bus is busy */
+ 372:src/i2c_ee.c  **** 		while (I2C_GetFlagStatus(I2C1, I2C_FLAG_BUSY)) {
+ 1168              		.loc 1 372 9
+ 1169 0148 08E0     		b	.L59
+ 1170              	.L60:
+ 373:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 1171              		.loc 1 373 15
+ 1172 014a BB68     		ldr	r3, [r7, #8]
+ 1173 014c 5A1E     		subs	r2, r3, #1
+ 1174 014e BA60     		str	r2, [r7, #8]
+ 1175              		.loc 1 373 7
+ 1176 0150 002B     		cmp	r3, #0
+ 1177 0152 03DC     		bgt	.L59
+ 374:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 1178              		.loc 1 374 12
+ 1179 0154 3C4B     		ldr	r3, .L73+4
+ 1180 0156 9847     		blx	r3
+ 1181              	.LVL71:
+ 1182 0158 0346     		mov	r3, r0
+ 1183 015a B6E0     		b	.L48
+ 1184              	.L59:
+ 372:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 1185              		.loc 1 372 10
+ 1186 015c 4FF40031 		mov	r1, #131072
+ 1187 0160 3A48     		ldr	r0, .L73+8
+ 1188 0162 3B4B     		ldr	r3, .L73+12
+ 1189 0164 9847     		blx	r3
+ 1190              	.LVL72:
+ 1191 0166 0346     		mov	r3, r0
+ 372:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 1192              		.loc 1 372 9
+ 1193 0168 002B     		cmp	r3, #0
+ 1194 016a EED1     		bne	.L60
+ 375:src/i2c_ee.c  **** 		}
+ 376:src/i2c_ee.c  **** 
+ 377:src/i2c_ee.c  **** 		/* Send START condition */
+ 378:src/i2c_ee.c  **** 		I2C_GenerateSTART(I2C1, ENABLE);
+ 1195              		.loc 1 378 3
+ 1196 016c 0121     		movs	r1, #1
+ 1197 016e 3748     		ldr	r0, .L73+8
+ 1198 0170 384B     		ldr	r3, .L73+16
+ 1199 0172 9847     		blx	r3
+ 1200              	.LVL73:
+ 379:src/i2c_ee.c  **** 
+ 380:src/i2c_ee.c  **** 		/* Test on EV5 and clear it */
+ 381:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 1201              		.loc 1 381 11
+ 1202 0174 40F6B833 		movw	r3, #3000
+ 1203 0178 BB60     		str	r3, [r7, #8]
+ 382:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) {
+ 1204              		.loc 1 382 9
+ 1205 017a 08E0     		b	.L61
+ 1206              	.L62:
+ 383:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 1207              		.loc 1 383 15
+ 1208 017c BB68     		ldr	r3, [r7, #8]
+ 1209 017e 5A1E     		subs	r2, r3, #1
+ 1210 0180 BA60     		str	r2, [r7, #8]
+ 1211              		.loc 1 383 7
+ 1212 0182 002B     		cmp	r3, #0
+ 1213 0184 03DC     		bgt	.L61
+ 384:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 1214              		.loc 1 384 12
+ 1215 0186 304B     		ldr	r3, .L73+4
+ 1216 0188 9847     		blx	r3
+ 1217              	.LVL74:
+ 1218 018a 0346     		mov	r3, r0
+ 1219 018c 9DE0     		b	.L48
+ 1220              	.L61:
+ 382:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) {
+ 1221              		.loc 1 382 11
+ 1222 018e 3249     		ldr	r1, .L73+20
+ 1223 0190 2E48     		ldr	r0, .L73+8
+ 1224 0192 324B     		ldr	r3, .L73+24
+ 1225 0194 9847     		blx	r3
+ 1226              	.LVL75:
+ 1227 0196 0346     		mov	r3, r0
+ 382:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) {
+ 1228              		.loc 1 382 9
+ 1229 0198 002B     		cmp	r3, #0
+ 1230 019a EFD0     		beq	.L62
+ 385:src/i2c_ee.c  **** 		}
+ 386:src/i2c_ee.c  **** 
+ 387:src/i2c_ee.c  **** 		/* Send EEPROM address for write */
+ 388:src/i2c_ee.c  **** 		I2C_Send7bitAddress(I2C1, EEPROM_ADDRESS, I2C_Direction_Transmitter);
+ 1231              		.loc 1 388 3
+ 1232 019c 304B     		ldr	r3, .L73+28
+ 1233 019e 1B88     		ldrh	r3, [r3]
+ 1234 01a0 DBB2     		uxtb	r3, r3
+ 1235 01a2 0022     		movs	r2, #0
+ 1236 01a4 1946     		mov	r1, r3
+ 1237 01a6 2948     		ldr	r0, .L73+8
+ 1238 01a8 2E4B     		ldr	r3, .L73+32
+ 1239 01aa 9847     		blx	r3
+ 1240              	.LVL76:
+ 389:src/i2c_ee.c  **** 
+ 390:src/i2c_ee.c  **** 		/* Test on EV6 and clear it */
+ 391:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 1241              		.loc 1 391 11
+ 1242 01ac 40F6B833 		movw	r3, #3000
+ 1243 01b0 BB60     		str	r3, [r7, #8]
+ 392:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) {
+ 1244              		.loc 1 392 9
+ 1245 01b2 08E0     		b	.L63
+ 1246              	.L64:
+ 393:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 1247              		.loc 1 393 15
+ 1248 01b4 BB68     		ldr	r3, [r7, #8]
+ 1249 01b6 5A1E     		subs	r2, r3, #1
+ 1250 01b8 BA60     		str	r2, [r7, #8]
+ 1251              		.loc 1 393 7
+ 1252 01ba 002B     		cmp	r3, #0
+ 1253 01bc 03DC     		bgt	.L63
+ 394:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 1254              		.loc 1 394 12
+ 1255 01be 224B     		ldr	r3, .L73+4
+ 1256 01c0 9847     		blx	r3
+ 1257              	.LVL77:
+ 1258 01c2 0346     		mov	r3, r0
+ 1259 01c4 81E0     		b	.L48
+ 1260              	.L63:
+ 392:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) {
+ 1261              		.loc 1 392 11
+ 1262 01c6 2C49     		ldr	r1, .L73+52
+ 1263 01c8 2048     		ldr	r0, .L73+8
+ 1264 01ca 244B     		ldr	r3, .L73+24
+ 1265 01cc 9847     		blx	r3
+ 1266              	.LVL78:
+ 1267 01ce 0346     		mov	r3, r0
+ 392:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) {
+ 1268              		.loc 1 392 9
+ 1269 01d0 002B     		cmp	r3, #0
+ 1270 01d2 EFD0     		beq	.L64
+ 395:src/i2c_ee.c  **** 		}
+ 396:src/i2c_ee.c  **** 
+ 397:src/i2c_ee.c  **** 		/* Send the EEPROM's internal address to write to */
+ 398:src/i2c_ee.c  **** 		I2C_SendData(I2C1, (WriteAddr >> 8) & 0xFF);
+ 1271              		.loc 1 398 3
+ 1272 01d4 7B88     		ldrh	r3, [r7, #2]
+ 1273 01d6 1B0A     		lsrs	r3, r3, #8
+ 1274 01d8 9BB2     		uxth	r3, r3
+ 1275 01da DBB2     		uxtb	r3, r3
+ 1276 01dc 1946     		mov	r1, r3
+ 1277 01de 1B48     		ldr	r0, .L73+8
+ 1278 01e0 214B     		ldr	r3, .L73+36
+ 1279 01e2 9847     		blx	r3
+ 1280              	.LVL79:
+ 399:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 1281              		.loc 1 399 11
+ 1282 01e4 40F6B833 		movw	r3, #3000
+ 1283 01e8 BB60     		str	r3, [r7, #8]
+ 400:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 1284              		.loc 1 400 9
+ 1285 01ea 08E0     		b	.L65
+ 1286              	.L66:
+ 401:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 1287              		.loc 1 401 15
+ 1288 01ec BB68     		ldr	r3, [r7, #8]
+ 1289 01ee 5A1E     		subs	r2, r3, #1
+ 1290 01f0 BA60     		str	r2, [r7, #8]
+ 1291              		.loc 1 401 7
+ 1292 01f2 002B     		cmp	r3, #0
+ 1293 01f4 03DC     		bgt	.L65
+ 402:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 1294              		.loc 1 402 12
+ 1295 01f6 144B     		ldr	r3, .L73+4
+ 1296 01f8 9847     		blx	r3
+ 1297              	.LVL80:
+ 1298 01fa 0346     		mov	r3, r0
+ 1299 01fc 65E0     		b	.L48
+ 1300              	.L65:
+ 400:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 1301              		.loc 1 400 11
+ 1302 01fe 1B49     		ldr	r1, .L73+40
+ 1303 0200 1248     		ldr	r0, .L73+8
+ 1304 0202 164B     		ldr	r3, .L73+24
+ 1305 0204 9847     		blx	r3
+ 1306              	.LVL81:
+ 1307 0206 0346     		mov	r3, r0
+ 400:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 1308              		.loc 1 400 9
+ 1309 0208 002B     		cmp	r3, #0
+ 1310 020a EFD0     		beq	.L66
+ 403:src/i2c_ee.c  **** 		}
+ 404:src/i2c_ee.c  **** 
+ 405:src/i2c_ee.c  **** 		I2C_SendData(I2C1, WriteAddr & 0xFF);
+ 1311              		.loc 1 405 3
+ 1312 020c 7B88     		ldrh	r3, [r7, #2]	@ movhi
+ 1313 020e DBB2     		uxtb	r3, r3
+ 1314 0210 1946     		mov	r1, r3
+ 1315 0212 0E48     		ldr	r0, .L73+8
+ 1316 0214 144B     		ldr	r3, .L73+36
+ 1317 0216 9847     		blx	r3
+ 1318              	.LVL82:
+ 406:src/i2c_ee.c  **** 
+ 407:src/i2c_ee.c  **** 		/* Test on EV8 and clear it */
+ 408:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 1319              		.loc 1 408 11
+ 1320 0218 40F6B833 		movw	r3, #3000
+ 1321 021c BB60     		str	r3, [r7, #8]
+ 409:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 1322              		.loc 1 409 9
+ 1323 021e 08E0     		b	.L67
+ 1324              	.L68:
+ 410:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 1325              		.loc 1 410 15
+ 1326 0220 BB68     		ldr	r3, [r7, #8]
+ 1327 0222 5A1E     		subs	r2, r3, #1
+ 1328 0224 BA60     		str	r2, [r7, #8]
+ 1329              		.loc 1 410 7
+ 1330 0226 002B     		cmp	r3, #0
+ 1331 0228 03DC     		bgt	.L67
+ 411:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 1332              		.loc 1 411 12
+ 1333 022a 074B     		ldr	r3, .L73+4
+ 1334 022c 9847     		blx	r3
+ 1335              	.LVL83:
+ 1336 022e 0346     		mov	r3, r0
+ 1337 0230 4BE0     		b	.L48
+ 1338              	.L67:
+ 409:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 1339              		.loc 1 409 11
+ 1340 0232 0E49     		ldr	r1, .L73+40
+ 1341 0234 0548     		ldr	r0, .L73+8
+ 1342 0236 094B     		ldr	r3, .L73+24
+ 1343 0238 9847     		blx	r3
+ 1344              	.LVL84:
+ 1345 023a 0346     		mov	r3, r0
+ 409:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 1346              		.loc 1 409 9
+ 1347 023c 002B     		cmp	r3, #0
+ 1348 023e EFD0     		beq	.L68
+ 412:src/i2c_ee.c  **** 		}
+ 413:src/i2c_ee.c  **** 
+ 414:src/i2c_ee.c  **** 		/* While there is data to be written */
+ 415:src/i2c_ee.c  **** 		while (NumByteToWrite--) {
+ 1349              		.loc 1 415 9
+ 1350 0240 39E0     		b	.L69
+ 1351              	.L74:
+ 1352 0242 00BF     		.align	2
+ 1353              	.L73:
+ 1354 0244 00000000 		.word	initMK
+ 1355 0248 00000000 		.word	I2C_EE_Relaunch
+ 1356 024c 00540040 		.word	1073763328
+ 1357 0250 00000000 		.word	I2C_GetFlagStatus
+ 1358 0254 00000000 		.word	I2C_GenerateSTART
+ 1359 0258 01000300 		.word	196609
+ 1360 025c 00000000 		.word	I2C_CheckEvent
+ 1361 0260 00000000 		.word	EEPROM_ADDRESS
+ 1362 0264 00000000 		.word	I2C_Send7bitAddress
+ 1363 0268 00000000 		.word	I2C_SendData
+ 1364 026c 84000700 		.word	458884
+ 1365 0270 80000010 		.word	268435584
+ 1366 0274 00000000 		.word	I2C_GenerateSTOP
+ 1367 0278 82000700 		.word	458882
+ 1368              	.L72:
+ 416:src/i2c_ee.c  **** 			/* Send the current byte */
+ 417:src/i2c_ee.c  **** 			I2C_SendData(I2C1, *pBuffer);
+ 1369              		.loc 1 417 4
+ 1370 027c 7B68     		ldr	r3, [r7, #4]
+ 1371 027e 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1372 0280 1946     		mov	r1, r3
+ 1373 0282 1448     		ldr	r0, .L75
+ 1374 0284 144B     		ldr	r3, .L75+4
+ 1375 0286 9847     		blx	r3
+ 1376              	.LVL85:
+ 418:src/i2c_ee.c  **** 
+ 419:src/i2c_ee.c  **** 			/* Point to the next byte to be written */
+ 420:src/i2c_ee.c  **** 			pBuffer++;
+ 1377              		.loc 1 420 11
+ 1378 0288 7B68     		ldr	r3, [r7, #4]
+ 1379 028a 0133     		adds	r3, r3, #1
+ 1380 028c 7B60     		str	r3, [r7, #4]
+ 421:src/i2c_ee.c  **** 
+ 422:src/i2c_ee.c  **** 			/* Test on EV8 and clear it */
+ 423:src/i2c_ee.c  **** 			counter = RETRY_NUMBER;
+ 1381              		.loc 1 423 12
+ 1382 028e 40F6B833 		movw	r3, #3000
+ 1383 0292 BB60     		str	r3, [r7, #8]
+ 424:src/i2c_ee.c  **** 			while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 1384              		.loc 1 424 10
+ 1385 0294 08E0     		b	.L70
+ 1386              	.L71:
+ 425:src/i2c_ee.c  **** 				if (counter-- <= 0)
+ 1387              		.loc 1 425 16
+ 1388 0296 BB68     		ldr	r3, [r7, #8]
+ 1389 0298 5A1E     		subs	r2, r3, #1
+ 1390 029a BA60     		str	r2, [r7, #8]
+ 1391              		.loc 1 425 8
+ 1392 029c 002B     		cmp	r3, #0
+ 1393 029e 03DC     		bgt	.L70
+ 426:src/i2c_ee.c  **** 					return I2C_EE_Relaunch();
+ 1394              		.loc 1 426 13
+ 1395 02a0 0E4B     		ldr	r3, .L75+8
+ 1396 02a2 9847     		blx	r3
+ 1397              	.LVL86:
+ 1398 02a4 0346     		mov	r3, r0
+ 1399 02a6 10E0     		b	.L48
+ 1400              	.L70:
+ 424:src/i2c_ee.c  **** 			while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 1401              		.loc 1 424 12
+ 1402 02a8 0D49     		ldr	r1, .L75+12
+ 1403 02aa 0A48     		ldr	r0, .L75
+ 1404 02ac 0D4B     		ldr	r3, .L75+16
+ 1405 02ae 9847     		blx	r3
+ 1406              	.LVL87:
+ 1407 02b0 0346     		mov	r3, r0
+ 424:src/i2c_ee.c  **** 			while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 1408              		.loc 1 424 10
+ 1409 02b2 002B     		cmp	r3, #0
+ 1410 02b4 EFD0     		beq	.L71
+ 1411              	.L69:
+ 415:src/i2c_ee.c  **** 			/* Send the current byte */
+ 1412              		.loc 1 415 24
+ 1413 02b6 7B78     		ldrb	r3, [r7, #1]	@ zero_extendqisi2
+ 1414 02b8 5A1E     		subs	r2, r3, #1
+ 1415 02ba 7A70     		strb	r2, [r7, #1]
+ 415:src/i2c_ee.c  **** 			/* Send the current byte */
+ 1416              		.loc 1 415 9
+ 1417 02bc 002B     		cmp	r3, #0
+ 1418 02be DDD1     		bne	.L72
+ 427:src/i2c_ee.c  **** 			}
+ 428:src/i2c_ee.c  **** 		}
+ 429:src/i2c_ee.c  **** 
+ 430:src/i2c_ee.c  **** 		/* Send STOP condition */
+ 431:src/i2c_ee.c  **** 		I2C_GenerateSTOP(I2C1, ENABLE);
+ 1419              		.loc 1 431 3
+ 1420 02c0 0121     		movs	r1, #1
+ 1421 02c2 0448     		ldr	r0, .L75
+ 1422 02c4 084B     		ldr	r3, .L75+20
+ 1423 02c6 9847     		blx	r3
+ 1424              	.LVL88:
+ 432:src/i2c_ee.c  **** 		return true;
+ 1425              		.loc 1 432 10
+ 1426 02c8 0123     		movs	r3, #1
+ 1427              	.L48:
+ 1428              	.LBE5:
+ 433:src/i2c_ee.c  **** 	}
+ 434:src/i2c_ee.c  **** }
+ 1429              		.loc 1 434 1
+ 1430 02ca 1846     		mov	r0, r3
+ 1431 02cc 1037     		adds	r7, r7, #16
+ 1432              	.LCFI20:
+ 1433              		.cfi_def_cfa_offset 8
+ 1434 02ce BD46     		mov	sp, r7
+ 1435              	.LCFI21:
+ 1436              		.cfi_def_cfa_register 13
+ 1437              		@ sp needed
+ 1438 02d0 80BD     		pop	{r7, pc}
+ 1439              	.L76:
+ 1440 02d2 00BF     		.align	2
+ 1441              	.L75:
+ 1442 02d4 00540040 		.word	1073763328
+ 1443 02d8 00000000 		.word	I2C_SendData
+ 1444 02dc 00000000 		.word	I2C_EE_Relaunch
+ 1445 02e0 84000700 		.word	458884
+ 1446 02e4 00000000 		.word	I2C_CheckEvent
+ 1447 02e8 00000000 		.word	I2C_GenerateSTOP
+ 1448              		.cfi_endproc
+ 1449              	.LFE31:
+ 1451              		.section	.text.I2C_EE_BufferRead,"ax",%progbits
+ 1452              		.align	1
+ 1453              		.global	I2C_EE_BufferRead
+ 1454              		.syntax unified
+ 1455              		.thumb
+ 1456              		.thumb_func
+ 1458              	I2C_EE_BufferRead:
+ 1459              	.LFB32:
+ 435:src/i2c_ee.c  **** 
+ 436:src/i2c_ee.c  **** /*******************************************************************************
+ 437:src/i2c_ee.c  ****  * Function Name  : I2C_EE_BufferRead
+ 438:src/i2c_ee.c  ****  * Description    : Reads a block of data from the EEPROM.
+ 439:src/i2c_ee.c  ****  * Input          : - pBuffer : pointer to the buffer that receives the data read
+ 440:src/i2c_ee.c  ****  *                    from the EEPROM.
+ 441:src/i2c_ee.c  ****  *                  - ReadAddr : EEPROM's internal address to read from.
+ 442:src/i2c_ee.c  ****  *                  - NumByteToRead : number of bytes to read from the EEPROM.
+ 443:src/i2c_ee.c  ****  * Output         : None
+ 444:src/i2c_ee.c  ****  * Return         : None
+ 445:src/i2c_ee.c  ****  *******************************************************************************/
+ 446:src/i2c_ee.c  **** bool I2C_EE_BufferRead(u8 *pBuffer, u16 ReadAddr, u16 NumByteToRead) {
+ 1460              		.loc 1 446 70
+ 1461              		.cfi_startproc
+ 1462              		@ args = 0, pretend = 0, frame = 24
+ 1463              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1464 0000 80B5     		push	{r7, lr}
+ 1465              	.LCFI22:
+ 1466              		.cfi_def_cfa_offset 8
+ 1467              		.cfi_offset 7, -8
+ 1468              		.cfi_offset 14, -4
+ 1469 0002 86B0     		sub	sp, sp, #24
+ 1470              	.LCFI23:
+ 1471              		.cfi_def_cfa_offset 32
+ 1472 0004 00AF     		add	r7, sp, #0
+ 1473              	.LCFI24:
+ 1474              		.cfi_def_cfa_register 7
+ 1475 0006 7860     		str	r0, [r7, #4]
+ 1476 0008 0B46     		mov	r3, r1
+ 1477 000a 7B80     		strh	r3, [r7, #2]	@ movhi
+ 1478 000c 1346     		mov	r3, r2	@ movhi
+ 1479 000e 3B80     		strh	r3, [r7]	@ movhi
+ 447:src/i2c_ee.c  **** 	if (initMK == 1) {
+ 1480              		.loc 1 447 13
+ 1481 0010 8E4B     		ldr	r3, .L116
+ 1482 0012 1B68     		ldr	r3, [r3]
+ 1483              		.loc 1 447 5
+ 1484 0014 012B     		cmp	r3, #1
+ 1485 0016 40F0F280 		bne	.L78
+ 1486              	.LBB6:
+ 448:src/i2c_ee.c  **** 		int counter = RETRY_NUMBER;
+ 1487              		.loc 1 448 7
+ 1488 001a 40F6B833 		movw	r3, #3000
+ 1489 001e 7B61     		str	r3, [r7, #20]
+ 449:src/i2c_ee.c  **** 		vu16 SR2_Tmp;
+ 450:src/i2c_ee.c  **** 		/* While the bus is busy */
+ 451:src/i2c_ee.c  **** 
+ 452:src/i2c_ee.c  **** 		while (I2C_GetFlagStatus(I2C1, I2C_FLAG_BUSY)) {
+ 1490              		.loc 1 452 9
+ 1491 0020 08E0     		b	.L79
+ 1492              	.L81:
+ 453:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 1493              		.loc 1 453 15
+ 1494 0022 7B69     		ldr	r3, [r7, #20]
+ 1495 0024 5A1E     		subs	r2, r3, #1
+ 1496 0026 7A61     		str	r2, [r7, #20]
+ 1497              		.loc 1 453 7
+ 1498 0028 002B     		cmp	r3, #0
+ 1499 002a 03DC     		bgt	.L79
+ 454:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 1500              		.loc 1 454 12
+ 1501 002c 884B     		ldr	r3, .L116+4
+ 1502 002e 9847     		blx	r3
+ 1503              	.LVL89:
+ 1504 0030 0346     		mov	r3, r0
+ 1505 0032 F6E1     		b	.L80
+ 1506              	.L79:
+ 452:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 1507              		.loc 1 452 10
+ 1508 0034 4FF40031 		mov	r1, #131072
+ 1509 0038 8648     		ldr	r0, .L116+8
+ 1510 003a 874B     		ldr	r3, .L116+12
+ 1511 003c 9847     		blx	r3
+ 1512              	.LVL90:
+ 1513 003e 0346     		mov	r3, r0
+ 452:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 1514              		.loc 1 452 9
+ 1515 0040 002B     		cmp	r3, #0
+ 1516 0042 EED1     		bne	.L81
+ 455:src/i2c_ee.c  **** 		}
+ 456:src/i2c_ee.c  **** 
+ 457:src/i2c_ee.c  **** 		/* Send START condition */
+ 458:src/i2c_ee.c  **** 		I2C_GenerateSTART(I2C1, ENABLE);
+ 1517              		.loc 1 458 3
+ 1518 0044 0121     		movs	r1, #1
+ 1519 0046 8348     		ldr	r0, .L116+8
+ 1520 0048 844B     		ldr	r3, .L116+16
+ 1521 004a 9847     		blx	r3
+ 1522              	.LVL91:
+ 459:src/i2c_ee.c  **** 
+ 460:src/i2c_ee.c  **** 		/* Test on EV5 and clear it */
+ 461:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 1523              		.loc 1 461 11
+ 1524 004c 40F6B833 		movw	r3, #3000
+ 1525 0050 7B61     		str	r3, [r7, #20]
+ 462:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) {
+ 1526              		.loc 1 462 9
+ 1527 0052 08E0     		b	.L82
+ 1528              	.L83:
+ 463:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 1529              		.loc 1 463 15
+ 1530 0054 7B69     		ldr	r3, [r7, #20]
+ 1531 0056 5A1E     		subs	r2, r3, #1
+ 1532 0058 7A61     		str	r2, [r7, #20]
+ 1533              		.loc 1 463 7
+ 1534 005a 002B     		cmp	r3, #0
+ 1535 005c 03DC     		bgt	.L82
+ 464:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 1536              		.loc 1 464 12
+ 1537 005e 7C4B     		ldr	r3, .L116+4
+ 1538 0060 9847     		blx	r3
+ 1539              	.LVL92:
+ 1540 0062 0346     		mov	r3, r0
+ 1541 0064 DDE1     		b	.L80
+ 1542              	.L82:
+ 462:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) {
+ 1543              		.loc 1 462 11
+ 1544 0066 7E49     		ldr	r1, .L116+20
+ 1545 0068 7A48     		ldr	r0, .L116+8
+ 1546 006a 7E4B     		ldr	r3, .L116+24
+ 1547 006c 9847     		blx	r3
+ 1548              	.LVL93:
+ 1549 006e 0346     		mov	r3, r0
+ 462:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) {
+ 1550              		.loc 1 462 9
+ 1551 0070 002B     		cmp	r3, #0
+ 1552 0072 EFD0     		beq	.L83
+ 465:src/i2c_ee.c  **** 		}
+ 466:src/i2c_ee.c  **** 
+ 467:src/i2c_ee.c  **** 		/* Send EEPROM address for write */
+ 468:src/i2c_ee.c  **** 		I2C_Send7bitAddress(I2C1, EEPROM_ADDRESS, I2C_Direction_Transmitter);
+ 1553              		.loc 1 468 3
+ 1554 0074 7C4B     		ldr	r3, .L116+28
+ 1555 0076 1B88     		ldrh	r3, [r3]
+ 1556 0078 DBB2     		uxtb	r3, r3
+ 1557 007a 0022     		movs	r2, #0
+ 1558 007c 1946     		mov	r1, r3
+ 1559 007e 7548     		ldr	r0, .L116+8
+ 1560 0080 7A4B     		ldr	r3, .L116+32
+ 1561 0082 9847     		blx	r3
+ 1562              	.LVL94:
+ 469:src/i2c_ee.c  **** 
+ 470:src/i2c_ee.c  **** 		/* Test on EV6 and clear it */
+ 471:src/i2c_ee.c  **** 
+ 472:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 1563              		.loc 1 472 11
+ 1564 0084 40F6B833 		movw	r3, #3000
+ 1565 0088 7B61     		str	r3, [r7, #20]
+ 473:src/i2c_ee.c  **** 		while (!I2C_GetFlagStatus(I2C1, I2C_FLAG_ADDR)) {
+ 1566              		.loc 1 473 9
+ 1567 008a 08E0     		b	.L84
+ 1568              	.L85:
+ 474:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 1569              		.loc 1 474 15
+ 1570 008c 7B69     		ldr	r3, [r7, #20]
+ 1571 008e 5A1E     		subs	r2, r3, #1
+ 1572 0090 7A61     		str	r2, [r7, #20]
+ 1573              		.loc 1 474 7
+ 1574 0092 002B     		cmp	r3, #0
+ 1575 0094 03DC     		bgt	.L84
+ 475:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 1576              		.loc 1 475 12
+ 1577 0096 6E4B     		ldr	r3, .L116+4
+ 1578 0098 9847     		blx	r3
+ 1579              	.LVL95:
+ 1580 009a 0346     		mov	r3, r0
+ 1581 009c C1E1     		b	.L80
+ 1582              	.L84:
+ 473:src/i2c_ee.c  **** 		while (!I2C_GetFlagStatus(I2C1, I2C_FLAG_ADDR)) {
+ 1583              		.loc 1 473 11
+ 1584 009e 7449     		ldr	r1, .L116+36
+ 1585 00a0 6C48     		ldr	r0, .L116+8
+ 1586 00a2 6D4B     		ldr	r3, .L116+12
+ 1587 00a4 9847     		blx	r3
+ 1588              	.LVL96:
+ 1589 00a6 0346     		mov	r3, r0
+ 473:src/i2c_ee.c  **** 		while (!I2C_GetFlagStatus(I2C1, I2C_FLAG_ADDR)) {
+ 1590              		.loc 1 473 9
+ 1591 00a8 002B     		cmp	r3, #0
+ 1592 00aa EFD0     		beq	.L85
+ 476:src/i2c_ee.c  **** 		}
+ 477:src/i2c_ee.c  **** 
+ 478:src/i2c_ee.c  **** 		/* Read I2C1 SR1 register*/
+ 479:src/i2c_ee.c  **** 		SR2_Tmp = I2C_ReadRegister(I2C1, I2C_Register_SR1);
+ 1593              		.loc 1 479 13
+ 1594 00ac 1421     		movs	r1, #20
+ 1595 00ae 6948     		ldr	r0, .L116+8
+ 1596 00b0 704B     		ldr	r3, .L116+40
+ 1597 00b2 9847     		blx	r3
+ 1598              	.LVL97:
+ 1599 00b4 0346     		mov	r3, r0
+ 1600              		.loc 1 479 11
+ 1601 00b6 FB81     		strh	r3, [r7, #14]	@ movhi
+ 480:src/i2c_ee.c  **** 
+ 481:src/i2c_ee.c  **** 		//
+ 482:src/i2c_ee.c  **** 
+ 483:src/i2c_ee.c  **** 		/* Clear EV6 by setting again the PE bit */
+ 484:src/i2c_ee.c  **** 		I2C_Cmd(I2C1, ENABLE);
+ 1602              		.loc 1 484 3
+ 1603 00b8 0121     		movs	r1, #1
+ 1604 00ba 6648     		ldr	r0, .L116+8
+ 1605 00bc 6E4B     		ldr	r3, .L116+44
+ 1606 00be 9847     		blx	r3
+ 1607              	.LVL98:
+ 485:src/i2c_ee.c  **** 
+ 486:src/i2c_ee.c  **** 		/* Send the EEPROM's internal address to write to */
+ 487:src/i2c_ee.c  **** 		I2C_SendData(I2C1, (ReadAddr >> 8) & 0xFF);
+ 1608              		.loc 1 487 3
+ 1609 00c0 7B88     		ldrh	r3, [r7, #2]
+ 1610 00c2 1B0A     		lsrs	r3, r3, #8
+ 1611 00c4 9BB2     		uxth	r3, r3
+ 1612 00c6 DBB2     		uxtb	r3, r3
+ 1613 00c8 1946     		mov	r1, r3
+ 1614 00ca 6248     		ldr	r0, .L116+8
+ 1615 00cc 6B4B     		ldr	r3, .L116+48
+ 1616 00ce 9847     		blx	r3
+ 1617              	.LVL99:
+ 488:src/i2c_ee.c  **** 
+ 489:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 1618              		.loc 1 489 11
+ 1619 00d0 40F6B833 		movw	r3, #3000
+ 1620 00d4 7B61     		str	r3, [r7, #20]
+ 490:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 1621              		.loc 1 490 9
+ 1622 00d6 08E0     		b	.L86
+ 1623              	.L87:
+ 491:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 1624              		.loc 1 491 15
+ 1625 00d8 7B69     		ldr	r3, [r7, #20]
+ 1626 00da 5A1E     		subs	r2, r3, #1
+ 1627 00dc 7A61     		str	r2, [r7, #20]
+ 1628              		.loc 1 491 7
+ 1629 00de 002B     		cmp	r3, #0
+ 1630 00e0 03DC     		bgt	.L86
+ 492:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 1631              		.loc 1 492 12
+ 1632 00e2 5B4B     		ldr	r3, .L116+4
+ 1633 00e4 9847     		blx	r3
+ 1634              	.LVL100:
+ 1635 00e6 0346     		mov	r3, r0
+ 1636 00e8 9BE1     		b	.L80
+ 1637              	.L86:
+ 490:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 1638              		.loc 1 490 11
+ 1639 00ea 6549     		ldr	r1, .L116+52
+ 1640 00ec 5948     		ldr	r0, .L116+8
+ 1641 00ee 5D4B     		ldr	r3, .L116+24
+ 1642 00f0 9847     		blx	r3
+ 1643              	.LVL101:
+ 1644 00f2 0346     		mov	r3, r0
+ 490:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 1645              		.loc 1 490 9
+ 1646 00f4 002B     		cmp	r3, #0
+ 1647 00f6 EFD0     		beq	.L87
+ 493:src/i2c_ee.c  **** 		}
+ 494:src/i2c_ee.c  **** 
+ 495:src/i2c_ee.c  **** 		I2C_SendData(I2C1, ReadAddr & 0xFF);
+ 1648              		.loc 1 495 3
+ 1649 00f8 7B88     		ldrh	r3, [r7, #2]	@ movhi
+ 1650 00fa DBB2     		uxtb	r3, r3
+ 1651 00fc 1946     		mov	r1, r3
+ 1652 00fe 5548     		ldr	r0, .L116+8
+ 1653 0100 5E4B     		ldr	r3, .L116+48
+ 1654 0102 9847     		blx	r3
+ 1655              	.LVL102:
+ 496:src/i2c_ee.c  **** 
+ 497:src/i2c_ee.c  **** 		/* Test on EV8 and clear it */
+ 498:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 1656              		.loc 1 498 11
+ 1657 0104 40F6B833 		movw	r3, #3000
+ 1658 0108 7B61     		str	r3, [r7, #20]
+ 499:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 1659              		.loc 1 499 9
+ 1660 010a 08E0     		b	.L88
+ 1661              	.L89:
+ 500:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 1662              		.loc 1 500 15
+ 1663 010c 7B69     		ldr	r3, [r7, #20]
+ 1664 010e 5A1E     		subs	r2, r3, #1
+ 1665 0110 7A61     		str	r2, [r7, #20]
+ 1666              		.loc 1 500 7
+ 1667 0112 002B     		cmp	r3, #0
+ 1668 0114 03DC     		bgt	.L88
+ 501:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 1669              		.loc 1 501 12
+ 1670 0116 4E4B     		ldr	r3, .L116+4
+ 1671 0118 9847     		blx	r3
+ 1672              	.LVL103:
+ 1673 011a 0346     		mov	r3, r0
+ 1674 011c 81E1     		b	.L80
+ 1675              	.L88:
+ 499:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 1676              		.loc 1 499 11
+ 1677 011e 5849     		ldr	r1, .L116+52
+ 1678 0120 4C48     		ldr	r0, .L116+8
+ 1679 0122 504B     		ldr	r3, .L116+24
+ 1680 0124 9847     		blx	r3
+ 1681              	.LVL104:
+ 1682 0126 0346     		mov	r3, r0
+ 499:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 1683              		.loc 1 499 9
+ 1684 0128 002B     		cmp	r3, #0
+ 1685 012a EFD0     		beq	.L89
+ 502:src/i2c_ee.c  **** 		}
+ 503:src/i2c_ee.c  **** 
+ 504:src/i2c_ee.c  **** 		/* Send STRAT condition a second time */
+ 505:src/i2c_ee.c  **** 		I2C_GenerateSTART(I2C1, ENABLE);
+ 1686              		.loc 1 505 3
+ 1687 012c 0121     		movs	r1, #1
+ 1688 012e 4948     		ldr	r0, .L116+8
+ 1689 0130 4A4B     		ldr	r3, .L116+16
+ 1690 0132 9847     		blx	r3
+ 1691              	.LVL105:
+ 506:src/i2c_ee.c  **** 
+ 507:src/i2c_ee.c  **** 		/* Test on EV5 and clear it */
+ 508:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 1692              		.loc 1 508 11
+ 1693 0134 40F6B833 		movw	r3, #3000
+ 1694 0138 7B61     		str	r3, [r7, #20]
+ 509:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) {
+ 1695              		.loc 1 509 9
+ 1696 013a 08E0     		b	.L90
+ 1697              	.L91:
+ 510:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 1698              		.loc 1 510 15
+ 1699 013c 7B69     		ldr	r3, [r7, #20]
+ 1700 013e 5A1E     		subs	r2, r3, #1
+ 1701 0140 7A61     		str	r2, [r7, #20]
+ 1702              		.loc 1 510 7
+ 1703 0142 002B     		cmp	r3, #0
+ 1704 0144 03DC     		bgt	.L90
+ 511:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 1705              		.loc 1 511 12
+ 1706 0146 424B     		ldr	r3, .L116+4
+ 1707 0148 9847     		blx	r3
+ 1708              	.LVL106:
+ 1709 014a 0346     		mov	r3, r0
+ 1710 014c 69E1     		b	.L80
+ 1711              	.L90:
+ 509:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) {
+ 1712              		.loc 1 509 11
+ 1713 014e 4449     		ldr	r1, .L116+20
+ 1714 0150 4048     		ldr	r0, .L116+8
+ 1715 0152 444B     		ldr	r3, .L116+24
+ 1716 0154 9847     		blx	r3
+ 1717              	.LVL107:
+ 1718 0156 0346     		mov	r3, r0
+ 509:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) {
+ 1719              		.loc 1 509 9
+ 1720 0158 002B     		cmp	r3, #0
+ 1721 015a EFD0     		beq	.L91
+ 512:src/i2c_ee.c  **** 		}
+ 513:src/i2c_ee.c  **** 
+ 514:src/i2c_ee.c  **** 		/* Send EEPROM address for read */
+ 515:src/i2c_ee.c  **** 		I2C_Send7bitAddress(I2C1, EEPROM_ADDRESS, I2C_Direction_Receiver);
+ 1722              		.loc 1 515 3
+ 1723 015c 424B     		ldr	r3, .L116+28
+ 1724 015e 1B88     		ldrh	r3, [r3]
+ 1725 0160 DBB2     		uxtb	r3, r3
+ 1726 0162 0122     		movs	r2, #1
+ 1727 0164 1946     		mov	r1, r3
+ 1728 0166 3B48     		ldr	r0, .L116+8
+ 1729 0168 404B     		ldr	r3, .L116+32
+ 1730 016a 9847     		blx	r3
+ 1731              	.LVL108:
+ 516:src/i2c_ee.c  **** 
+ 517:src/i2c_ee.c  **** 		/* Test on EV6 and clear it */
+ 518:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 1732              		.loc 1 518 11
+ 1733 016c 40F6B833 		movw	r3, #3000
+ 1734 0170 7B61     		str	r3, [r7, #20]
+ 519:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED)) {
+ 1735              		.loc 1 519 9
+ 1736 0172 08E0     		b	.L92
+ 1737              	.L93:
+ 520:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 1738              		.loc 1 520 15
+ 1739 0174 7B69     		ldr	r3, [r7, #20]
+ 1740 0176 5A1E     		subs	r2, r3, #1
+ 1741 0178 7A61     		str	r2, [r7, #20]
+ 1742              		.loc 1 520 7
+ 1743 017a 002B     		cmp	r3, #0
+ 1744 017c 03DC     		bgt	.L92
+ 521:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 1745              		.loc 1 521 12
+ 1746 017e 344B     		ldr	r3, .L116+4
+ 1747 0180 9847     		blx	r3
+ 1748              	.LVL109:
+ 1749 0182 0346     		mov	r3, r0
+ 1750 0184 4DE1     		b	.L80
+ 1751              	.L92:
+ 519:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED)) {
+ 1752              		.loc 1 519 11
+ 1753 0186 3F49     		ldr	r1, .L116+56
+ 1754 0188 3248     		ldr	r0, .L116+8
+ 1755 018a 364B     		ldr	r3, .L116+24
+ 1756 018c 9847     		blx	r3
+ 1757              	.LVL110:
+ 1758 018e 0346     		mov	r3, r0
+ 519:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED)) {
+ 1759              		.loc 1 519 9
+ 1760 0190 002B     		cmp	r3, #0
+ 1761 0192 EFD0     		beq	.L93
+ 522:src/i2c_ee.c  **** 		}
+ 523:src/i2c_ee.c  **** 
+ 524:src/i2c_ee.c  **** 		/* While there is data to be read */
+ 525:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 1762              		.loc 1 525 11
+ 1763 0194 40F6B833 		movw	r3, #3000
+ 1764 0198 7B61     		str	r3, [r7, #20]
+ 526:src/i2c_ee.c  **** 
+ 527:src/i2c_ee.c  **** 		while (NumByteToRead) {
+ 1765              		.loc 1 527 9
+ 1766 019a 27E0     		b	.L94
+ 1767              	.L97:
+ 528:src/i2c_ee.c  **** 			if (NumByteToRead == 1) {
+ 1768              		.loc 1 528 7
+ 1769 019c 3B88     		ldrh	r3, [r7]
+ 1770 019e 012B     		cmp	r3, #1
+ 1771 01a0 07D1     		bne	.L95
+ 529:src/i2c_ee.c  **** 				/* Disable Acknowledgement */
+ 530:src/i2c_ee.c  **** 				I2C_AcknowledgeConfig(I2C1, DISABLE);
+ 1772              		.loc 1 530 5
+ 1773 01a2 0021     		movs	r1, #0
+ 1774 01a4 2B48     		ldr	r0, .L116+8
+ 1775 01a6 384B     		ldr	r3, .L116+60
+ 1776 01a8 9847     		blx	r3
+ 1777              	.LVL111:
+ 531:src/i2c_ee.c  **** 
+ 532:src/i2c_ee.c  **** 				/* Send STOP Condition */
+ 533:src/i2c_ee.c  **** 				I2C_GenerateSTOP(I2C1, ENABLE);
+ 1778              		.loc 1 533 5
+ 1779 01aa 0121     		movs	r1, #1
+ 1780 01ac 2948     		ldr	r0, .L116+8
+ 1781 01ae 374B     		ldr	r3, .L116+64
+ 1782 01b0 9847     		blx	r3
+ 1783              	.LVL112:
+ 1784              	.L95:
+ 534:src/i2c_ee.c  **** 			}
+ 535:src/i2c_ee.c  **** 
+ 536:src/i2c_ee.c  **** 			/* Test on EV7 and clear it */
+ 537:src/i2c_ee.c  **** 			if (I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_RECEIVED)) {
+ 1785              		.loc 1 537 8
+ 1786 01b2 3749     		ldr	r1, .L116+68
+ 1787 01b4 2748     		ldr	r0, .L116+8
+ 1788 01b6 2B4B     		ldr	r3, .L116+24
+ 1789 01b8 9847     		blx	r3
+ 1790              	.LVL113:
+ 1791 01ba 0346     		mov	r3, r0
+ 1792              		.loc 1 537 7
+ 1793 01bc 002B     		cmp	r3, #0
+ 1794 01be 0CD0     		beq	.L96
+ 538:src/i2c_ee.c  **** 				/* Read a byte from the EEPROM */
+ 539:src/i2c_ee.c  **** 				*pBuffer = I2C_ReceiveData(I2C1);
+ 1795              		.loc 1 539 16
+ 1796 01c0 2448     		ldr	r0, .L116+8
+ 1797 01c2 344B     		ldr	r3, .L116+72
+ 1798 01c4 9847     		blx	r3
+ 1799              	.LVL114:
+ 1800 01c6 0346     		mov	r3, r0
+ 1801 01c8 1A46     		mov	r2, r3
+ 1802              		.loc 1 539 14
+ 1803 01ca 7B68     		ldr	r3, [r7, #4]
+ 1804 01cc 1A70     		strb	r2, [r3]
+ 540:src/i2c_ee.c  **** 
+ 541:src/i2c_ee.c  **** 				/* Point to the next location where the byte read will be saved */
+ 542:src/i2c_ee.c  **** 				pBuffer++;
+ 1805              		.loc 1 542 12
+ 1806 01ce 7B68     		ldr	r3, [r7, #4]
+ 1807 01d0 0133     		adds	r3, r3, #1
+ 1808 01d2 7B60     		str	r3, [r7, #4]
+ 543:src/i2c_ee.c  **** 
+ 544:src/i2c_ee.c  **** 				/* Decrement the read bytes counter */
+ 545:src/i2c_ee.c  **** 				NumByteToRead--;
+ 1809              		.loc 1 545 18
+ 1810 01d4 3B88     		ldrh	r3, [r7]
+ 1811 01d6 013B     		subs	r3, r3, #1
+ 1812 01d8 3B80     		strh	r3, [r7]	@ movhi
+ 1813              	.L96:
+ 546:src/i2c_ee.c  **** 
+ 547:src/i2c_ee.c  **** 			}
+ 548:src/i2c_ee.c  **** 
+ 549:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 1814              		.loc 1 549 15
+ 1815 01da 7B69     		ldr	r3, [r7, #20]
+ 1816 01dc 5A1E     		subs	r2, r3, #1
+ 1817 01de 7A61     		str	r2, [r7, #20]
+ 1818              		.loc 1 549 7
+ 1819 01e0 002B     		cmp	r3, #0
+ 1820 01e2 03DC     		bgt	.L94
+ 550:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 1821              		.loc 1 550 12
+ 1822 01e4 1A4B     		ldr	r3, .L116+4
+ 1823 01e6 9847     		blx	r3
+ 1824              	.LVL115:
+ 1825 01e8 0346     		mov	r3, r0
+ 1826 01ea 1AE1     		b	.L80
+ 1827              	.L94:
+ 527:src/i2c_ee.c  **** 			if (NumByteToRead == 1) {
+ 1828              		.loc 1 527 9
+ 1829 01ec 3B88     		ldrh	r3, [r7]
+ 1830 01ee 002B     		cmp	r3, #0
+ 1831 01f0 D4D1     		bne	.L97
+ 551:src/i2c_ee.c  **** 		}
+ 552:src/i2c_ee.c  **** 
+ 553:src/i2c_ee.c  **** 		/* Enable Acknowledgement to be ready for another reception */
+ 554:src/i2c_ee.c  **** 		I2C_AcknowledgeConfig(I2C1, ENABLE);
+ 1832              		.loc 1 554 3
+ 1833 01f2 0121     		movs	r1, #1
+ 1834 01f4 1748     		ldr	r0, .L116+8
+ 1835 01f6 244B     		ldr	r3, .L116+60
+ 1836 01f8 9847     		blx	r3
+ 1837              	.LVL116:
+ 555:src/i2c_ee.c  **** 		return true;
+ 1838              		.loc 1 555 10
+ 1839 01fa 0123     		movs	r3, #1
+ 1840 01fc 11E1     		b	.L80
+ 1841              	.L78:
+ 1842              	.LBE6:
+ 1843              	.LBB7:
+ 556:src/i2c_ee.c  **** 	} else {
+ 557:src/i2c_ee.c  **** 		int counter = RETRY_NUMBER;
+ 1844              		.loc 1 557 7
+ 1845 01fe 40F6B833 		movw	r3, #3000
+ 1846 0202 3B61     		str	r3, [r7, #16]
+ 558:src/i2c_ee.c  **** 		/* While the bus is busy */
+ 559:src/i2c_ee.c  **** 
+ 560:src/i2c_ee.c  **** 		while (I2C_GetFlagStatus(I2C1, I2C_FLAG_BUSY)) {
+ 1847              		.loc 1 560 9
+ 1848 0204 08E0     		b	.L98
+ 1849              	.L99:
+ 561:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 1850              		.loc 1 561 15
+ 1851 0206 3B69     		ldr	r3, [r7, #16]
+ 1852 0208 5A1E     		subs	r2, r3, #1
+ 1853 020a 3A61     		str	r2, [r7, #16]
+ 1854              		.loc 1 561 7
+ 1855 020c 002B     		cmp	r3, #0
+ 1856 020e 03DC     		bgt	.L98
+ 562:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 1857              		.loc 1 562 12
+ 1858 0210 0F4B     		ldr	r3, .L116+4
+ 1859 0212 9847     		blx	r3
+ 1860              	.LVL117:
+ 1861 0214 0346     		mov	r3, r0
+ 1862 0216 04E1     		b	.L80
+ 1863              	.L98:
+ 560:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 1864              		.loc 1 560 10
+ 1865 0218 4FF40031 		mov	r1, #131072
+ 1866 021c 0D48     		ldr	r0, .L116+8
+ 1867 021e 0E4B     		ldr	r3, .L116+12
+ 1868 0220 9847     		blx	r3
+ 1869              	.LVL118:
+ 1870 0222 0346     		mov	r3, r0
+ 560:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 1871              		.loc 1 560 9
+ 1872 0224 002B     		cmp	r3, #0
+ 1873 0226 EED1     		bne	.L99
+ 563:src/i2c_ee.c  **** 		}
+ 564:src/i2c_ee.c  **** 
+ 565:src/i2c_ee.c  **** 		/* Send START condition */
+ 566:src/i2c_ee.c  **** 		I2C_GenerateSTART(I2C1, ENABLE);
+ 1874              		.loc 1 566 3
+ 1875 0228 0121     		movs	r1, #1
+ 1876 022a 0A48     		ldr	r0, .L116+8
+ 1877 022c 0B4B     		ldr	r3, .L116+16
+ 1878 022e 9847     		blx	r3
+ 1879              	.LVL119:
+ 567:src/i2c_ee.c  **** 
+ 568:src/i2c_ee.c  **** 		/* Test on EV5 and clear it */
+ 569:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 1880              		.loc 1 569 11
+ 1881 0230 40F6B833 		movw	r3, #3000
+ 1882 0234 3B61     		str	r3, [r7, #16]
+ 570:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) {
+ 1883              		.loc 1 570 9
+ 1884 0236 2FE0     		b	.L100
+ 1885              	.L101:
+ 571:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 1886              		.loc 1 571 15
+ 1887 0238 3B69     		ldr	r3, [r7, #16]
+ 1888 023a 5A1E     		subs	r2, r3, #1
+ 1889 023c 3A61     		str	r2, [r7, #16]
+ 1890              		.loc 1 571 7
+ 1891 023e 002B     		cmp	r3, #0
+ 1892 0240 2ADC     		bgt	.L100
+ 572:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 1893              		.loc 1 572 12
+ 1894 0242 034B     		ldr	r3, .L116+4
+ 1895 0244 9847     		blx	r3
+ 1896              	.LVL120:
+ 1897 0246 0346     		mov	r3, r0
+ 1898 0248 EBE0     		b	.L80
+ 1899              	.L117:
+ 1900 024a 00BF     		.align	2
+ 1901              	.L116:
+ 1902 024c 00000000 		.word	initMK
+ 1903 0250 00000000 		.word	I2C_EE_Relaunch
+ 1904 0254 00540040 		.word	1073763328
+ 1905 0258 00000000 		.word	I2C_GetFlagStatus
+ 1906 025c 00000000 		.word	I2C_GenerateSTART
+ 1907 0260 01000300 		.word	196609
+ 1908 0264 00000000 		.word	I2C_CheckEvent
+ 1909 0268 00000000 		.word	EEPROM_ADDRESS
+ 1910 026c 00000000 		.word	I2C_Send7bitAddress
+ 1911 0270 02000010 		.word	268435458
+ 1912 0274 00000000 		.word	I2C_ReadRegister
+ 1913 0278 00000000 		.word	I2C_Cmd
+ 1914 027c 00000000 		.word	I2C_SendData
+ 1915 0280 84000700 		.word	458884
+ 1916 0284 02000300 		.word	196610
+ 1917 0288 00000000 		.word	I2C_AcknowledgeConfig
+ 1918 028c 00000000 		.word	I2C_GenerateSTOP
+ 1919 0290 40000300 		.word	196672
+ 1920 0294 00000000 		.word	I2C_ReceiveData
+ 1921              	.L100:
+ 570:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) {
+ 1922              		.loc 1 570 11
+ 1923 0298 6449     		ldr	r1, .L118
+ 1924 029a 6548     		ldr	r0, .L118+4
+ 1925 029c 654B     		ldr	r3, .L118+8
+ 1926 029e 9847     		blx	r3
+ 1927              	.LVL121:
+ 1928 02a0 0346     		mov	r3, r0
+ 570:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) {
+ 1929              		.loc 1 570 9
+ 1930 02a2 002B     		cmp	r3, #0
+ 1931 02a4 C8D0     		beq	.L101
+ 573:src/i2c_ee.c  **** 		}
+ 574:src/i2c_ee.c  **** 
+ 575:src/i2c_ee.c  **** 		/* Send EEPROM address for write */
+ 576:src/i2c_ee.c  **** 		I2C_Send7bitAddress(I2C1, EEPROM_ADDRESS, I2C_Direction_Transmitter);
+ 1932              		.loc 1 576 3
+ 1933 02a6 644B     		ldr	r3, .L118+12
+ 1934 02a8 1B88     		ldrh	r3, [r3]
+ 1935 02aa DBB2     		uxtb	r3, r3
+ 1936 02ac 0022     		movs	r2, #0
+ 1937 02ae 1946     		mov	r1, r3
+ 1938 02b0 5F48     		ldr	r0, .L118+4
+ 1939 02b2 624B     		ldr	r3, .L118+16
+ 1940 02b4 9847     		blx	r3
+ 1941              	.LVL122:
+ 577:src/i2c_ee.c  **** 
+ 578:src/i2c_ee.c  **** 		/* Test on EV6 and clear it */
+ 579:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 1942              		.loc 1 579 11
+ 1943 02b6 40F6B833 		movw	r3, #3000
+ 1944 02ba 3B61     		str	r3, [r7, #16]
+ 580:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) {
+ 1945              		.loc 1 580 9
+ 1946 02bc 08E0     		b	.L102
+ 1947              	.L103:
+ 581:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 1948              		.loc 1 581 15
+ 1949 02be 3B69     		ldr	r3, [r7, #16]
+ 1950 02c0 5A1E     		subs	r2, r3, #1
+ 1951 02c2 3A61     		str	r2, [r7, #16]
+ 1952              		.loc 1 581 7
+ 1953 02c4 002B     		cmp	r3, #0
+ 1954 02c6 03DC     		bgt	.L102
+ 582:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 1955              		.loc 1 582 12
+ 1956 02c8 5D4B     		ldr	r3, .L118+20
+ 1957 02ca 9847     		blx	r3
+ 1958              	.LVL123:
+ 1959 02cc 0346     		mov	r3, r0
+ 1960 02ce A8E0     		b	.L80
+ 1961              	.L102:
+ 580:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) {
+ 1962              		.loc 1 580 11
+ 1963 02d0 5C49     		ldr	r1, .L118+24
+ 1964 02d2 5748     		ldr	r0, .L118+4
+ 1965 02d4 574B     		ldr	r3, .L118+8
+ 1966 02d6 9847     		blx	r3
+ 1967              	.LVL124:
+ 1968 02d8 0346     		mov	r3, r0
+ 580:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) {
+ 1969              		.loc 1 580 9
+ 1970 02da 002B     		cmp	r3, #0
+ 1971 02dc EFD0     		beq	.L103
+ 583:src/i2c_ee.c  **** 		}
+ 584:src/i2c_ee.c  **** 
+ 585:src/i2c_ee.c  **** 		/* Clear EV6 by setting again the PE bit */
+ 586:src/i2c_ee.c  **** 		I2C_Cmd(I2C1, ENABLE);
+ 1972              		.loc 1 586 3
+ 1973 02de 0121     		movs	r1, #1
+ 1974 02e0 5348     		ldr	r0, .L118+4
+ 1975 02e2 594B     		ldr	r3, .L118+28
+ 1976 02e4 9847     		blx	r3
+ 1977              	.LVL125:
+ 587:src/i2c_ee.c  **** 
+ 588:src/i2c_ee.c  **** 		/* Send the EEPROM's internal address to write to */
+ 589:src/i2c_ee.c  **** 		I2C_SendData(I2C1, (ReadAddr >> 8) & 0xFF);
+ 1978              		.loc 1 589 3
+ 1979 02e6 7B88     		ldrh	r3, [r7, #2]
+ 1980 02e8 1B0A     		lsrs	r3, r3, #8
+ 1981 02ea 9BB2     		uxth	r3, r3
+ 1982 02ec DBB2     		uxtb	r3, r3
+ 1983 02ee 1946     		mov	r1, r3
+ 1984 02f0 4F48     		ldr	r0, .L118+4
+ 1985 02f2 564B     		ldr	r3, .L118+32
+ 1986 02f4 9847     		blx	r3
+ 1987              	.LVL126:
+ 590:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 1988              		.loc 1 590 11
+ 1989 02f6 40F6B833 		movw	r3, #3000
+ 1990 02fa 3B61     		str	r3, [r7, #16]
+ 591:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 1991              		.loc 1 591 9
+ 1992 02fc 08E0     		b	.L104
+ 1993              	.L105:
+ 592:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 1994              		.loc 1 592 15
+ 1995 02fe 3B69     		ldr	r3, [r7, #16]
+ 1996 0300 5A1E     		subs	r2, r3, #1
+ 1997 0302 3A61     		str	r2, [r7, #16]
+ 1998              		.loc 1 592 7
+ 1999 0304 002B     		cmp	r3, #0
+ 2000 0306 03DC     		bgt	.L104
+ 593:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 2001              		.loc 1 593 12
+ 2002 0308 4D4B     		ldr	r3, .L118+20
+ 2003 030a 9847     		blx	r3
+ 2004              	.LVL127:
+ 2005 030c 0346     		mov	r3, r0
+ 2006 030e 88E0     		b	.L80
+ 2007              	.L104:
+ 591:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 2008              		.loc 1 591 11
+ 2009 0310 4F49     		ldr	r1, .L118+36
+ 2010 0312 4748     		ldr	r0, .L118+4
+ 2011 0314 474B     		ldr	r3, .L118+8
+ 2012 0316 9847     		blx	r3
+ 2013              	.LVL128:
+ 2014 0318 0346     		mov	r3, r0
+ 591:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 2015              		.loc 1 591 9
+ 2016 031a 002B     		cmp	r3, #0
+ 2017 031c EFD0     		beq	.L105
+ 594:src/i2c_ee.c  **** 		}
+ 595:src/i2c_ee.c  **** 
+ 596:src/i2c_ee.c  **** 		I2C_SendData(I2C1, ReadAddr & 0xFF);
+ 2018              		.loc 1 596 3
+ 2019 031e 7B88     		ldrh	r3, [r7, #2]	@ movhi
+ 2020 0320 DBB2     		uxtb	r3, r3
+ 2021 0322 1946     		mov	r1, r3
+ 2022 0324 4248     		ldr	r0, .L118+4
+ 2023 0326 494B     		ldr	r3, .L118+32
+ 2024 0328 9847     		blx	r3
+ 2025              	.LVL129:
+ 597:src/i2c_ee.c  **** 
+ 598:src/i2c_ee.c  **** 		/* Test on EV8 and clear it */
+ 599:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 2026              		.loc 1 599 11
+ 2027 032a 40F6B833 		movw	r3, #3000
+ 2028 032e 3B61     		str	r3, [r7, #16]
+ 600:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 2029              		.loc 1 600 9
+ 2030 0330 08E0     		b	.L106
+ 2031              	.L107:
+ 601:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 2032              		.loc 1 601 15
+ 2033 0332 3B69     		ldr	r3, [r7, #16]
+ 2034 0334 5A1E     		subs	r2, r3, #1
+ 2035 0336 3A61     		str	r2, [r7, #16]
+ 2036              		.loc 1 601 7
+ 2037 0338 002B     		cmp	r3, #0
+ 2038 033a 03DC     		bgt	.L106
+ 602:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 2039              		.loc 1 602 12
+ 2040 033c 404B     		ldr	r3, .L118+20
+ 2041 033e 9847     		blx	r3
+ 2042              	.LVL130:
+ 2043 0340 0346     		mov	r3, r0
+ 2044 0342 6EE0     		b	.L80
+ 2045              	.L106:
+ 600:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 2046              		.loc 1 600 11
+ 2047 0344 4249     		ldr	r1, .L118+36
+ 2048 0346 3A48     		ldr	r0, .L118+4
+ 2049 0348 3A4B     		ldr	r3, .L118+8
+ 2050 034a 9847     		blx	r3
+ 2051              	.LVL131:
+ 2052 034c 0346     		mov	r3, r0
+ 600:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) {
+ 2053              		.loc 1 600 9
+ 2054 034e 002B     		cmp	r3, #0
+ 2055 0350 EFD0     		beq	.L107
+ 603:src/i2c_ee.c  **** 		}
+ 604:src/i2c_ee.c  **** 
+ 605:src/i2c_ee.c  **** 		/* Send STRAT condition a second time */
+ 606:src/i2c_ee.c  **** 		I2C_GenerateSTART(I2C1, ENABLE);
+ 2056              		.loc 1 606 3
+ 2057 0352 0121     		movs	r1, #1
+ 2058 0354 3648     		ldr	r0, .L118+4
+ 2059 0356 3F4B     		ldr	r3, .L118+40
+ 2060 0358 9847     		blx	r3
+ 2061              	.LVL132:
+ 607:src/i2c_ee.c  **** 
+ 608:src/i2c_ee.c  **** 		/* Test on EV5 and clear it */
+ 609:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 2062              		.loc 1 609 11
+ 2063 035a 40F6B833 		movw	r3, #3000
+ 2064 035e 3B61     		str	r3, [r7, #16]
+ 610:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) {
+ 2065              		.loc 1 610 9
+ 2066 0360 08E0     		b	.L108
+ 2067              	.L109:
+ 611:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 2068              		.loc 1 611 15
+ 2069 0362 3B69     		ldr	r3, [r7, #16]
+ 2070 0364 5A1E     		subs	r2, r3, #1
+ 2071 0366 3A61     		str	r2, [r7, #16]
+ 2072              		.loc 1 611 7
+ 2073 0368 002B     		cmp	r3, #0
+ 2074 036a 03DC     		bgt	.L108
+ 612:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 2075              		.loc 1 612 12
+ 2076 036c 344B     		ldr	r3, .L118+20
+ 2077 036e 9847     		blx	r3
+ 2078              	.LVL133:
+ 2079 0370 0346     		mov	r3, r0
+ 2080 0372 56E0     		b	.L80
+ 2081              	.L108:
+ 610:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) {
+ 2082              		.loc 1 610 11
+ 2083 0374 2D49     		ldr	r1, .L118
+ 2084 0376 2E48     		ldr	r0, .L118+4
+ 2085 0378 2E4B     		ldr	r3, .L118+8
+ 2086 037a 9847     		blx	r3
+ 2087              	.LVL134:
+ 2088 037c 0346     		mov	r3, r0
+ 610:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) {
+ 2089              		.loc 1 610 9
+ 2090 037e 002B     		cmp	r3, #0
+ 2091 0380 EFD0     		beq	.L109
+ 613:src/i2c_ee.c  **** 		}
+ 614:src/i2c_ee.c  **** 
+ 615:src/i2c_ee.c  **** 		/* Send EEPROM address for read */
+ 616:src/i2c_ee.c  **** 		I2C_Send7bitAddress(I2C1, EEPROM_ADDRESS, I2C_Direction_Receiver);
+ 2092              		.loc 1 616 3
+ 2093 0382 2D4B     		ldr	r3, .L118+12
+ 2094 0384 1B88     		ldrh	r3, [r3]
+ 2095 0386 DBB2     		uxtb	r3, r3
+ 2096 0388 0122     		movs	r2, #1
+ 2097 038a 1946     		mov	r1, r3
+ 2098 038c 2848     		ldr	r0, .L118+4
+ 2099 038e 2B4B     		ldr	r3, .L118+16
+ 2100 0390 9847     		blx	r3
+ 2101              	.LVL135:
+ 617:src/i2c_ee.c  **** 
+ 618:src/i2c_ee.c  **** 		/* Test on EV6 and clear it */
+ 619:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 2102              		.loc 1 619 11
+ 2103 0392 40F6B833 		movw	r3, #3000
+ 2104 0396 3B61     		str	r3, [r7, #16]
+ 620:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED)) {
+ 2105              		.loc 1 620 9
+ 2106 0398 08E0     		b	.L110
+ 2107              	.L111:
+ 621:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 2108              		.loc 1 621 15
+ 2109 039a 3B69     		ldr	r3, [r7, #16]
+ 2110 039c 5A1E     		subs	r2, r3, #1
+ 2111 039e 3A61     		str	r2, [r7, #16]
+ 2112              		.loc 1 621 7
+ 2113 03a0 002B     		cmp	r3, #0
+ 2114 03a2 03DC     		bgt	.L110
+ 622:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 2115              		.loc 1 622 12
+ 2116 03a4 264B     		ldr	r3, .L118+20
+ 2117 03a6 9847     		blx	r3
+ 2118              	.LVL136:
+ 2119 03a8 0346     		mov	r3, r0
+ 2120 03aa 3AE0     		b	.L80
+ 2121              	.L110:
+ 620:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED)) {
+ 2122              		.loc 1 620 11
+ 2123 03ac 2A49     		ldr	r1, .L118+44
+ 2124 03ae 2048     		ldr	r0, .L118+4
+ 2125 03b0 204B     		ldr	r3, .L118+8
+ 2126 03b2 9847     		blx	r3
+ 2127              	.LVL137:
+ 2128 03b4 0346     		mov	r3, r0
+ 620:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED)) {
+ 2129              		.loc 1 620 9
+ 2130 03b6 002B     		cmp	r3, #0
+ 2131 03b8 EFD0     		beq	.L111
+ 623:src/i2c_ee.c  **** 		}
+ 624:src/i2c_ee.c  **** 
+ 625:src/i2c_ee.c  **** 		/* While there is data to be read */
+ 626:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 2132              		.loc 1 626 11
+ 2133 03ba 40F6B833 		movw	r3, #3000
+ 2134 03be 3B61     		str	r3, [r7, #16]
+ 627:src/i2c_ee.c  **** 
+ 628:src/i2c_ee.c  **** 		while (NumByteToRead) {
+ 2135              		.loc 1 628 9
+ 2136 03c0 27E0     		b	.L112
+ 2137              	.L115:
+ 629:src/i2c_ee.c  **** 			if (NumByteToRead == 1) {
+ 2138              		.loc 1 629 7
+ 2139 03c2 3B88     		ldrh	r3, [r7]
+ 2140 03c4 012B     		cmp	r3, #1
+ 2141 03c6 07D1     		bne	.L113
+ 630:src/i2c_ee.c  **** 				/* Disable Acknowledgement */
+ 631:src/i2c_ee.c  **** 				I2C_AcknowledgeConfig(I2C1, DISABLE);
+ 2142              		.loc 1 631 5
+ 2143 03c8 0021     		movs	r1, #0
+ 2144 03ca 1948     		ldr	r0, .L118+4
+ 2145 03cc 234B     		ldr	r3, .L118+48
+ 2146 03ce 9847     		blx	r3
+ 2147              	.LVL138:
+ 632:src/i2c_ee.c  **** 
+ 633:src/i2c_ee.c  **** 				/* Send STOP Condition */
+ 634:src/i2c_ee.c  **** 				I2C_GenerateSTOP(I2C1, ENABLE);
+ 2148              		.loc 1 634 5
+ 2149 03d0 0121     		movs	r1, #1
+ 2150 03d2 1748     		ldr	r0, .L118+4
+ 2151 03d4 224B     		ldr	r3, .L118+52
+ 2152 03d6 9847     		blx	r3
+ 2153              	.LVL139:
+ 2154              	.L113:
+ 635:src/i2c_ee.c  **** 			}
+ 636:src/i2c_ee.c  **** 
+ 637:src/i2c_ee.c  **** 			/* Test on EV7 and clear it */
+ 638:src/i2c_ee.c  **** 			if (I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_RECEIVED)) {
+ 2155              		.loc 1 638 8
+ 2156 03d8 2249     		ldr	r1, .L118+56
+ 2157 03da 1548     		ldr	r0, .L118+4
+ 2158 03dc 154B     		ldr	r3, .L118+8
+ 2159 03de 9847     		blx	r3
+ 2160              	.LVL140:
+ 2161 03e0 0346     		mov	r3, r0
+ 2162              		.loc 1 638 7
+ 2163 03e2 002B     		cmp	r3, #0
+ 2164 03e4 0CD0     		beq	.L114
+ 639:src/i2c_ee.c  **** 				/* Read a byte from the EEPROM */
+ 640:src/i2c_ee.c  **** 				*pBuffer = I2C_ReceiveData(I2C1);
+ 2165              		.loc 1 640 16
+ 2166 03e6 1248     		ldr	r0, .L118+4
+ 2167 03e8 1F4B     		ldr	r3, .L118+60
+ 2168 03ea 9847     		blx	r3
+ 2169              	.LVL141:
+ 2170 03ec 0346     		mov	r3, r0
+ 2171 03ee 1A46     		mov	r2, r3
+ 2172              		.loc 1 640 14
+ 2173 03f0 7B68     		ldr	r3, [r7, #4]
+ 2174 03f2 1A70     		strb	r2, [r3]
+ 641:src/i2c_ee.c  **** 
+ 642:src/i2c_ee.c  **** 				/* Point to the next location where the byte read will be saved */
+ 643:src/i2c_ee.c  **** 				pBuffer++;
+ 2175              		.loc 1 643 12
+ 2176 03f4 7B68     		ldr	r3, [r7, #4]
+ 2177 03f6 0133     		adds	r3, r3, #1
+ 2178 03f8 7B60     		str	r3, [r7, #4]
+ 644:src/i2c_ee.c  **** 
+ 645:src/i2c_ee.c  **** 				/* Decrement the read bytes counter */
+ 646:src/i2c_ee.c  **** 				NumByteToRead--;
+ 2179              		.loc 1 646 18
+ 2180 03fa 3B88     		ldrh	r3, [r7]
+ 2181 03fc 013B     		subs	r3, r3, #1
+ 2182 03fe 3B80     		strh	r3, [r7]	@ movhi
+ 2183              	.L114:
+ 647:src/i2c_ee.c  **** 
+ 648:src/i2c_ee.c  **** 			}
+ 649:src/i2c_ee.c  **** 
+ 650:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 2184              		.loc 1 650 15
+ 2185 0400 3B69     		ldr	r3, [r7, #16]
+ 2186 0402 5A1E     		subs	r2, r3, #1
+ 2187 0404 3A61     		str	r2, [r7, #16]
+ 2188              		.loc 1 650 7
+ 2189 0406 002B     		cmp	r3, #0
+ 2190 0408 03DC     		bgt	.L112
+ 651:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 2191              		.loc 1 651 12
+ 2192 040a 0D4B     		ldr	r3, .L118+20
+ 2193 040c 9847     		blx	r3
+ 2194              	.LVL142:
+ 2195 040e 0346     		mov	r3, r0
+ 2196 0410 07E0     		b	.L80
+ 2197              	.L112:
+ 628:src/i2c_ee.c  **** 			if (NumByteToRead == 1) {
+ 2198              		.loc 1 628 9
+ 2199 0412 3B88     		ldrh	r3, [r7]
+ 2200 0414 002B     		cmp	r3, #0
+ 2201 0416 D4D1     		bne	.L115
+ 652:src/i2c_ee.c  **** 		}
+ 653:src/i2c_ee.c  **** 
+ 654:src/i2c_ee.c  **** 		/* Enable Acknowledgement to be ready for another reception */
+ 655:src/i2c_ee.c  **** 		I2C_AcknowledgeConfig(I2C1, ENABLE);
+ 2202              		.loc 1 655 3
+ 2203 0418 0121     		movs	r1, #1
+ 2204 041a 0548     		ldr	r0, .L118+4
+ 2205 041c 0F4B     		ldr	r3, .L118+48
+ 2206 041e 9847     		blx	r3
+ 2207              	.LVL143:
+ 656:src/i2c_ee.c  **** 		return true;
+ 2208              		.loc 1 656 10
+ 2209 0420 0123     		movs	r3, #1
+ 2210              	.L80:
+ 2211              	.LBE7:
+ 657:src/i2c_ee.c  **** 
+ 658:src/i2c_ee.c  **** 	}
+ 659:src/i2c_ee.c  **** 
+ 660:src/i2c_ee.c  **** }
+ 2212              		.loc 1 660 1
+ 2213 0422 1846     		mov	r0, r3
+ 2214 0424 1837     		adds	r7, r7, #24
+ 2215              	.LCFI25:
+ 2216              		.cfi_def_cfa_offset 8
+ 2217 0426 BD46     		mov	sp, r7
+ 2218              	.LCFI26:
+ 2219              		.cfi_def_cfa_register 13
+ 2220              		@ sp needed
+ 2221 0428 80BD     		pop	{r7, pc}
+ 2222              	.L119:
+ 2223 042a 00BF     		.align	2
+ 2224              	.L118:
+ 2225 042c 01000300 		.word	196609
+ 2226 0430 00540040 		.word	1073763328
+ 2227 0434 00000000 		.word	I2C_CheckEvent
+ 2228 0438 00000000 		.word	EEPROM_ADDRESS
+ 2229 043c 00000000 		.word	I2C_Send7bitAddress
+ 2230 0440 00000000 		.word	I2C_EE_Relaunch
+ 2231 0444 82000700 		.word	458882
+ 2232 0448 00000000 		.word	I2C_Cmd
+ 2233 044c 00000000 		.word	I2C_SendData
+ 2234 0450 84000700 		.word	458884
+ 2235 0454 00000000 		.word	I2C_GenerateSTART
+ 2236 0458 02000300 		.word	196610
+ 2237 045c 00000000 		.word	I2C_AcknowledgeConfig
+ 2238 0460 00000000 		.word	I2C_GenerateSTOP
+ 2239 0464 40000300 		.word	196672
+ 2240 0468 00000000 		.word	I2C_ReceiveData
+ 2241              		.cfi_endproc
+ 2242              	.LFE32:
+ 2244              		.section	.text.I2C_EE_WaitEepromStandbyState,"ax",%progbits
+ 2245              		.align	1
+ 2246              		.global	I2C_EE_WaitEepromStandbyState
+ 2247              		.syntax unified
+ 2248              		.thumb
+ 2249              		.thumb_func
+ 2251              	I2C_EE_WaitEepromStandbyState:
+ 2252              	.LFB33:
+ 661:src/i2c_ee.c  **** 
+ 662:src/i2c_ee.c  **** /*******************************************************************************
+ 663:src/i2c_ee.c  ****  * Function Name  : I2C_EE_WaitEepromStandbyState
+ 664:src/i2c_ee.c  ****  * Description    : Wait for EEPROM Standby state
+ 665:src/i2c_ee.c  ****  * Input          : None
+ 666:src/i2c_ee.c  ****  * Output         : None
+ 667:src/i2c_ee.c  ****  * Return         : None
+ 668:src/i2c_ee.c  ****  *******************************************************************************/
+ 669:src/i2c_ee.c  **** bool I2C_EE_WaitEepromStandbyState(void) {
+ 2253              		.loc 1 669 42
+ 2254              		.cfi_startproc
+ 2255              		@ args = 0, pretend = 0, frame = 16
+ 2256              		@ frame_needed = 1, uses_anonymous_args = 0
+ 2257 0000 80B5     		push	{r7, lr}
+ 2258              	.LCFI27:
+ 2259              		.cfi_def_cfa_offset 8
+ 2260              		.cfi_offset 7, -8
+ 2261              		.cfi_offset 14, -4
+ 2262 0002 84B0     		sub	sp, sp, #16
+ 2263              	.LCFI28:
+ 2264              		.cfi_def_cfa_offset 24
+ 2265 0004 00AF     		add	r7, sp, #0
+ 2266              	.LCFI29:
+ 2267              		.cfi_def_cfa_register 7
+ 670:src/i2c_ee.c  **** 
+ 671:src/i2c_ee.c  **** 	if (initMK == 1) {
+ 2268              		.loc 1 671 13
+ 2269 0006 4B4B     		ldr	r3, .L131
+ 2270 0008 1B68     		ldr	r3, [r3]
+ 2271              		.loc 1 671 5
+ 2272 000a 012B     		cmp	r3, #1
+ 2273 000c 5BD1     		bne	.L121
+ 2274              	.LBB8:
+ 672:src/i2c_ee.c  **** 		vu16 SR1_Tmp = 0;
+ 2275              		.loc 1 672 8
+ 2276 000e 0023     		movs	r3, #0
+ 2277 0010 FB80     		strh	r3, [r7, #6]	@ movhi
+ 673:src/i2c_ee.c  **** 		int counter = RETRY_NUMBER;
+ 2278              		.loc 1 673 7
+ 2279 0012 40F6B833 		movw	r3, #3000
+ 2280 0016 FB60     		str	r3, [r7, #12]
+ 674:src/i2c_ee.c  **** 
+ 675:src/i2c_ee.c  **** 		//do
+ 676:src/i2c_ee.c  **** 		//{
+ 677:src/i2c_ee.c  **** 		/* Send START condition */
+ 678:src/i2c_ee.c  **** 		//I2C_GenerateSTART(I2C1, ENABLE);
+ 679:src/i2c_ee.c  **** 		/* Read I2C1 SR1 register */
+ 680:src/i2c_ee.c  **** 		//SR1_Tmp = I2C_ReadRegister(I2C1, I2C_Register_SR1);
+ 681:src/i2c_ee.c  **** 		/* Send EEPROM address for write */
+ 682:src/i2c_ee.c  **** 		// I2C_Send7bitAddress(I2C1, EEPROM_ADDRESS, I2C_Direction_Transmitter);
+ 683:src/i2c_ee.c  **** 		// if(counter-- <= 0) return I2C_EE_Relaunch();
+ 684:src/i2c_ee.c  **** 		//}while(!(I2C_ReadRegister(I2C1, I2C_Register_SR1) & 0x0002));
+ 685:src/i2c_ee.c  **** 		while (I2C_GetFlagStatus(I2C1, I2C_FLAG_BUSY)) {
+ 2281              		.loc 1 685 9
+ 2282 0018 08E0     		b	.L122
+ 2283              	.L124:
+ 686:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 2284              		.loc 1 686 15
+ 2285 001a FB68     		ldr	r3, [r7, #12]
+ 2286 001c 5A1E     		subs	r2, r3, #1
+ 2287 001e FA60     		str	r2, [r7, #12]
+ 2288              		.loc 1 686 7
+ 2289 0020 002B     		cmp	r3, #0
+ 2290 0022 03DC     		bgt	.L122
+ 687:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 2291              		.loc 1 687 12
+ 2292 0024 444B     		ldr	r3, .L131+4
+ 2293 0026 9847     		blx	r3
+ 2294              	.LVL144:
+ 2295 0028 0346     		mov	r3, r0
+ 2296 002a 7EE0     		b	.L123
+ 2297              	.L122:
+ 685:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 2298              		.loc 1 685 10
+ 2299 002c 4FF40031 		mov	r1, #131072
+ 2300 0030 4248     		ldr	r0, .L131+8
+ 2301 0032 434B     		ldr	r3, .L131+12
+ 2302 0034 9847     		blx	r3
+ 2303              	.LVL145:
+ 2304 0036 0346     		mov	r3, r0
+ 685:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 2305              		.loc 1 685 9
+ 2306 0038 002B     		cmp	r3, #0
+ 2307 003a EED1     		bne	.L124
+ 688:src/i2c_ee.c  **** 		}
+ 689:src/i2c_ee.c  **** 		/* Send START condition*/
+ 690:src/i2c_ee.c  **** 		I2C_GenerateSTART(I2C1, ENABLE);
+ 2308              		.loc 1 690 3
+ 2309 003c 0121     		movs	r1, #1
+ 2310 003e 3F48     		ldr	r0, .L131+8
+ 2311 0040 404B     		ldr	r3, .L131+16
+ 2312 0042 9847     		blx	r3
+ 2313              	.LVL146:
+ 691:src/i2c_ee.c  **** 		/* Read I2C1 SR1 register*/
+ 692:src/i2c_ee.c  **** 		SR1_Tmp = I2C_ReadRegister(I2C1, I2C_Register_SR1);
+ 2314              		.loc 1 692 13
+ 2315 0044 1421     		movs	r1, #20
+ 2316 0046 3D48     		ldr	r0, .L131+8
+ 2317 0048 3F4B     		ldr	r3, .L131+20
+ 2318 004a 9847     		blx	r3
+ 2319              	.LVL147:
+ 2320 004c 0346     		mov	r3, r0
+ 2321              		.loc 1 692 11
+ 2322 004e FB80     		strh	r3, [r7, #6]	@ movhi
+ 693:src/i2c_ee.c  **** 
+ 694:src/i2c_ee.c  **** 		I2C_ClearFlag(I2C1, I2C_FLAG_ADDR);
+ 2323              		.loc 1 694 3
+ 2324 0050 3E49     		ldr	r1, .L131+24
+ 2325 0052 3A48     		ldr	r0, .L131+8
+ 2326 0054 3E4B     		ldr	r3, .L131+28
+ 2327 0056 9847     		blx	r3
+ 2328              	.LVL148:
+ 695:src/i2c_ee.c  **** 
+ 696:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) {
+ 2329              		.loc 1 696 9
+ 2330 0058 08E0     		b	.L125
+ 2331              	.L126:
+ 697:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 2332              		.loc 1 697 15
+ 2333 005a FB68     		ldr	r3, [r7, #12]
+ 2334 005c 5A1E     		subs	r2, r3, #1
+ 2335 005e FA60     		str	r2, [r7, #12]
+ 2336              		.loc 1 697 7
+ 2337 0060 002B     		cmp	r3, #0
+ 2338 0062 03DC     		bgt	.L125
+ 698:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 2339              		.loc 1 698 12
+ 2340 0064 344B     		ldr	r3, .L131+4
+ 2341 0066 9847     		blx	r3
+ 2342              	.LVL149:
+ 2343 0068 0346     		mov	r3, r0
+ 2344 006a 5EE0     		b	.L123
+ 2345              	.L125:
+ 696:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 2346              		.loc 1 696 11
+ 2347 006c 3949     		ldr	r1, .L131+32
+ 2348 006e 3348     		ldr	r0, .L131+8
+ 2349 0070 394B     		ldr	r3, .L131+36
+ 2350 0072 9847     		blx	r3
+ 2351              	.LVL150:
+ 2352 0074 0346     		mov	r3, r0
+ 696:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 2353              		.loc 1 696 9
+ 2354 0076 002B     		cmp	r3, #0
+ 2355 0078 EFD0     		beq	.L126
+ 699:src/i2c_ee.c  **** 		}
+ 700:src/i2c_ee.c  **** 		/* Send EEPROM address for write*/
+ 701:src/i2c_ee.c  **** 		I2C_Send7bitAddress(I2C1, EEPROM_ADDRESS, I2C_Direction_Transmitter);
+ 2356              		.loc 1 701 3
+ 2357 007a 384B     		ldr	r3, .L131+40
+ 2358 007c 1B88     		ldrh	r3, [r3]
+ 2359 007e DBB2     		uxtb	r3, r3
+ 2360 0080 0022     		movs	r2, #0
+ 2361 0082 1946     		mov	r1, r3
+ 2362 0084 2D48     		ldr	r0, .L131+8
+ 2363 0086 364B     		ldr	r3, .L131+44
+ 2364 0088 9847     		blx	r3
+ 2365              	.LVL151:
+ 702:src/i2c_ee.c  **** 		/*{
+ 703:src/i2c_ee.c  **** 		 int i = 0xfff;
+ 704:src/i2c_ee.c  **** 		 while(i --);
+ 705:src/i2c_ee.c  **** 		 }*/
+ 706:src/i2c_ee.c  **** 		counter = RETRY_NUMBER;
+ 2366              		.loc 1 706 11
+ 2367 008a 40F6B833 		movw	r3, #3000
+ 2368 008e FB60     		str	r3, [r7, #12]
+ 707:src/i2c_ee.c  **** 
+ 708:src/i2c_ee.c  **** 		while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) {
+ 2369              		.loc 1 708 9
+ 2370 0090 08E0     		b	.L127
+ 2371              	.L128:
+ 709:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 2372              		.loc 1 709 15
+ 2373 0092 FB68     		ldr	r3, [r7, #12]
+ 2374 0094 5A1E     		subs	r2, r3, #1
+ 2375 0096 FA60     		str	r2, [r7, #12]
+ 2376              		.loc 1 709 7
+ 2377 0098 002B     		cmp	r3, #0
+ 2378 009a 03DC     		bgt	.L127
+ 710:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 2379              		.loc 1 710 12
+ 2380 009c 264B     		ldr	r3, .L131+4
+ 2381 009e 9847     		blx	r3
+ 2382              	.LVL152:
+ 2383 00a0 0346     		mov	r3, r0
+ 2384 00a2 42E0     		b	.L123
+ 2385              	.L127:
+ 708:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 2386              		.loc 1 708 11
+ 2387 00a4 2F49     		ldr	r1, .L131+48
+ 2388 00a6 2548     		ldr	r0, .L131+8
+ 2389 00a8 2B4B     		ldr	r3, .L131+36
+ 2390 00aa 9847     		blx	r3
+ 2391              	.LVL153:
+ 2392 00ac 0346     		mov	r3, r0
+ 708:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 2393              		.loc 1 708 9
+ 2394 00ae 002B     		cmp	r3, #0
+ 2395 00b0 EFD0     		beq	.L128
+ 711:src/i2c_ee.c  **** 		}
+ 712:src/i2c_ee.c  **** 
+ 713:src/i2c_ee.c  **** 		/* Clear AF flag */
+ 714:src/i2c_ee.c  **** 		I2C_ClearFlag(I2C1, I2C_FLAG_AF);
+ 2396              		.loc 1 714 3
+ 2397 00b2 2D49     		ldr	r1, .L131+52
+ 2398 00b4 2148     		ldr	r0, .L131+8
+ 2399 00b6 264B     		ldr	r3, .L131+28
+ 2400 00b8 9847     		blx	r3
+ 2401              	.LVL154:
+ 715:src/i2c_ee.c  **** 
+ 716:src/i2c_ee.c  **** 		/* STOP condition */
+ 717:src/i2c_ee.c  **** 		I2C_GenerateSTOP(I2C1, ENABLE);
+ 2402              		.loc 1 717 3
+ 2403 00ba 0121     		movs	r1, #1
+ 2404 00bc 1F48     		ldr	r0, .L131+8
+ 2405 00be 2B4B     		ldr	r3, .L131+56
+ 2406 00c0 9847     		blx	r3
+ 2407              	.LVL155:
+ 718:src/i2c_ee.c  **** 		return true;
+ 2408              		.loc 1 718 10
+ 2409 00c2 0123     		movs	r3, #1
+ 2410 00c4 31E0     		b	.L123
+ 2411              	.L121:
+ 2412              	.LBE8:
+ 2413              	.LBB9:
+ 719:src/i2c_ee.c  **** 	} else {
+ 720:src/i2c_ee.c  **** 		vu16 SR1_Tmp = 0;
+ 2414              		.loc 1 720 8
+ 2415 00c6 0023     		movs	r3, #0
+ 2416 00c8 BB80     		strh	r3, [r7, #4]	@ movhi
+ 721:src/i2c_ee.c  **** 		int counter = RETRY_NUMBER;
+ 2417              		.loc 1 721 7
+ 2418 00ca 40F6B833 		movw	r3, #3000
+ 2419 00ce BB60     		str	r3, [r7, #8]
+ 2420              	.L130:
+ 722:src/i2c_ee.c  **** 		do {
+ 723:src/i2c_ee.c  **** 			/* Send START condition */
+ 724:src/i2c_ee.c  **** 			I2C_GenerateSTART(I2C1, ENABLE);
+ 2421              		.loc 1 724 4
+ 2422 00d0 0121     		movs	r1, #1
+ 2423 00d2 1A48     		ldr	r0, .L131+8
+ 2424 00d4 1B4B     		ldr	r3, .L131+16
+ 2425 00d6 9847     		blx	r3
+ 2426              	.LVL156:
+ 725:src/i2c_ee.c  **** 			/* Read I2C1 SR1 register */
+ 726:src/i2c_ee.c  **** 			SR1_Tmp = I2C_ReadRegister(I2C1, I2C_Register_SR1);
+ 2427              		.loc 1 726 14
+ 2428 00d8 1421     		movs	r1, #20
+ 2429 00da 1848     		ldr	r0, .L131+8
+ 2430 00dc 1A4B     		ldr	r3, .L131+20
+ 2431 00de 9847     		blx	r3
+ 2432              	.LVL157:
+ 2433 00e0 0346     		mov	r3, r0
+ 2434              		.loc 1 726 12
+ 2435 00e2 BB80     		strh	r3, [r7, #4]	@ movhi
+ 727:src/i2c_ee.c  **** 			/* Send EEPROM address for write */
+ 728:src/i2c_ee.c  **** 			I2C_Send7bitAddress(I2C1, EEPROM_ADDRESS,
+ 2436              		.loc 1 728 4
+ 2437 00e4 1D4B     		ldr	r3, .L131+40
+ 2438 00e6 1B88     		ldrh	r3, [r3]
+ 2439 00e8 DBB2     		uxtb	r3, r3
+ 2440 00ea 0022     		movs	r2, #0
+ 2441 00ec 1946     		mov	r1, r3
+ 2442 00ee 1348     		ldr	r0, .L131+8
+ 2443 00f0 1B4B     		ldr	r3, .L131+44
+ 2444 00f2 9847     		blx	r3
+ 2445              	.LVL158:
+ 729:src/i2c_ee.c  **** 					I2C_Direction_Transmitter);
+ 730:src/i2c_ee.c  **** 			if (counter-- <= 0)
+ 2446              		.loc 1 730 15
+ 2447 00f4 BB68     		ldr	r3, [r7, #8]
+ 2448 00f6 5A1E     		subs	r2, r3, #1
+ 2449 00f8 BA60     		str	r2, [r7, #8]
+ 2450              		.loc 1 730 7
+ 2451 00fa 002B     		cmp	r3, #0
+ 2452 00fc 03DC     		bgt	.L129
+ 731:src/i2c_ee.c  **** 				return I2C_EE_Relaunch();
+ 2453              		.loc 1 731 12
+ 2454 00fe 0E4B     		ldr	r3, .L131+4
+ 2455 0100 9847     		blx	r3
+ 2456              	.LVL159:
+ 2457 0102 0346     		mov	r3, r0
+ 2458 0104 11E0     		b	.L123
+ 2459              	.L129:
+ 732:src/i2c_ee.c  **** 		} while (!(I2C_ReadRegister(I2C1, I2C_Register_SR1) & 0x0002));
+ 2460              		.loc 1 732 14
+ 2461 0106 1421     		movs	r1, #20
+ 2462 0108 0C48     		ldr	r0, .L131+8
+ 2463 010a 0F4B     		ldr	r3, .L131+20
+ 2464 010c 9847     		blx	r3
+ 2465              	.LVL160:
+ 2466 010e 0346     		mov	r3, r0
+ 2467              		.loc 1 732 55
+ 2468 0110 03F00203 		and	r3, r3, #2
+ 2469              		.loc 1 732 3
+ 2470 0114 002B     		cmp	r3, #0
+ 2471 0116 DBD0     		beq	.L130
+ 733:src/i2c_ee.c  **** 
+ 734:src/i2c_ee.c  **** 		/* Clear AF flag */
+ 735:src/i2c_ee.c  **** 		I2C_ClearFlag(I2C1, I2C_FLAG_AF);
+ 2472              		.loc 1 735 3
+ 2473 0118 1349     		ldr	r1, .L131+52
+ 2474 011a 0848     		ldr	r0, .L131+8
+ 2475 011c 0C4B     		ldr	r3, .L131+28
+ 2476 011e 9847     		blx	r3
+ 2477              	.LVL161:
+ 736:src/i2c_ee.c  **** 
+ 737:src/i2c_ee.c  **** 		/* STOP condition */
+ 738:src/i2c_ee.c  **** 		I2C_GenerateSTOP(I2C1, ENABLE);
+ 2478              		.loc 1 738 3
+ 2479 0120 0121     		movs	r1, #1
+ 2480 0122 0648     		ldr	r0, .L131+8
+ 2481 0124 114B     		ldr	r3, .L131+56
+ 2482 0126 9847     		blx	r3
+ 2483              	.LVL162:
+ 739:src/i2c_ee.c  **** 		return true;
+ 2484              		.loc 1 739 10
+ 2485 0128 0123     		movs	r3, #1
+ 2486              	.L123:
+ 2487              	.LBE9:
+ 740:src/i2c_ee.c  **** 	}
+ 741:src/i2c_ee.c  **** 
+ 742:src/i2c_ee.c  **** }
+ 2488              		.loc 1 742 1
+ 2489 012a 1846     		mov	r0, r3
+ 2490 012c 1037     		adds	r7, r7, #16
+ 2491              	.LCFI30:
+ 2492              		.cfi_def_cfa_offset 8
+ 2493 012e BD46     		mov	sp, r7
+ 2494              	.LCFI31:
+ 2495              		.cfi_def_cfa_register 13
+ 2496              		@ sp needed
+ 2497 0130 80BD     		pop	{r7, pc}
+ 2498              	.L132:
+ 2499 0132 00BF     		.align	2
+ 2500              	.L131:
+ 2501 0134 00000000 		.word	initMK
+ 2502 0138 00000000 		.word	I2C_EE_Relaunch
+ 2503 013c 00540040 		.word	1073763328
+ 2504 0140 00000000 		.word	I2C_GetFlagStatus
+ 2505 0144 00000000 		.word	I2C_GenerateSTART
+ 2506 0148 00000000 		.word	I2C_ReadRegister
+ 2507 014c 02000010 		.word	268435458
+ 2508 0150 00000000 		.word	I2C_ClearFlag
+ 2509 0154 01000300 		.word	196609
+ 2510 0158 00000000 		.word	I2C_CheckEvent
+ 2511 015c 00000000 		.word	EEPROM_ADDRESS
+ 2512 0160 00000000 		.word	I2C_Send7bitAddress
+ 2513 0164 82000700 		.word	458882
+ 2514 0168 00040010 		.word	268436480
+ 2515 016c 00000000 		.word	I2C_GenerateSTOP
+ 2516              		.cfi_endproc
+ 2517              	.LFE33:
+ 2519              		.section	.text.I2C_EE_Relaunch,"ax",%progbits
+ 2520              		.align	1
+ 2521              		.global	I2C_EE_Relaunch
+ 2522              		.syntax unified
+ 2523              		.thumb
+ 2524              		.thumb_func
+ 2526              	I2C_EE_Relaunch:
+ 2527              	.LFB34:
+ 743:src/i2c_ee.c  **** 
+ 744:src/i2c_ee.c  **** bool I2C_EE_Relaunch(void) {
+ 2528              		.loc 1 744 28
+ 2529              		.cfi_startproc
+ 2530              		@ args = 0, pretend = 0, frame = 8
+ 2531              		@ frame_needed = 1, uses_anonymous_args = 0
+ 2532 0000 80B5     		push	{r7, lr}
+ 2533              	.LCFI32:
+ 2534              		.cfi_def_cfa_offset 8
+ 2535              		.cfi_offset 7, -8
+ 2536              		.cfi_offset 14, -4
+ 2537 0002 82B0     		sub	sp, sp, #8
+ 2538              	.LCFI33:
+ 2539              		.cfi_def_cfa_offset 16
+ 2540 0004 00AF     		add	r7, sp, #0
+ 2541              	.LCFI34:
+ 2542              		.cfi_def_cfa_register 7
+ 745:src/i2c_ee.c  **** 	if (initMK == 1) {
+ 2543              		.loc 1 745 13
+ 2544 0006 3B4B     		ldr	r3, .L139
+ 2545 0008 1B68     		ldr	r3, [r3]
+ 2546              		.loc 1 745 5
+ 2547 000a 012B     		cmp	r3, #1
+ 2548 000c 10D1     		bne	.L134
+ 746:src/i2c_ee.c  **** 		I2C_ClearFlag(I2C1, I2C_FLAG_AF);
+ 2549              		.loc 1 746 3
+ 2550 000e 3A49     		ldr	r1, .L139+4
+ 2551 0010 3A48     		ldr	r0, .L139+8
+ 2552 0012 3B4B     		ldr	r3, .L139+12
+ 2553 0014 9847     		blx	r3
+ 2554              	.LVL163:
+ 747:src/i2c_ee.c  **** 
+ 748:src/i2c_ee.c  **** 		if (I2C_GetFlagStatus(I2C1, I2C_FLAG_BUSY)) {
+ 2555              		.loc 1 748 7
+ 2556 0016 4FF40031 		mov	r1, #131072
+ 2557 001a 3848     		ldr	r0, .L139+8
+ 2558 001c 394B     		ldr	r3, .L139+16
+ 2559 001e 9847     		blx	r3
+ 2560              	.LVL164:
+ 2561 0020 0346     		mov	r3, r0
+ 2562              		.loc 1 748 6
+ 2563 0022 002B     		cmp	r3, #0
+ 2564 0024 62D0     		beq	.L135
+ 749:src/i2c_ee.c  **** 
+ 750:src/i2c_ee.c  **** 			I2C_GenerateSTOP(I2C1, ENABLE);
+ 2565              		.loc 1 750 4
+ 2566 0026 0121     		movs	r1, #1
+ 2567 0028 3448     		ldr	r0, .L139+8
+ 2568 002a 374B     		ldr	r3, .L139+20
+ 2569 002c 9847     		blx	r3
+ 2570              	.LVL165:
+ 2571 002e 5DE0     		b	.L135
+ 2572              	.L134:
+ 2573              	.LBB10:
+ 751:src/i2c_ee.c  **** 			//vTaskDelay(100);
+ 752:src/i2c_ee.c  **** 		}
+ 753:src/i2c_ee.c  **** 	} else {
+ 754:src/i2c_ee.c  **** 
+ 755:src/i2c_ee.c  **** 		I2C_Cmd(I2C1, DISABLE);
+ 2574              		.loc 1 755 3
+ 2575 0030 0021     		movs	r1, #0
+ 2576 0032 3248     		ldr	r0, .L139+8
+ 2577 0034 354B     		ldr	r3, .L139+24
+ 2578 0036 9847     		blx	r3
+ 2579              	.LVL166:
+ 756:src/i2c_ee.c  **** 		GPIO_InitTypeDef GPIO_InitStructure;
+ 757:src/i2c_ee.c  **** 
+ 758:src/i2c_ee.c  **** 		// reconfigure IIC pins to push pull
+ 759:src/i2c_ee.c  **** 		GPIO_StructInit(&GPIO_InitStructure);
+ 2580              		.loc 1 759 3
+ 2581 0038 3B46     		mov	r3, r7
+ 2582 003a 1846     		mov	r0, r3
+ 2583 003c 344B     		ldr	r3, .L139+28
+ 2584 003e 9847     		blx	r3
+ 2585              	.LVL167:
+ 760:src/i2c_ee.c  **** 		GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+ 2586              		.loc 1 760 33
+ 2587 0040 0323     		movs	r3, #3
+ 2588 0042 BB70     		strb	r3, [r7, #2]
+ 761:src/i2c_ee.c  **** 		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+ 2589              		.loc 1 761 32
+ 2590 0044 1023     		movs	r3, #16
+ 2591 0046 FB70     		strb	r3, [r7, #3]
+ 762:src/i2c_ee.c  **** 
+ 763:src/i2c_ee.c  **** 		GPIO_InitStructure.GPIO_Pin = MIOS32_IIC0_SCL_PIN;
+ 2592              		.loc 1 763 31
+ 2593 0048 4FF48073 		mov	r3, #256
+ 2594 004c 3B80     		strh	r3, [r7]	@ movhi
+ 764:src/i2c_ee.c  **** 		GPIO_Init(MIOS32_IIC0_SCL_PORT, &GPIO_InitStructure);
+ 2595              		.loc 1 764 3
+ 2596 004e 3B46     		mov	r3, r7
+ 2597 0050 1946     		mov	r1, r3
+ 2598 0052 3048     		ldr	r0, .L139+32
+ 2599 0054 304B     		ldr	r3, .L139+36
+ 2600 0056 9847     		blx	r3
+ 2601              	.LVL168:
+ 765:src/i2c_ee.c  **** 		GPIO_InitStructure.GPIO_Pin = MIOS32_IIC0_SDA_PIN;
+ 2602              		.loc 1 765 31
+ 2603 0058 4FF40073 		mov	r3, #512
+ 2604 005c 3B80     		strh	r3, [r7]	@ movhi
+ 766:src/i2c_ee.c  **** 		GPIO_Init(MIOS32_IIC0_SDA_PORT, &GPIO_InitStructure);
+ 2605              		.loc 1 766 3
+ 2606 005e 3B46     		mov	r3, r7
+ 2607 0060 1946     		mov	r1, r3
+ 2608 0062 2C48     		ldr	r0, .L139+32
+ 2609 0064 2C4B     		ldr	r3, .L139+36
+ 2610 0066 9847     		blx	r3
+ 2611              	.LVL169:
+ 767:src/i2c_ee.c  **** 
+ 768:src/i2c_ee.c  **** 		u32 i;
+ 769:src/i2c_ee.c  **** 		//vTaskDelay(20);
+ 770:src/i2c_ee.c  **** 		for (i = 0; i < 16; i++) {
+ 2612              		.loc 1 770 10
+ 2613 0068 0023     		movs	r3, #0
+ 2614 006a 7B60     		str	r3, [r7, #4]
+ 2615              		.loc 1 770 3
+ 2616 006c 16E0     		b	.L136
+ 2617              	.L137:
+ 771:src/i2c_ee.c  **** 			/*Reset the SDA Pin*/
+ 772:src/i2c_ee.c  **** 			GPIO_ResetBits(GPIOB, MIOS32_IIC0_SDA_PIN);
+ 2618              		.loc 1 772 4 discriminator 3
+ 2619 006e 4FF40071 		mov	r1, #512
+ 2620 0072 2848     		ldr	r0, .L139+32
+ 2621 0074 294B     		ldr	r3, .L139+40
+ 2622 0076 9847     		blx	r3
+ 2623              	.LVL170:
+ 773:src/i2c_ee.c  **** 			// vTaskDelay(20);
+ 774:src/i2c_ee.c  **** 			/*Reset the SCL Pin*/
+ 775:src/i2c_ee.c  **** 			GPIO_ResetBits(GPIOB, MIOS32_IIC0_SCL_PIN);
+ 2624              		.loc 1 775 4 discriminator 3
+ 2625 0078 4FF48071 		mov	r1, #256
+ 2626 007c 2548     		ldr	r0, .L139+32
+ 2627 007e 274B     		ldr	r3, .L139+40
+ 2628 0080 9847     		blx	r3
+ 2629              	.LVL171:
+ 776:src/i2c_ee.c  **** 			// vTaskDelay(20);
+ 777:src/i2c_ee.c  **** 			/*Set the SCL Pin*/
+ 778:src/i2c_ee.c  **** 			GPIO_SetBits(GPIOB, MIOS32_IIC0_SCL_PIN);
+ 2630              		.loc 1 778 4 discriminator 3
+ 2631 0082 4FF48071 		mov	r1, #256
+ 2632 0086 2348     		ldr	r0, .L139+32
+ 2633 0088 254B     		ldr	r3, .L139+44
+ 2634 008a 9847     		blx	r3
+ 2635              	.LVL172:
+ 779:src/i2c_ee.c  **** 			// vTaskDelay(20);
+ 780:src/i2c_ee.c  **** 			/*Set the SDA Pin*/
+ 781:src/i2c_ee.c  **** 			GPIO_SetBits(GPIOB, MIOS32_IIC0_SDA_PIN);
+ 2636              		.loc 1 781 4 discriminator 3
+ 2637 008c 4FF40071 		mov	r1, #512
+ 2638 0090 2048     		ldr	r0, .L139+32
+ 2639 0092 234B     		ldr	r3, .L139+44
+ 2640 0094 9847     		blx	r3
+ 2641              	.LVL173:
+ 770:src/i2c_ee.c  **** 			/*Reset the SDA Pin*/
+ 2642              		.loc 1 770 24 discriminator 3
+ 2643 0096 7B68     		ldr	r3, [r7, #4]
+ 2644 0098 0133     		adds	r3, r3, #1
+ 2645 009a 7B60     		str	r3, [r7, #4]
+ 2646              	.L136:
+ 770:src/i2c_ee.c  **** 			/*Reset the SDA Pin*/
+ 2647              		.loc 1 770 3 discriminator 1
+ 2648 009c 7B68     		ldr	r3, [r7, #4]
+ 2649 009e 0F2B     		cmp	r3, #15
+ 2650 00a0 E5D9     		bls	.L137
+ 782:src/i2c_ee.c  **** 			// vTaskDelay(20);
+ 783:src/i2c_ee.c  **** 		}
+ 784:src/i2c_ee.c  **** 
+ 785:src/i2c_ee.c  **** 		GPIO_StructInit(&GPIO_InitStructure);
+ 2651              		.loc 1 785 3
+ 2652 00a2 3B46     		mov	r3, r7
+ 2653 00a4 1846     		mov	r0, r3
+ 2654 00a6 1A4B     		ldr	r3, .L139+28
+ 2655 00a8 9847     		blx	r3
+ 2656              	.LVL174:
+ 786:src/i2c_ee.c  **** 		GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
+ 2657              		.loc 1 786 33
+ 2658 00aa 0123     		movs	r3, #1
+ 2659 00ac BB70     		strb	r3, [r7, #2]
+ 787:src/i2c_ee.c  **** 		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_OD;
+ 2660              		.loc 1 787 32
+ 2661 00ae 1C23     		movs	r3, #28
+ 2662 00b0 FB70     		strb	r3, [r7, #3]
+ 788:src/i2c_ee.c  **** 
+ 789:src/i2c_ee.c  **** 		GPIO_InitStructure.GPIO_Pin = MIOS32_IIC0_SCL_PIN;
+ 2663              		.loc 1 789 31
+ 2664 00b2 4FF48073 		mov	r3, #256
+ 2665 00b6 3B80     		strh	r3, [r7]	@ movhi
+ 790:src/i2c_ee.c  **** 		GPIO_Init(MIOS32_IIC0_SCL_PORT, &GPIO_InitStructure);
+ 2666              		.loc 1 790 3
+ 2667 00b8 3B46     		mov	r3, r7
+ 2668 00ba 1946     		mov	r1, r3
+ 2669 00bc 1548     		ldr	r0, .L139+32
+ 2670 00be 164B     		ldr	r3, .L139+36
+ 2671 00c0 9847     		blx	r3
+ 2672              	.LVL175:
+ 791:src/i2c_ee.c  **** 		GPIO_InitStructure.GPIO_Pin = MIOS32_IIC0_SDA_PIN;
+ 2673              		.loc 1 791 31
+ 2674 00c2 4FF40073 		mov	r3, #512
+ 2675 00c6 3B80     		strh	r3, [r7]	@ movhi
+ 792:src/i2c_ee.c  **** 		GPIO_Init(MIOS32_IIC0_SDA_PORT, &GPIO_InitStructure);
+ 2676              		.loc 1 792 3
+ 2677 00c8 3B46     		mov	r3, r7
+ 2678 00ca 1946     		mov	r1, r3
+ 2679 00cc 1148     		ldr	r0, .L139+32
+ 2680 00ce 124B     		ldr	r3, .L139+36
+ 2681 00d0 9847     		blx	r3
+ 2682              	.LVL176:
+ 793:src/i2c_ee.c  **** 
+ 794:src/i2c_ee.c  **** 		I2C_Cmd(I2C1, ENABLE);
+ 2683              		.loc 1 794 3
+ 2684 00d2 0121     		movs	r1, #1
+ 2685 00d4 0948     		ldr	r0, .L139+8
+ 2686 00d6 0D4B     		ldr	r3, .L139+24
+ 2687 00d8 9847     		blx	r3
+ 2688              	.LVL177:
+ 795:src/i2c_ee.c  **** 
+ 796:src/i2c_ee.c  **** 		I2C_AcknowledgeConfig(I2C1, ENABLE);
+ 2689              		.loc 1 796 3
+ 2690 00da 0121     		movs	r1, #1
+ 2691 00dc 0748     		ldr	r0, .L139+8
+ 2692 00de 114B     		ldr	r3, .L139+48
+ 2693 00e0 9847     		blx	r3
+ 2694              	.LVL178:
+ 797:src/i2c_ee.c  **** 		vTaskDelay(100);
+ 2695              		.loc 1 797 3
+ 2696 00e2 6420     		movs	r0, #100
+ 2697 00e4 104B     		ldr	r3, .L139+52
+ 2698 00e6 9847     		blx	r3
+ 2699              	.LVL179:
+ 798:src/i2c_ee.c  **** 
+ 799:src/i2c_ee.c  **** 		return false;
+ 2700              		.loc 1 799 10
+ 2701 00e8 0023     		movs	r3, #0
+ 2702 00ea FFE7     		b	.L133
+ 2703              	.L135:
+ 2704              	.L133:
+ 2705              	.LBE10:
+ 800:src/i2c_ee.c  **** 	}
+ 801:src/i2c_ee.c  **** 
+ 802:src/i2c_ee.c  **** }
+ 2706              		.loc 1 802 1
+ 2707 00ec 1846     		mov	r0, r3
+ 2708 00ee 0837     		adds	r7, r7, #8
+ 2709              	.LCFI35:
+ 2710              		.cfi_def_cfa_offset 8
+ 2711 00f0 BD46     		mov	sp, r7
+ 2712              	.LCFI36:
+ 2713              		.cfi_def_cfa_register 13
+ 2714              		@ sp needed
+ 2715 00f2 80BD     		pop	{r7, pc}
+ 2716              	.L140:
+ 2717              		.align	2
+ 2718              	.L139:
+ 2719 00f4 00000000 		.word	initMK
+ 2720 00f8 00040010 		.word	268436480
+ 2721 00fc 00540040 		.word	1073763328
+ 2722 0100 00000000 		.word	I2C_ClearFlag
+ 2723 0104 00000000 		.word	I2C_GetFlagStatus
+ 2724 0108 00000000 		.word	I2C_GenerateSTOP
+ 2725 010c 00000000 		.word	I2C_Cmd
+ 2726 0110 00000000 		.word	GPIO_StructInit
+ 2727 0114 000C0140 		.word	1073810432
+ 2728 0118 00000000 		.word	GPIO_Init
+ 2729 011c 00000000 		.word	GPIO_ResetBits
+ 2730 0120 00000000 		.word	GPIO_SetBits
+ 2731 0124 00000000 		.word	I2C_AcknowledgeConfig
+ 2732 0128 00000000 		.word	vTaskDelay
+ 2733              		.cfi_endproc
+ 2734              	.LFE34:
+ 2736              		.text
+ 2737              	.Letext0:
+ 2738              		.file 2 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 2739              		.file 3 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 2740              		.file 4 "common/lib.stm32/CMSIS/Core/CM3/stm32f10x.h"
+ 2741              		.file 5 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_gpio.h"
+ 2742              		.file 6 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_i2c.h"
+ 2743              		.file 7 "./board.h"
+ 2744              		.file 8 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_bkp.h"
+ 2745              		.file 9 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_rcc.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 i2c_ee.c
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:22     .bss.EEPROM_ADDRESS:00000000 EEPROM_ADDRESS
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:19     .bss.EEPROM_ADDRESS:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:25     .text.I2C_Configuration:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:31     .text.I2C_Configuration:00000000 I2C_Configuration
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:111    .text.I2C_Configuration:00000058 $d
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:122    .text.I2C_EE_Init:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:128    .text.I2C_EE_Init:00000000 I2C_EE_Init
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:156    .text.I2C_EE_Init:00000014 $d
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:162    .text.I2C_EE_BufferWrite:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:168    .text.I2C_EE_BufferWrite:00000000 I2C_EE_BufferWrite
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:422    .text.I2C_EE_BufferWrite:0000014c $d
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:918    .text.I2C_EE_PageWrite:00000000 I2C_EE_PageWrite
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:2251   .text.I2C_EE_WaitEepromStandbyState:00000000 I2C_EE_WaitEepromStandbyState
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:429    .text.I2C_EE_ByteWrite:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:435    .text.I2C_EE_ByteWrite:00000000 I2C_EE_ByteWrite
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:893    .text.I2C_EE_ByteWrite:00000254 $d
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:2526   .text.I2C_EE_Relaunch:00000000 I2C_EE_Relaunch
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:912    .text.I2C_EE_PageWrite:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:1354   .text.I2C_EE_PageWrite:00000244 $d
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:1370   .text.I2C_EE_PageWrite:0000027c $t
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:1442   .text.I2C_EE_PageWrite:000002d4 $d
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:1452   .text.I2C_EE_BufferRead:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:1458   .text.I2C_EE_BufferRead:00000000 I2C_EE_BufferRead
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:1902   .text.I2C_EE_BufferRead:0000024c $d
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:1923   .text.I2C_EE_BufferRead:00000298 $t
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:2225   .text.I2C_EE_BufferRead:0000042c $d
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:2245   .text.I2C_EE_WaitEepromStandbyState:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:2501   .text.I2C_EE_WaitEepromStandbyState:00000134 $d
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:2520   .text.I2C_EE_Relaunch:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccCHFMQX.s:2719   .text.I2C_EE_Relaunch:000000f4 $d
+
+UNDEFINED SYMBOLS
+RCC_APB1PeriphClockCmd
+RCC_APB2PeriphClockCmd
+I2C_Cmd
+I2C_Init
+I2C_AcknowledgeConfig
+BKP_WriteBackupRegister
+initMK
+I2C_GenerateSTART
+I2C_CheckEvent
+I2C_Send7bitAddress
+I2C_GetFlagStatus
+I2C_SendData
+I2C_GenerateSTOP
+I2C_ReadRegister
+I2C_ReceiveData
+I2C_ClearFlag
+GPIO_StructInit
+GPIO_Init
+GPIO_ResetBits
+GPIO_SetBits
+vTaskDelay

@@ -1,0 +1,1938 @@
+   1              		.cpu cortex-m3
+   2              		.arch armv7-m
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"iec61107.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.section	.text.iecClaculateBCC,"ax",%progbits
+  18              		.align	1
+  19              		.global	iecClaculateBCC
+  20              		.syntax unified
+  21              		.thumb
+  22              		.thumb_func
+  24              	iecClaculateBCC:
+  25              	.LFB0:
+  26              		.file 1 "src/iec61107.c"
+   1:src/iec61107.c **** #include "iec61107.h"
+   2:src/iec61107.c **** 
+   3:src/iec61107.c **** char iecClaculateBCC(char *pxBuf, uint16 size)
+   4:src/iec61107.c **** {
+  27              		.loc 1 4 1
+  28              		.cfi_startproc
+  29              		@ args = 0, pretend = 0, frame = 16
+  30              		@ frame_needed = 1, uses_anonymous_args = 0
+  31              		@ link register save eliminated.
+  32 0000 80B4     		push	{r7}
+  33              	.LCFI0:
+  34              		.cfi_def_cfa_offset 4
+  35              		.cfi_offset 7, -4
+  36 0002 85B0     		sub	sp, sp, #20
+  37              	.LCFI1:
+  38              		.cfi_def_cfa_offset 24
+  39 0004 00AF     		add	r7, sp, #0
+  40              	.LCFI2:
+  41              		.cfi_def_cfa_register 7
+  42 0006 7860     		str	r0, [r7, #4]
+  43 0008 0B46     		mov	r3, r1
+  44 000a 7B80     		strh	r3, [r7, #2]	@ movhi
+   5:src/iec61107.c **** 	char bcc = 0;
+  45              		.loc 1 5 7
+  46 000c 0023     		movs	r3, #0
+  47 000e FB73     		strb	r3, [r7, #15]
+   6:src/iec61107.c **** 	while (size)
+  48              		.loc 1 6 8
+  49 0010 0AE0     		b	.L2
+  50              	.L3:
+   7:src/iec61107.c **** 	{
+   8:src/iec61107.c **** 		bcc += *pxBuf;
+  51              		.loc 1 8 10
+  52 0012 7B68     		ldr	r3, [r7, #4]
+  53 0014 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+  54              		.loc 1 8 7
+  55 0016 FB7B     		ldrb	r3, [r7, #15]
+  56 0018 1344     		add	r3, r3, r2
+  57 001a FB73     		strb	r3, [r7, #15]
+   9:src/iec61107.c **** 		pxBuf++;
+  58              		.loc 1 9 8
+  59 001c 7B68     		ldr	r3, [r7, #4]
+  60 001e 0133     		adds	r3, r3, #1
+  61 0020 7B60     		str	r3, [r7, #4]
+  10:src/iec61107.c **** 		size--;
+  62              		.loc 1 10 7
+  63 0022 7B88     		ldrh	r3, [r7, #2]
+  64 0024 013B     		subs	r3, r3, #1
+  65 0026 7B80     		strh	r3, [r7, #2]	@ movhi
+  66              	.L2:
+   6:src/iec61107.c **** 	{
+  67              		.loc 1 6 8
+  68 0028 7B88     		ldrh	r3, [r7, #2]
+  69 002a 002B     		cmp	r3, #0
+  70 002c F1D1     		bne	.L3
+  11:src/iec61107.c **** 	}
+  12:src/iec61107.c **** 	return (bcc & 0x7F);
+  71              		.loc 1 12 14
+  72 002e FB7B     		ldrb	r3, [r7, #15]
+  73 0030 03F07F03 		and	r3, r3, #127
+  74 0034 DBB2     		uxtb	r3, r3
+  13:src/iec61107.c **** }
+  75              		.loc 1 13 1
+  76 0036 1846     		mov	r0, r3
+  77 0038 1437     		adds	r7, r7, #20
+  78              	.LCFI3:
+  79              		.cfi_def_cfa_offset 4
+  80 003a BD46     		mov	sp, r7
+  81              	.LCFI4:
+  82              		.cfi_def_cfa_register 13
+  83              		@ sp needed
+  84 003c 80BC     		pop	{r7}
+  85              	.LCFI5:
+  86              		.cfi_restore 7
+  87              		.cfi_def_cfa_offset 0
+  88 003e 7047     		bx	lr
+  89              		.cfi_endproc
+  90              	.LFE0:
+  92              		.section	.text.iecProcReqPacket,"ax",%progbits
+  93              		.align	1
+  94              		.global	iecProcReqPacket
+  95              		.syntax unified
+  96              		.thumb
+  97              		.thumb_func
+  99              	iecProcReqPacket:
+ 100              	.LFB1:
+  14:src/iec61107.c **** uint16 iecProcReqPacket(char *pxBuf, char *addr, uint8 limit)
+  15:src/iec61107.c **** {
+ 101              		.loc 1 15 1
+ 102              		.cfi_startproc
+ 103              		@ args = 0, pretend = 0, frame = 24
+ 104              		@ frame_needed = 1, uses_anonymous_args = 0
+ 105              		@ link register save eliminated.
+ 106 0000 80B4     		push	{r7}
+ 107              	.LCFI6:
+ 108              		.cfi_def_cfa_offset 4
+ 109              		.cfi_offset 7, -4
+ 110 0002 87B0     		sub	sp, sp, #28
+ 111              	.LCFI7:
+ 112              		.cfi_def_cfa_offset 32
+ 113 0004 00AF     		add	r7, sp, #0
+ 114              	.LCFI8:
+ 115              		.cfi_def_cfa_register 7
+ 116 0006 F860     		str	r0, [r7, #12]
+ 117 0008 B960     		str	r1, [r7, #8]
+ 118 000a 1346     		mov	r3, r2
+ 119 000c FB71     		strb	r3, [r7, #7]
+  16:src/iec61107.c **** 	uint16 size = 0;
+ 120              		.loc 1 16 9
+ 121 000e 0023     		movs	r3, #0
+ 122 0010 FB82     		strh	r3, [r7, #22]	@ movhi
+  17:src/iec61107.c **** 	*pxBuf = '/';
+ 123              		.loc 1 17 9
+ 124 0012 FB68     		ldr	r3, [r7, #12]
+ 125 0014 2F22     		movs	r2, #47
+ 126 0016 1A70     		strb	r2, [r3]
+  18:src/iec61107.c **** 	pxBuf++;
+ 127              		.loc 1 18 7
+ 128 0018 FB68     		ldr	r3, [r7, #12]
+ 129 001a 0133     		adds	r3, r3, #1
+ 130 001c FB60     		str	r3, [r7, #12]
+  19:src/iec61107.c **** 	*pxBuf = '?';
+ 131              		.loc 1 19 9
+ 132 001e FB68     		ldr	r3, [r7, #12]
+ 133 0020 3F22     		movs	r2, #63
+ 134 0022 1A70     		strb	r2, [r3]
+  20:src/iec61107.c **** 	pxBuf++;
+ 135              		.loc 1 20 7
+ 136 0024 FB68     		ldr	r3, [r7, #12]
+ 137 0026 0133     		adds	r3, r3, #1
+ 138 0028 FB60     		str	r3, [r7, #12]
+  21:src/iec61107.c **** 	while (*addr)
+ 139              		.loc 1 21 8
+ 140 002a 14E0     		b	.L6
+ 141              	.L9:
+  22:src/iec61107.c **** 	{
+  23:src/iec61107.c **** 		if (limit == 0)
+ 142              		.loc 1 23 6
+ 143 002c FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 144 002e 002B     		cmp	r3, #0
+ 145 0030 01D1     		bne	.L7
+  24:src/iec61107.c **** 			return 0;
+ 146              		.loc 1 24 11
+ 147 0032 0023     		movs	r3, #0
+ 148 0034 28E0     		b	.L8
+ 149              	.L7:
+  25:src/iec61107.c **** 		*pxBuf = (*addr);
+ 150              		.loc 1 25 13
+ 151 0036 BB68     		ldr	r3, [r7, #8]
+ 152 0038 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 153              		.loc 1 25 10
+ 154 003a FB68     		ldr	r3, [r7, #12]
+ 155 003c 1A70     		strb	r2, [r3]
+  26:src/iec61107.c **** 		pxBuf++;
+ 156              		.loc 1 26 8
+ 157 003e FB68     		ldr	r3, [r7, #12]
+ 158 0040 0133     		adds	r3, r3, #1
+ 159 0042 FB60     		str	r3, [r7, #12]
+  27:src/iec61107.c **** 		addr++;
+ 160              		.loc 1 27 7
+ 161 0044 BB68     		ldr	r3, [r7, #8]
+ 162 0046 0133     		adds	r3, r3, #1
+ 163 0048 BB60     		str	r3, [r7, #8]
+  28:src/iec61107.c **** 		limit--;
+ 164              		.loc 1 28 8
+ 165 004a FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 166 004c 013B     		subs	r3, r3, #1
+ 167 004e FB71     		strb	r3, [r7, #7]
+  29:src/iec61107.c **** 		size++;
+ 168              		.loc 1 29 7
+ 169 0050 FB8A     		ldrh	r3, [r7, #22]
+ 170 0052 0133     		adds	r3, r3, #1
+ 171 0054 FB82     		strh	r3, [r7, #22]	@ movhi
+ 172              	.L6:
+  21:src/iec61107.c **** 	{
+ 173              		.loc 1 21 9
+ 174 0056 BB68     		ldr	r3, [r7, #8]
+ 175 0058 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+  21:src/iec61107.c **** 	{
+ 176              		.loc 1 21 8
+ 177 005a 002B     		cmp	r3, #0
+ 178 005c E6D1     		bne	.L9
+  30:src/iec61107.c **** 	}
+  31:src/iec61107.c **** 	*pxBuf = '!';
+ 179              		.loc 1 31 9
+ 180 005e FB68     		ldr	r3, [r7, #12]
+ 181 0060 2122     		movs	r2, #33
+ 182 0062 1A70     		strb	r2, [r3]
+  32:src/iec61107.c **** 	pxBuf++;
+ 183              		.loc 1 32 7
+ 184 0064 FB68     		ldr	r3, [r7, #12]
+ 185 0066 0133     		adds	r3, r3, #1
+ 186 0068 FB60     		str	r3, [r7, #12]
+  33:src/iec61107.c **** 	*pxBuf = SYM_CR;
+ 187              		.loc 1 33 9
+ 188 006a FB68     		ldr	r3, [r7, #12]
+ 189 006c 0D22     		movs	r2, #13
+ 190 006e 1A70     		strb	r2, [r3]
+  34:src/iec61107.c **** 	pxBuf++;
+ 191              		.loc 1 34 7
+ 192 0070 FB68     		ldr	r3, [r7, #12]
+ 193 0072 0133     		adds	r3, r3, #1
+ 194 0074 FB60     		str	r3, [r7, #12]
+  35:src/iec61107.c **** 	*pxBuf = SYM_LF;
+ 195              		.loc 1 35 9
+ 196 0076 FB68     		ldr	r3, [r7, #12]
+ 197 0078 0A22     		movs	r2, #10
+ 198 007a 1A70     		strb	r2, [r3]
+  36:src/iec61107.c **** 	pxBuf++;
+ 199              		.loc 1 36 7
+ 200 007c FB68     		ldr	r3, [r7, #12]
+ 201 007e 0133     		adds	r3, r3, #1
+ 202 0080 FB60     		str	r3, [r7, #12]
+  37:src/iec61107.c **** 	return (2 + size + 3);
+ 203              		.loc 1 37 19
+ 204 0082 FB8A     		ldrh	r3, [r7, #22]	@ movhi
+ 205 0084 0533     		adds	r3, r3, #5
+ 206 0086 9BB2     		uxth	r3, r3
+ 207              	.L8:
+  38:src/iec61107.c **** }
+ 208              		.loc 1 38 1
+ 209 0088 1846     		mov	r0, r3
+ 210 008a 1C37     		adds	r7, r7, #28
+ 211              	.LCFI9:
+ 212              		.cfi_def_cfa_offset 4
+ 213 008c BD46     		mov	sp, r7
+ 214              	.LCFI10:
+ 215              		.cfi_def_cfa_register 13
+ 216              		@ sp needed
+ 217 008e 80BC     		pop	{r7}
+ 218              	.LCFI11:
+ 219              		.cfi_restore 7
+ 220              		.cfi_def_cfa_offset 0
+ 221 0090 7047     		bx	lr
+ 222              		.cfi_endproc
+ 223              	.LFE1:
+ 225              		.section	.text.iecIndProc,"ax",%progbits
+ 226              		.align	1
+ 227              		.global	iecIndProc
+ 228              		.syntax unified
+ 229              		.thumb
+ 230              		.thumb_func
+ 232              	iecIndProc:
+ 233              	.LFB2:
+  39:src/iec61107.c **** bool iecIndProc(char *pxBuf, IDENTIFIER *idStr)
+  40:src/iec61107.c **** {
+ 234              		.loc 1 40 1
+ 235              		.cfi_startproc
+ 236              		@ args = 0, pretend = 0, frame = 16
+ 237              		@ frame_needed = 1, uses_anonymous_args = 0
+ 238              		@ link register save eliminated.
+ 239 0000 80B4     		push	{r7}
+ 240              	.LCFI12:
+ 241              		.cfi_def_cfa_offset 4
+ 242              		.cfi_offset 7, -4
+ 243 0002 85B0     		sub	sp, sp, #20
+ 244              	.LCFI13:
+ 245              		.cfi_def_cfa_offset 24
+ 246 0004 00AF     		add	r7, sp, #0
+ 247              	.LCFI14:
+ 248              		.cfi_def_cfa_register 7
+ 249 0006 7860     		str	r0, [r7, #4]
+ 250 0008 3960     		str	r1, [r7]
+  41:src/iec61107.c **** 	int i;
+  42:src/iec61107.c **** 	if (*pxBuf != '/')
+ 251              		.loc 1 42 6
+ 252 000a 7B68     		ldr	r3, [r7, #4]
+ 253 000c 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 254              		.loc 1 42 5
+ 255 000e 2F2B     		cmp	r3, #47
+ 256 0010 01D0     		beq	.L11
+  43:src/iec61107.c **** 		return false;
+ 257              		.loc 1 43 10
+ 258 0012 0023     		movs	r3, #0
+ 259 0014 43E0     		b	.L12
+ 260              	.L11:
+  44:src/iec61107.c **** 	pxBuf++;
+ 261              		.loc 1 44 7
+ 262 0016 7B68     		ldr	r3, [r7, #4]
+ 263 0018 0133     		adds	r3, r3, #1
+ 264 001a 7B60     		str	r3, [r7, #4]
+  45:src/iec61107.c **** 	for (i = 0; i < 3; i++)
+ 265              		.loc 1 45 9
+ 266 001c 0023     		movs	r3, #0
+ 267 001e FB60     		str	r3, [r7, #12]
+ 268              		.loc 1 45 2
+ 269 0020 0CE0     		b	.L13
+ 270              	.L14:
+  46:src/iec61107.c **** 	{
+  47:src/iec61107.c **** 		idStr->manufator[i] = *pxBuf;
+ 271              		.loc 1 47 25 discriminator 3
+ 272 0022 7B68     		ldr	r3, [r7, #4]
+ 273 0024 1978     		ldrb	r1, [r3]	@ zero_extendqisi2
+ 274              		.loc 1 47 23 discriminator 3
+ 275 0026 3A68     		ldr	r2, [r7]
+ 276 0028 FB68     		ldr	r3, [r7, #12]
+ 277 002a 1344     		add	r3, r3, r2
+ 278 002c 0A46     		mov	r2, r1
+ 279 002e 1A70     		strb	r2, [r3]
+  48:src/iec61107.c **** 		pxBuf++;
+ 280              		.loc 1 48 8 discriminator 3
+ 281 0030 7B68     		ldr	r3, [r7, #4]
+ 282 0032 0133     		adds	r3, r3, #1
+ 283 0034 7B60     		str	r3, [r7, #4]
+  45:src/iec61107.c **** 	for (i = 0; i < 3; i++)
+ 284              		.loc 1 45 22 discriminator 3
+ 285 0036 FB68     		ldr	r3, [r7, #12]
+ 286 0038 0133     		adds	r3, r3, #1
+ 287 003a FB60     		str	r3, [r7, #12]
+ 288              	.L13:
+  45:src/iec61107.c **** 	for (i = 0; i < 3; i++)
+ 289              		.loc 1 45 2 discriminator 1
+ 290 003c FB68     		ldr	r3, [r7, #12]
+ 291 003e 022B     		cmp	r3, #2
+ 292 0040 EFDD     		ble	.L14
+  49:src/iec61107.c **** 	}
+  50:src/iec61107.c **** 	idStr->speed = *pxBuf;
+ 293              		.loc 1 50 17
+ 294 0042 7B68     		ldr	r3, [r7, #4]
+ 295 0044 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 296              		.loc 1 50 15
+ 297 0046 3B68     		ldr	r3, [r7]
+ 298 0048 DA70     		strb	r2, [r3, #3]
+  51:src/iec61107.c **** 	pxBuf++;
+ 299              		.loc 1 51 7
+ 300 004a 7B68     		ldr	r3, [r7, #4]
+ 301 004c 0133     		adds	r3, r3, #1
+ 302 004e 7B60     		str	r3, [r7, #4]
+  52:src/iec61107.c **** 	for (i = 0; i < 16; i++)
+ 303              		.loc 1 52 9
+ 304 0050 0023     		movs	r3, #0
+ 305 0052 FB60     		str	r3, [r7, #12]
+ 306              		.loc 1 52 2
+ 307 0054 11E0     		b	.L15
+ 308              	.L18:
+  53:src/iec61107.c **** 	{
+  54:src/iec61107.c **** 		if (*pxBuf == SYM_CR)
+ 309              		.loc 1 54 7
+ 310 0056 7B68     		ldr	r3, [r7, #4]
+ 311 0058 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 312              		.loc 1 54 6
+ 313 005a 0D2B     		cmp	r3, #13
+ 314 005c 11D0     		beq	.L20
+  55:src/iec61107.c **** 			break;
+  56:src/iec61107.c **** 		idStr->ident[i] = *pxBuf;
+ 315              		.loc 1 56 21 discriminator 2
+ 316 005e 7B68     		ldr	r3, [r7, #4]
+ 317 0060 1978     		ldrb	r1, [r3]	@ zero_extendqisi2
+ 318              		.loc 1 56 19 discriminator 2
+ 319 0062 3A68     		ldr	r2, [r7]
+ 320 0064 FB68     		ldr	r3, [r7, #12]
+ 321 0066 1344     		add	r3, r3, r2
+ 322 0068 0433     		adds	r3, r3, #4
+ 323 006a 0A46     		mov	r2, r1
+ 324 006c 1A70     		strb	r2, [r3]
+  57:src/iec61107.c **** 		pxBuf++;
+ 325              		.loc 1 57 8 discriminator 2
+ 326 006e 7B68     		ldr	r3, [r7, #4]
+ 327 0070 0133     		adds	r3, r3, #1
+ 328 0072 7B60     		str	r3, [r7, #4]
+  52:src/iec61107.c **** 	{
+ 329              		.loc 1 52 23 discriminator 2
+ 330 0074 FB68     		ldr	r3, [r7, #12]
+ 331 0076 0133     		adds	r3, r3, #1
+ 332 0078 FB60     		str	r3, [r7, #12]
+ 333              	.L15:
+  52:src/iec61107.c **** 	{
+ 334              		.loc 1 52 2 discriminator 1
+ 335 007a FB68     		ldr	r3, [r7, #12]
+ 336 007c 0F2B     		cmp	r3, #15
+ 337 007e EADD     		ble	.L18
+ 338 0080 00E0     		b	.L17
+ 339              	.L20:
+  55:src/iec61107.c **** 			break;
+ 340              		.loc 1 55 4
+ 341 0082 00BF     		nop
+ 342              	.L17:
+  58:src/iec61107.c **** 	}
+  59:src/iec61107.c **** 	if ((*pxBuf != SYM_CR) && (*(pxBuf + 1) != SYM_LF))
+ 343              		.loc 1 59 7
+ 344 0084 7B68     		ldr	r3, [r7, #4]
+ 345 0086 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 346              		.loc 1 59 5
+ 347 0088 0D2B     		cmp	r3, #13
+ 348 008a 06D0     		beq	.L19
+ 349              		.loc 1 59 37 discriminator 1
+ 350 008c 7B68     		ldr	r3, [r7, #4]
+ 351 008e 0133     		adds	r3, r3, #1
+ 352              		.loc 1 59 29 discriminator 1
+ 353 0090 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 354              		.loc 1 59 25 discriminator 1
+ 355 0092 0A2B     		cmp	r3, #10
+ 356 0094 01D0     		beq	.L19
+  60:src/iec61107.c **** 		return false;
+ 357              		.loc 1 60 10
+ 358 0096 0023     		movs	r3, #0
+ 359 0098 01E0     		b	.L12
+ 360              	.L19:
+  61:src/iec61107.c **** 	return true;
+ 361              		.loc 1 61 9
+ 362 009a 4FF0FF33 		mov	r3, #-1
+ 363              	.L12:
+  62:src/iec61107.c **** }
+ 364              		.loc 1 62 1
+ 365 009e 1846     		mov	r0, r3
+ 366 00a0 1437     		adds	r7, r7, #20
+ 367              	.LCFI15:
+ 368              		.cfi_def_cfa_offset 4
+ 369 00a2 BD46     		mov	sp, r7
+ 370              	.LCFI16:
+ 371              		.cfi_def_cfa_register 13
+ 372              		@ sp needed
+ 373 00a4 80BC     		pop	{r7}
+ 374              	.LCFI17:
+ 375              		.cfi_restore 7
+ 376              		.cfi_def_cfa_offset 0
+ 377 00a6 7047     		bx	lr
+ 378              		.cfi_endproc
+ 379              	.LFE2:
+ 381              		.section	.text.iecOptionsAckPacket,"ax",%progbits
+ 382              		.align	1
+ 383              		.global	iecOptionsAckPacket
+ 384              		.syntax unified
+ 385              		.thumb
+ 386              		.thumb_func
+ 388              	iecOptionsAckPacket:
+ 389              	.LFB3:
+  63:src/iec61107.c **** uint16 iecOptionsAckPacket(char *pxBuf, char V, char Z, char Y)
+  64:src/iec61107.c **** {
+ 390              		.loc 1 64 1
+ 391              		.cfi_startproc
+ 392              		@ args = 0, pretend = 0, frame = 8
+ 393              		@ frame_needed = 1, uses_anonymous_args = 0
+ 394              		@ link register save eliminated.
+ 395 0000 80B4     		push	{r7}
+ 396              	.LCFI18:
+ 397              		.cfi_def_cfa_offset 4
+ 398              		.cfi_offset 7, -4
+ 399 0002 83B0     		sub	sp, sp, #12
+ 400              	.LCFI19:
+ 401              		.cfi_def_cfa_offset 16
+ 402 0004 00AF     		add	r7, sp, #0
+ 403              	.LCFI20:
+ 404              		.cfi_def_cfa_register 7
+ 405 0006 7860     		str	r0, [r7, #4]
+ 406 0008 0846     		mov	r0, r1
+ 407 000a 1146     		mov	r1, r2
+ 408 000c 1A46     		mov	r2, r3
+ 409 000e 0346     		mov	r3, r0
+ 410 0010 FB70     		strb	r3, [r7, #3]
+ 411 0012 0B46     		mov	r3, r1
+ 412 0014 BB70     		strb	r3, [r7, #2]
+ 413 0016 1346     		mov	r3, r2
+ 414 0018 7B70     		strb	r3, [r7, #1]
+  65:src/iec61107.c **** 	*pxBuf = ACK;
+ 415              		.loc 1 65 9
+ 416 001a 7B68     		ldr	r3, [r7, #4]
+ 417 001c 0622     		movs	r2, #6
+ 418 001e 1A70     		strb	r2, [r3]
+  66:src/iec61107.c **** 	pxBuf++;
+ 419              		.loc 1 66 7
+ 420 0020 7B68     		ldr	r3, [r7, #4]
+ 421 0022 0133     		adds	r3, r3, #1
+ 422 0024 7B60     		str	r3, [r7, #4]
+  67:src/iec61107.c **** 	*pxBuf = V;
+ 423              		.loc 1 67 9
+ 424 0026 7B68     		ldr	r3, [r7, #4]
+ 425 0028 FA78     		ldrb	r2, [r7, #3]
+ 426 002a 1A70     		strb	r2, [r3]
+  68:src/iec61107.c **** 	pxBuf++;
+ 427              		.loc 1 68 7
+ 428 002c 7B68     		ldr	r3, [r7, #4]
+ 429 002e 0133     		adds	r3, r3, #1
+ 430 0030 7B60     		str	r3, [r7, #4]
+  69:src/iec61107.c **** 	*pxBuf = Z;
+ 431              		.loc 1 69 9
+ 432 0032 7B68     		ldr	r3, [r7, #4]
+ 433 0034 BA78     		ldrb	r2, [r7, #2]
+ 434 0036 1A70     		strb	r2, [r3]
+  70:src/iec61107.c **** 	pxBuf++;
+ 435              		.loc 1 70 7
+ 436 0038 7B68     		ldr	r3, [r7, #4]
+ 437 003a 0133     		adds	r3, r3, #1
+ 438 003c 7B60     		str	r3, [r7, #4]
+  71:src/iec61107.c **** 	*pxBuf = Y;
+ 439              		.loc 1 71 9
+ 440 003e 7B68     		ldr	r3, [r7, #4]
+ 441 0040 7A78     		ldrb	r2, [r7, #1]
+ 442 0042 1A70     		strb	r2, [r3]
+  72:src/iec61107.c **** 	pxBuf++;
+ 443              		.loc 1 72 7
+ 444 0044 7B68     		ldr	r3, [r7, #4]
+ 445 0046 0133     		adds	r3, r3, #1
+ 446 0048 7B60     		str	r3, [r7, #4]
+  73:src/iec61107.c **** 	*pxBuf = SYM_CR;
+ 447              		.loc 1 73 9
+ 448 004a 7B68     		ldr	r3, [r7, #4]
+ 449 004c 0D22     		movs	r2, #13
+ 450 004e 1A70     		strb	r2, [r3]
+  74:src/iec61107.c **** 	pxBuf++;
+ 451              		.loc 1 74 7
+ 452 0050 7B68     		ldr	r3, [r7, #4]
+ 453 0052 0133     		adds	r3, r3, #1
+ 454 0054 7B60     		str	r3, [r7, #4]
+  75:src/iec61107.c **** 	*pxBuf = SYM_LF;
+ 455              		.loc 1 75 9
+ 456 0056 7B68     		ldr	r3, [r7, #4]
+ 457 0058 0A22     		movs	r2, #10
+ 458 005a 1A70     		strb	r2, [r3]
+  76:src/iec61107.c **** 	return 6;
+ 459              		.loc 1 76 9
+ 460 005c 0623     		movs	r3, #6
+  77:src/iec61107.c **** }
+ 461              		.loc 1 77 1
+ 462 005e 1846     		mov	r0, r3
+ 463 0060 0C37     		adds	r7, r7, #12
+ 464              	.LCFI21:
+ 465              		.cfi_def_cfa_offset 4
+ 466 0062 BD46     		mov	sp, r7
+ 467              	.LCFI22:
+ 468              		.cfi_def_cfa_register 13
+ 469              		@ sp needed
+ 470 0064 80BC     		pop	{r7}
+ 471              	.LCFI23:
+ 472              		.cfi_restore 7
+ 473              		.cfi_def_cfa_offset 0
+ 474 0066 7047     		bx	lr
+ 475              		.cfi_endproc
+ 476              	.LFE3:
+ 478              		.section	.text.iecConnect,"ax",%progbits
+ 479              		.align	1
+ 480              		.global	iecConnect
+ 481              		.syntax unified
+ 482              		.thumb
+ 483              		.thumb_func
+ 485              	iecConnect:
+ 486              	.LFB4:
+  78:src/iec61107.c **** bool iecConnect(char *devaddr, IDENTIFIER *idStr)
+  79:src/iec61107.c **** {
+ 487              		.loc 1 79 1
+ 488              		.cfi_startproc
+ 489              		@ args = 0, pretend = 0, frame = 8
+ 490              		@ frame_needed = 1, uses_anonymous_args = 0
+ 491              		@ link register save eliminated.
+ 492 0000 80B4     		push	{r7}
+ 493              	.LCFI24:
+ 494              		.cfi_def_cfa_offset 4
+ 495              		.cfi_offset 7, -4
+ 496 0002 83B0     		sub	sp, sp, #12
+ 497              	.LCFI25:
+ 498              		.cfi_def_cfa_offset 16
+ 499 0004 00AF     		add	r7, sp, #0
+ 500              	.LCFI26:
+ 501              		.cfi_def_cfa_register 7
+ 502 0006 7860     		str	r0, [r7, #4]
+ 503 0008 3960     		str	r1, [r7]
+  80:src/iec61107.c **** 	//uint8 buf[32];
+  81:src/iec61107.c **** 	//uint16 size;
+  82:src/iec61107.c **** 	/*
+  83:src/iec61107.c **** 	 size = iecReqPacket(buf,devaddr,10);
+  84:src/iec61107.c **** 	 iecSysWrite(buf,size);
+  85:src/iec61107.c **** 	 size = iecSysRead(buf,32);
+  86:src/iec61107.c **** 	 if(iecIndProc(buf,idStr) == false ) return false;
+  87:src/iec61107.c **** 	 size = iecOptionsAckPacket(buf,V_NORM,Z_9600,Y_PROG);
+  88:src/iec61107.c **** 	 iecSysWrite(buf,size);
+  89:src/iec61107.c **** 	 size = iecReqPacket(buf,devaddr,10);
+  90:src/iec61107.c **** 	 // todo security proc;
+  91:src/iec61107.c **** 	 */
+  92:src/iec61107.c **** 
+  93:src/iec61107.c **** 	return true;
+ 504              		.loc 1 93 9
+ 505 000a 4FF0FF33 		mov	r3, #-1
+  94:src/iec61107.c **** }
+ 506              		.loc 1 94 1
+ 507 000e 1846     		mov	r0, r3
+ 508 0010 0C37     		adds	r7, r7, #12
+ 509              	.LCFI27:
+ 510              		.cfi_def_cfa_offset 4
+ 511 0012 BD46     		mov	sp, r7
+ 512              	.LCFI28:
+ 513              		.cfi_def_cfa_register 13
+ 514              		@ sp needed
+ 515 0014 80BC     		pop	{r7}
+ 516              	.LCFI29:
+ 517              		.cfi_restore 7
+ 518              		.cfi_def_cfa_offset 0
+ 519 0016 7047     		bx	lr
+ 520              		.cfi_endproc
+ 521              	.LFE4:
+ 523              		.section	.text.iecProcInputPacked,"ax",%progbits
+ 524              		.align	1
+ 525              		.global	iecProcInputPacked
+ 526              		.syntax unified
+ 527              		.thumb
+ 528              		.thumb_func
+ 530              	iecProcInputPacked:
+ 531              	.LFB5:
+  95:src/iec61107.c **** bool iecProcInputPacked(char *pxBuf, uint16 size, IDENTIFIER *idStr)
+  96:src/iec61107.c **** {
+ 532              		.loc 1 96 1
+ 533              		.cfi_startproc
+ 534              		@ args = 0, pretend = 0, frame = 16
+ 535              		@ frame_needed = 1, uses_anonymous_args = 0
+ 536 0000 80B5     		push	{r7, lr}
+ 537              	.LCFI30:
+ 538              		.cfi_def_cfa_offset 8
+ 539              		.cfi_offset 7, -8
+ 540              		.cfi_offset 14, -4
+ 541 0002 84B0     		sub	sp, sp, #16
+ 542              	.LCFI31:
+ 543              		.cfi_def_cfa_offset 24
+ 544 0004 00AF     		add	r7, sp, #0
+ 545              	.LCFI32:
+ 546              		.cfi_def_cfa_register 7
+ 547 0006 F860     		str	r0, [r7, #12]
+ 548 0008 0B46     		mov	r3, r1
+ 549 000a 7A60     		str	r2, [r7, #4]
+ 550 000c 7B81     		strh	r3, [r7, #10]	@ movhi
+  97:src/iec61107.c **** 	switch (*pxBuf)
+ 551              		.loc 1 97 10
+ 552 000e FB68     		ldr	r3, [r7, #12]
+ 553 0010 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 554              		.loc 1 97 2
+ 555 0012 152B     		cmp	r3, #21
+ 556 0014 32DC     		bgt	.L26
+ 557 0016 002B     		cmp	r3, #0
+ 558 0018 3CDD     		ble	.L27
+ 559 001a 013B     		subs	r3, r3, #1
+ 560 001c 142B     		cmp	r3, #20
+ 561 001e 39D8     		bhi	.L27
+ 562 0020 01A2     		adr	r2, .L29
+ 563 0022 52F823F0 		ldr	pc, [r2, r3, lsl #2]
+ 564 0026 00BF     		.p2align 2
+ 565              	.L29:
+ 566 0028 95000000 		.word	.L27+1
+ 567 002c 95000000 		.word	.L27+1
+ 568 0030 95000000 		.word	.L27+1
+ 569 0034 95000000 		.word	.L27+1
+ 570 0038 95000000 		.word	.L27+1
+ 571 003c 95000000 		.word	.L27+1
+ 572 0040 95000000 		.word	.L27+1
+ 573 0044 95000000 		.word	.L27+1
+ 574 0048 95000000 		.word	.L27+1
+ 575 004c 95000000 		.word	.L27+1
+ 576 0050 95000000 		.word	.L27+1
+ 577 0054 95000000 		.word	.L27+1
+ 578 0058 95000000 		.word	.L27+1
+ 579 005c 95000000 		.word	.L27+1
+ 580 0060 95000000 		.word	.L27+1
+ 581 0064 95000000 		.word	.L27+1
+ 582 0068 95000000 		.word	.L27+1
+ 583 006c 95000000 		.word	.L27+1
+ 584 0070 95000000 		.word	.L27+1
+ 585 0074 95000000 		.word	.L27+1
+ 586 0078 95000000 		.word	.L27+1
+ 587              		.p2align 1
+ 588              	.L26:
+ 589 007c 2F2B     		cmp	r3, #47
+ 590 007e 09D1     		bne	.L27
+  98:src/iec61107.c **** 	{
+  99:src/iec61107.c **** 	case SYM_ST:
+ 100:src/iec61107.c **** 		return iecProcInputPacked(pxBuf, size - 1, idStr);
+ 591              		.loc 1 100 10
+ 592 0080 7B89     		ldrh	r3, [r7, #10]	@ movhi
+ 593 0082 013B     		subs	r3, r3, #1
+ 594 0084 9BB2     		uxth	r3, r3
+ 595 0086 7A68     		ldr	r2, [r7, #4]
+ 596 0088 1946     		mov	r1, r3
+ 597 008a F868     		ldr	r0, [r7, #12]
+ 598 008c FFF7FEFF 		bl	iecProcInputPacked
+ 599 0090 0346     		mov	r3, r0
+ 600 0092 01E0     		b	.L33
+ 601              	.L27:
+ 101:src/iec61107.c **** 	case ACK:
+ 102:src/iec61107.c **** 		break;
+ 103:src/iec61107.c **** 	case NAK:
+ 104:src/iec61107.c **** 		break;
+ 105:src/iec61107.c **** 	case STX:
+ 106:src/iec61107.c **** 		break;
+ 107:src/iec61107.c **** 	case SOH:
+ 108:src/iec61107.c **** 		break;
+ 109:src/iec61107.c **** 	}
+ 110:src/iec61107.c **** 	return true;
+ 602              		.loc 1 110 9
+ 603 0094 4FF0FF33 		mov	r3, #-1
+ 604              	.L33:
+ 111:src/iec61107.c **** }
+ 605              		.loc 1 111 1
+ 606 0098 1846     		mov	r0, r3
+ 607 009a 1037     		adds	r7, r7, #16
+ 608              	.LCFI33:
+ 609              		.cfi_def_cfa_offset 8
+ 610 009c BD46     		mov	sp, r7
+ 611              	.LCFI34:
+ 612              		.cfi_def_cfa_register 13
+ 613              		@ sp needed
+ 614 009e 80BD     		pop	{r7, pc}
+ 615              		.cfi_endproc
+ 616              	.LFE5:
+ 618              		.section	.text.iecProcAddrAnswer,"ax",%progbits
+ 619              		.align	1
+ 620              		.global	iecProcAddrAnswer
+ 621              		.syntax unified
+ 622              		.thumb
+ 623              		.thumb_func
+ 625              	iecProcAddrAnswer:
+ 626              	.LFB6:
+ 112:src/iec61107.c **** bool iecProcAddrAnswer(char *pxBuf, char *addrStr, uint8 limit)
+ 113:src/iec61107.c **** {
+ 627              		.loc 1 113 1
+ 628              		.cfi_startproc
+ 629              		@ args = 0, pretend = 0, frame = 32
+ 630              		@ frame_needed = 1, uses_anonymous_args = 0
+ 631 0000 80B5     		push	{r7, lr}
+ 632              	.LCFI35:
+ 633              		.cfi_def_cfa_offset 8
+ 634              		.cfi_offset 7, -8
+ 635              		.cfi_offset 14, -4
+ 636 0002 88B0     		sub	sp, sp, #32
+ 637              	.LCFI36:
+ 638              		.cfi_def_cfa_offset 40
+ 639 0004 00AF     		add	r7, sp, #0
+ 640              	.LCFI37:
+ 641              		.cfi_def_cfa_register 7
+ 642 0006 F860     		str	r0, [r7, #12]
+ 643 0008 B960     		str	r1, [r7, #8]
+ 644 000a 1346     		mov	r3, r2
+ 645 000c FB71     		strb	r3, [r7, #7]
+ 114:src/iec61107.c **** 	int i;
+ 115:src/iec61107.c **** 	uint8 *tmpbuff = pxBuf;
+ 646              		.loc 1 115 9
+ 647 000e FB68     		ldr	r3, [r7, #12]
+ 648 0010 BB61     		str	r3, [r7, #24]
+ 116:src/iec61107.c **** 	if (*pxBuf != SOH)
+ 649              		.loc 1 116 6
+ 650 0012 FB68     		ldr	r3, [r7, #12]
+ 651 0014 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 652              		.loc 1 116 5
+ 653 0016 012B     		cmp	r3, #1
+ 654 0018 01D0     		beq	.L35
+ 117:src/iec61107.c **** 		return false;
+ 655              		.loc 1 117 10
+ 656 001a 0023     		movs	r3, #0
+ 657 001c 67E0     		b	.L36
+ 658              	.L35:
+ 118:src/iec61107.c **** 	pxBuf++;
+ 659              		.loc 1 118 7
+ 660 001e FB68     		ldr	r3, [r7, #12]
+ 661 0020 0133     		adds	r3, r3, #1
+ 662 0022 FB60     		str	r3, [r7, #12]
+ 119:src/iec61107.c **** 	if (*pxBuf != 'P')
+ 663              		.loc 1 119 6
+ 664 0024 FB68     		ldr	r3, [r7, #12]
+ 665 0026 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 666              		.loc 1 119 5
+ 667 0028 502B     		cmp	r3, #80
+ 668 002a 01D0     		beq	.L37
+ 120:src/iec61107.c **** 		return false;
+ 669              		.loc 1 120 10
+ 670 002c 0023     		movs	r3, #0
+ 671 002e 5EE0     		b	.L36
+ 672              	.L37:
+ 121:src/iec61107.c **** 	pxBuf++;
+ 673              		.loc 1 121 7
+ 674 0030 FB68     		ldr	r3, [r7, #12]
+ 675 0032 0133     		adds	r3, r3, #1
+ 676 0034 FB60     		str	r3, [r7, #12]
+ 122:src/iec61107.c **** 	if (*pxBuf != '0')
+ 677              		.loc 1 122 6
+ 678 0036 FB68     		ldr	r3, [r7, #12]
+ 679 0038 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 680              		.loc 1 122 5
+ 681 003a 302B     		cmp	r3, #48
+ 682 003c 01D0     		beq	.L38
+ 123:src/iec61107.c **** 		return false;
+ 683              		.loc 1 123 10
+ 684 003e 0023     		movs	r3, #0
+ 685 0040 55E0     		b	.L36
+ 686              	.L38:
+ 124:src/iec61107.c **** 	pxBuf++;
+ 687              		.loc 1 124 7
+ 688 0042 FB68     		ldr	r3, [r7, #12]
+ 689 0044 0133     		adds	r3, r3, #1
+ 690 0046 FB60     		str	r3, [r7, #12]
+ 125:src/iec61107.c **** 	if (*pxBuf != STX)
+ 691              		.loc 1 125 6
+ 692 0048 FB68     		ldr	r3, [r7, #12]
+ 693 004a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 694              		.loc 1 125 5
+ 695 004c 022B     		cmp	r3, #2
+ 696 004e 01D0     		beq	.L39
+ 126:src/iec61107.c **** 		return false;
+ 697              		.loc 1 126 10
+ 698 0050 0023     		movs	r3, #0
+ 699 0052 4CE0     		b	.L36
+ 700              	.L39:
+ 127:src/iec61107.c **** 	pxBuf++;
+ 701              		.loc 1 127 7
+ 702 0054 FB68     		ldr	r3, [r7, #12]
+ 703 0056 0133     		adds	r3, r3, #1
+ 704 0058 FB60     		str	r3, [r7, #12]
+ 128:src/iec61107.c **** 	if (*pxBuf != '(')
+ 705              		.loc 1 128 6
+ 706 005a FB68     		ldr	r3, [r7, #12]
+ 707 005c 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 708              		.loc 1 128 5
+ 709 005e 282B     		cmp	r3, #40
+ 710 0060 01D0     		beq	.L40
+ 129:src/iec61107.c **** 		return false;
+ 711              		.loc 1 129 10
+ 712 0062 0023     		movs	r3, #0
+ 713 0064 43E0     		b	.L36
+ 714              	.L40:
+ 130:src/iec61107.c **** 	pxBuf++;
+ 715              		.loc 1 130 7
+ 716 0066 FB68     		ldr	r3, [r7, #12]
+ 717 0068 0133     		adds	r3, r3, #1
+ 718 006a FB60     		str	r3, [r7, #12]
+ 131:src/iec61107.c **** 	i = 0;
+ 719              		.loc 1 131 4
+ 720 006c 0023     		movs	r3, #0
+ 721 006e FB61     		str	r3, [r7, #28]
+ 132:src/iec61107.c **** 	while ((*pxBuf != ')') && (limit > 0))
+ 722              		.loc 1 132 8
+ 723 0070 12E0     		b	.L41
+ 724              	.L44:
+ 133:src/iec61107.c **** 	{
+ 134:src/iec61107.c **** 		if (i >= limit)
+ 725              		.loc 1 134 9
+ 726 0072 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 727              		.loc 1 134 6
+ 728 0074 FA69     		ldr	r2, [r7, #28]
+ 729 0076 9A42     		cmp	r2, r3
+ 730 0078 01DB     		blt	.L42
+ 135:src/iec61107.c **** 			return false;
+ 731              		.loc 1 135 11
+ 732 007a 0023     		movs	r3, #0
+ 733 007c 37E0     		b	.L36
+ 734              	.L42:
+ 136:src/iec61107.c **** 		*addrStr = (char) *pxBuf;
+ 735              		.loc 1 136 14
+ 736 007e FB68     		ldr	r3, [r7, #12]
+ 737 0080 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 738              		.loc 1 136 12
+ 739 0082 BB68     		ldr	r3, [r7, #8]
+ 740 0084 1A70     		strb	r2, [r3]
+ 137:src/iec61107.c **** 		i++;
+ 741              		.loc 1 137 4
+ 742 0086 FB69     		ldr	r3, [r7, #28]
+ 743 0088 0133     		adds	r3, r3, #1
+ 744 008a FB61     		str	r3, [r7, #28]
+ 138:src/iec61107.c **** 		addrStr++;
+ 745              		.loc 1 138 10
+ 746 008c BB68     		ldr	r3, [r7, #8]
+ 747 008e 0133     		adds	r3, r3, #1
+ 748 0090 BB60     		str	r3, [r7, #8]
+ 139:src/iec61107.c **** 		pxBuf++;
+ 749              		.loc 1 139 8
+ 750 0092 FB68     		ldr	r3, [r7, #12]
+ 751 0094 0133     		adds	r3, r3, #1
+ 752 0096 FB60     		str	r3, [r7, #12]
+ 753              	.L41:
+ 132:src/iec61107.c **** 	{
+ 754              		.loc 1 132 10
+ 755 0098 FB68     		ldr	r3, [r7, #12]
+ 756 009a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 132:src/iec61107.c **** 	{
+ 757              		.loc 1 132 8
+ 758 009c 292B     		cmp	r3, #41
+ 759 009e 02D0     		beq	.L43
+ 132:src/iec61107.c **** 	{
+ 760              		.loc 1 132 25 discriminator 1
+ 761 00a0 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 762 00a2 002B     		cmp	r3, #0
+ 763 00a4 E5D1     		bne	.L44
+ 764              	.L43:
+ 140:src/iec61107.c **** 	}
+ 141:src/iec61107.c **** 	*addrStr = 0; // end of string
+ 765              		.loc 1 141 11
+ 766 00a6 BB68     		ldr	r3, [r7, #8]
+ 767 00a8 0022     		movs	r2, #0
+ 768 00aa 1A70     		strb	r2, [r3]
+ 142:src/iec61107.c **** 	pxBuf++;
+ 769              		.loc 1 142 7
+ 770 00ac FB68     		ldr	r3, [r7, #12]
+ 771 00ae 0133     		adds	r3, r3, #1
+ 772 00b0 FB60     		str	r3, [r7, #12]
+ 143:src/iec61107.c **** 	if (*pxBuf != ETX)
+ 773              		.loc 1 143 6
+ 774 00b2 FB68     		ldr	r3, [r7, #12]
+ 775 00b4 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 776              		.loc 1 143 5
+ 777 00b6 032B     		cmp	r3, #3
+ 778 00b8 01D0     		beq	.L45
+ 144:src/iec61107.c **** 		return false;
+ 779              		.loc 1 144 10
+ 780 00ba 0023     		movs	r3, #0
+ 781 00bc 17E0     		b	.L36
+ 782              	.L45:
+ 145:src/iec61107.c **** 	pxBuf++;
+ 783              		.loc 1 145 7
+ 784 00be FB68     		ldr	r3, [r7, #12]
+ 785 00c0 0133     		adds	r3, r3, #1
+ 786 00c2 FB60     		str	r3, [r7, #12]
+ 146:src/iec61107.c **** 	uint8 bcc = iecClaculateBCC((tmpbuff + 1), 3 + 1 + i + 1 + 1);
+ 787              		.loc 1 146 39
+ 788 00c4 BB69     		ldr	r3, [r7, #24]
+ 789 00c6 5A1C     		adds	r2, r3, #1
+ 790              		.loc 1 146 14
+ 791 00c8 FB69     		ldr	r3, [r7, #28]
+ 792 00ca 9BB2     		uxth	r3, r3
+ 793 00cc 0633     		adds	r3, r3, #6
+ 794 00ce 9BB2     		uxth	r3, r3
+ 795 00d0 1946     		mov	r1, r3
+ 796 00d2 1046     		mov	r0, r2
+ 797 00d4 084B     		ldr	r3, .L47
+ 798 00d6 9847     		blx	r3
+ 799              	.LVL0:
+ 800 00d8 0346     		mov	r3, r0
+ 801 00da FB75     		strb	r3, [r7, #23]
+ 147:src/iec61107.c **** 	if (bcc != *pxBuf)
+ 802              		.loc 1 147 13
+ 803 00dc FB68     		ldr	r3, [r7, #12]
+ 804 00de 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 805              		.loc 1 147 5
+ 806 00e0 FA7D     		ldrb	r2, [r7, #23]	@ zero_extendqisi2
+ 807 00e2 9A42     		cmp	r2, r3
+ 808 00e4 01D0     		beq	.L46
+ 148:src/iec61107.c **** 	{
+ 149:src/iec61107.c **** 		return false;
+ 809              		.loc 1 149 10
+ 810 00e6 0023     		movs	r3, #0
+ 811 00e8 01E0     		b	.L36
+ 812              	.L46:
+ 150:src/iec61107.c **** 	}
+ 151:src/iec61107.c **** 	return true;
+ 813              		.loc 1 151 9
+ 814 00ea 4FF0FF33 		mov	r3, #-1
+ 815              	.L36:
+ 152:src/iec61107.c **** }
+ 816              		.loc 1 152 1
+ 817 00ee 1846     		mov	r0, r3
+ 818 00f0 2037     		adds	r7, r7, #32
+ 819              	.LCFI38:
+ 820              		.cfi_def_cfa_offset 8
+ 821 00f2 BD46     		mov	sp, r7
+ 822              	.LCFI39:
+ 823              		.cfi_def_cfa_register 13
+ 824              		@ sp needed
+ 825 00f4 80BD     		pop	{r7, pc}
+ 826              	.L48:
+ 827 00f6 00BF     		.align	2
+ 828              	.L47:
+ 829 00f8 00000000 		.word	iecClaculateBCC
+ 830              		.cfi_endproc
+ 831              	.LFE6:
+ 833              		.section	.text.iecProcPassPacket,"ax",%progbits
+ 834              		.align	1
+ 835              		.global	iecProcPassPacket
+ 836              		.syntax unified
+ 837              		.thumb
+ 838              		.thumb_func
+ 840              	iecProcPassPacket:
+ 841              	.LFB7:
+ 153:src/iec61107.c **** uint16 iecProcPassPacket(char *pxBuf, char *pass, uint8 limit)
+ 154:src/iec61107.c **** {
+ 842              		.loc 1 154 1
+ 843              		.cfi_startproc
+ 844              		@ args = 0, pretend = 0, frame = 24
+ 845              		@ frame_needed = 1, uses_anonymous_args = 0
+ 846 0000 80B5     		push	{r7, lr}
+ 847              	.LCFI40:
+ 848              		.cfi_def_cfa_offset 8
+ 849              		.cfi_offset 7, -8
+ 850              		.cfi_offset 14, -4
+ 851 0002 86B0     		sub	sp, sp, #24
+ 852              	.LCFI41:
+ 853              		.cfi_def_cfa_offset 32
+ 854 0004 00AF     		add	r7, sp, #0
+ 855              	.LCFI42:
+ 856              		.cfi_def_cfa_register 7
+ 857 0006 F860     		str	r0, [r7, #12]
+ 858 0008 B960     		str	r1, [r7, #8]
+ 859 000a 1346     		mov	r3, r2
+ 860 000c FB71     		strb	r3, [r7, #7]
+ 155:src/iec61107.c **** 	uint8 *tmpbuff = pxBuf;
+ 861              		.loc 1 155 9
+ 862 000e FB68     		ldr	r3, [r7, #12]
+ 863 0010 3B61     		str	r3, [r7, #16]
+ 156:src/iec61107.c **** 	*pxBuf = SOH;
+ 864              		.loc 1 156 9
+ 865 0012 FB68     		ldr	r3, [r7, #12]
+ 866 0014 0122     		movs	r2, #1
+ 867 0016 1A70     		strb	r2, [r3]
+ 157:src/iec61107.c **** 	pxBuf++;
+ 868              		.loc 1 157 7
+ 869 0018 FB68     		ldr	r3, [r7, #12]
+ 870 001a 0133     		adds	r3, r3, #1
+ 871 001c FB60     		str	r3, [r7, #12]
+ 158:src/iec61107.c **** 	*pxBuf = 'P';
+ 872              		.loc 1 158 9
+ 873 001e FB68     		ldr	r3, [r7, #12]
+ 874 0020 5022     		movs	r2, #80
+ 875 0022 1A70     		strb	r2, [r3]
+ 159:src/iec61107.c **** 	pxBuf++;
+ 876              		.loc 1 159 7
+ 877 0024 FB68     		ldr	r3, [r7, #12]
+ 878 0026 0133     		adds	r3, r3, #1
+ 879 0028 FB60     		str	r3, [r7, #12]
+ 160:src/iec61107.c **** 	*pxBuf = '1';
+ 880              		.loc 1 160 9
+ 881 002a FB68     		ldr	r3, [r7, #12]
+ 882 002c 3122     		movs	r2, #49
+ 883 002e 1A70     		strb	r2, [r3]
+ 161:src/iec61107.c **** 	pxBuf++;
+ 884              		.loc 1 161 7
+ 885 0030 FB68     		ldr	r3, [r7, #12]
+ 886 0032 0133     		adds	r3, r3, #1
+ 887 0034 FB60     		str	r3, [r7, #12]
+ 162:src/iec61107.c **** 	*pxBuf = STX;
+ 888              		.loc 1 162 9
+ 889 0036 FB68     		ldr	r3, [r7, #12]
+ 890 0038 0222     		movs	r2, #2
+ 891 003a 1A70     		strb	r2, [r3]
+ 163:src/iec61107.c **** 	pxBuf++;
+ 892              		.loc 1 163 7
+ 893 003c FB68     		ldr	r3, [r7, #12]
+ 894 003e 0133     		adds	r3, r3, #1
+ 895 0040 FB60     		str	r3, [r7, #12]
+ 164:src/iec61107.c **** 	*pxBuf = '(';
+ 896              		.loc 1 164 9
+ 897 0042 FB68     		ldr	r3, [r7, #12]
+ 898 0044 2822     		movs	r2, #40
+ 899 0046 1A70     		strb	r2, [r3]
+ 165:src/iec61107.c **** 	pxBuf++;
+ 900              		.loc 1 165 7
+ 901 0048 FB68     		ldr	r3, [r7, #12]
+ 902 004a 0133     		adds	r3, r3, #1
+ 903 004c FB60     		str	r3, [r7, #12]
+ 166:src/iec61107.c **** 	int i = 0;
+ 904              		.loc 1 166 6
+ 905 004e 0023     		movs	r3, #0
+ 906 0050 7B61     		str	r3, [r7, #20]
+ 167:src/iec61107.c **** 	while (*pass)
+ 907              		.loc 1 167 8
+ 908 0052 12E0     		b	.L50
+ 909              	.L53:
+ 168:src/iec61107.c **** 	{
+ 169:src/iec61107.c **** 		if (i >= limit)
+ 910              		.loc 1 169 9
+ 911 0054 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 912              		.loc 1 169 6
+ 913 0056 7A69     		ldr	r2, [r7, #20]
+ 914 0058 9A42     		cmp	r2, r3
+ 915 005a 01DB     		blt	.L51
+ 170:src/iec61107.c **** 			return 0;
+ 916              		.loc 1 170 11
+ 917 005c 0023     		movs	r3, #0
+ 918 005e 2EE0     		b	.L52
+ 919              	.L51:
+ 171:src/iec61107.c **** 		*pxBuf = *pass;
+ 920              		.loc 1 171 12
+ 921 0060 BB68     		ldr	r3, [r7, #8]
+ 922 0062 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 923              		.loc 1 171 10
+ 924 0064 FB68     		ldr	r3, [r7, #12]
+ 925 0066 1A70     		strb	r2, [r3]
+ 172:src/iec61107.c **** 		pxBuf++;
+ 926              		.loc 1 172 8
+ 927 0068 FB68     		ldr	r3, [r7, #12]
+ 928 006a 0133     		adds	r3, r3, #1
+ 929 006c FB60     		str	r3, [r7, #12]
+ 173:src/iec61107.c **** 		pass++;
+ 930              		.loc 1 173 7
+ 931 006e BB68     		ldr	r3, [r7, #8]
+ 932 0070 0133     		adds	r3, r3, #1
+ 933 0072 BB60     		str	r3, [r7, #8]
+ 174:src/iec61107.c **** 		i++;
+ 934              		.loc 1 174 4
+ 935 0074 7B69     		ldr	r3, [r7, #20]
+ 936 0076 0133     		adds	r3, r3, #1
+ 937 0078 7B61     		str	r3, [r7, #20]
+ 938              	.L50:
+ 167:src/iec61107.c **** 	{
+ 939              		.loc 1 167 9
+ 940 007a BB68     		ldr	r3, [r7, #8]
+ 941 007c 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 167:src/iec61107.c **** 	{
+ 942              		.loc 1 167 8
+ 943 007e 002B     		cmp	r3, #0
+ 944 0080 E8D1     		bne	.L53
+ 175:src/iec61107.c **** 	}
+ 176:src/iec61107.c **** 	*pxBuf = ')';
+ 945              		.loc 1 176 9
+ 946 0082 FB68     		ldr	r3, [r7, #12]
+ 947 0084 2922     		movs	r2, #41
+ 948 0086 1A70     		strb	r2, [r3]
+ 177:src/iec61107.c **** 	pxBuf++;
+ 949              		.loc 1 177 7
+ 950 0088 FB68     		ldr	r3, [r7, #12]
+ 951 008a 0133     		adds	r3, r3, #1
+ 952 008c FB60     		str	r3, [r7, #12]
+ 178:src/iec61107.c **** 	*pxBuf = ETX;
+ 953              		.loc 1 178 9
+ 954 008e FB68     		ldr	r3, [r7, #12]
+ 955 0090 0322     		movs	r2, #3
+ 956 0092 1A70     		strb	r2, [r3]
+ 179:src/iec61107.c **** 	pxBuf++;
+ 957              		.loc 1 179 7
+ 958 0094 FB68     		ldr	r3, [r7, #12]
+ 959 0096 0133     		adds	r3, r3, #1
+ 960 0098 FB60     		str	r3, [r7, #12]
+ 180:src/iec61107.c **** 	*pxBuf = iecClaculateBCC(tmpbuff + 1, 4 + i + 1 + 1);
+ 961              		.loc 1 180 35
+ 962 009a 3B69     		ldr	r3, [r7, #16]
+ 963 009c 5A1C     		adds	r2, r3, #1
+ 964              		.loc 1 180 11
+ 965 009e 7B69     		ldr	r3, [r7, #20]
+ 966 00a0 9BB2     		uxth	r3, r3
+ 967 00a2 0633     		adds	r3, r3, #6
+ 968 00a4 9BB2     		uxth	r3, r3
+ 969 00a6 1946     		mov	r1, r3
+ 970 00a8 1046     		mov	r0, r2
+ 971 00aa 074B     		ldr	r3, .L54
+ 972 00ac 9847     		blx	r3
+ 973              	.LVL1:
+ 974 00ae 0346     		mov	r3, r0
+ 975 00b0 1A46     		mov	r2, r3
+ 976              		.loc 1 180 9
+ 977 00b2 FB68     		ldr	r3, [r7, #12]
+ 978 00b4 1A70     		strb	r2, [r3]
+ 181:src/iec61107.c **** 	return (5 + i + 2 + 1);
+ 979              		.loc 1 181 20
+ 980 00b6 7B69     		ldr	r3, [r7, #20]
+ 981 00b8 9BB2     		uxth	r3, r3
+ 982 00ba 0833     		adds	r3, r3, #8
+ 983 00bc 9BB2     		uxth	r3, r3
+ 984              	.L52:
+ 182:src/iec61107.c **** }
+ 985              		.loc 1 182 1
+ 986 00be 1846     		mov	r0, r3
+ 987 00c0 1837     		adds	r7, r7, #24
+ 988              	.LCFI43:
+ 989              		.cfi_def_cfa_offset 8
+ 990 00c2 BD46     		mov	sp, r7
+ 991              	.LCFI44:
+ 992              		.cfi_def_cfa_register 13
+ 993              		@ sp needed
+ 994 00c4 80BD     		pop	{r7, pc}
+ 995              	.L55:
+ 996 00c6 00BF     		.align	2
+ 997              	.L54:
+ 998 00c8 00000000 		.word	iecClaculateBCC
+ 999              		.cfi_endproc
+ 1000              	.LFE7:
+ 1002              		.section	.text.iecProcVarReqPacket,"ax",%progbits
+ 1003              		.align	1
+ 1004              		.global	iecProcVarReqPacket
+ 1005              		.syntax unified
+ 1006              		.thumb
+ 1007              		.thumb_func
+ 1009              	iecProcVarReqPacket:
+ 1010              	.LFB8:
+ 183:src/iec61107.c **** uint16 iecProcVarReqPacket(char *pxBuf, char *var, uint8 limit)
+ 184:src/iec61107.c **** {
+ 1011              		.loc 1 184 1
+ 1012              		.cfi_startproc
+ 1013              		@ args = 0, pretend = 0, frame = 24
+ 1014              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1015 0000 80B5     		push	{r7, lr}
+ 1016              	.LCFI45:
+ 1017              		.cfi_def_cfa_offset 8
+ 1018              		.cfi_offset 7, -8
+ 1019              		.cfi_offset 14, -4
+ 1020 0002 86B0     		sub	sp, sp, #24
+ 1021              	.LCFI46:
+ 1022              		.cfi_def_cfa_offset 32
+ 1023 0004 00AF     		add	r7, sp, #0
+ 1024              	.LCFI47:
+ 1025              		.cfi_def_cfa_register 7
+ 1026 0006 F860     		str	r0, [r7, #12]
+ 1027 0008 B960     		str	r1, [r7, #8]
+ 1028 000a 1346     		mov	r3, r2
+ 1029 000c FB71     		strb	r3, [r7, #7]
+ 185:src/iec61107.c **** 	uint8 *tmpbuff = pxBuf;
+ 1030              		.loc 1 185 9
+ 1031 000e FB68     		ldr	r3, [r7, #12]
+ 1032 0010 3B61     		str	r3, [r7, #16]
+ 186:src/iec61107.c **** 	*pxBuf = SOH;
+ 1033              		.loc 1 186 9
+ 1034 0012 FB68     		ldr	r3, [r7, #12]
+ 1035 0014 0122     		movs	r2, #1
+ 1036 0016 1A70     		strb	r2, [r3]
+ 187:src/iec61107.c **** 	pxBuf++;
+ 1037              		.loc 1 187 7
+ 1038 0018 FB68     		ldr	r3, [r7, #12]
+ 1039 001a 0133     		adds	r3, r3, #1
+ 1040 001c FB60     		str	r3, [r7, #12]
+ 188:src/iec61107.c **** 	*pxBuf = 'R';
+ 1041              		.loc 1 188 9
+ 1042 001e FB68     		ldr	r3, [r7, #12]
+ 1043 0020 5222     		movs	r2, #82
+ 1044 0022 1A70     		strb	r2, [r3]
+ 189:src/iec61107.c **** 	pxBuf++;
+ 1045              		.loc 1 189 7
+ 1046 0024 FB68     		ldr	r3, [r7, #12]
+ 1047 0026 0133     		adds	r3, r3, #1
+ 1048 0028 FB60     		str	r3, [r7, #12]
+ 190:src/iec61107.c **** 	*pxBuf = '1';
+ 1049              		.loc 1 190 9
+ 1050 002a FB68     		ldr	r3, [r7, #12]
+ 1051 002c 3122     		movs	r2, #49
+ 1052 002e 1A70     		strb	r2, [r3]
+ 191:src/iec61107.c **** 	pxBuf++;
+ 1053              		.loc 1 191 7
+ 1054 0030 FB68     		ldr	r3, [r7, #12]
+ 1055 0032 0133     		adds	r3, r3, #1
+ 1056 0034 FB60     		str	r3, [r7, #12]
+ 192:src/iec61107.c **** 	*pxBuf = STX;
+ 1057              		.loc 1 192 9
+ 1058 0036 FB68     		ldr	r3, [r7, #12]
+ 1059 0038 0222     		movs	r2, #2
+ 1060 003a 1A70     		strb	r2, [r3]
+ 193:src/iec61107.c **** 	pxBuf++;
+ 1061              		.loc 1 193 7
+ 1062 003c FB68     		ldr	r3, [r7, #12]
+ 1063 003e 0133     		adds	r3, r3, #1
+ 1064 0040 FB60     		str	r3, [r7, #12]
+ 194:src/iec61107.c **** 	int i = 0;
+ 1065              		.loc 1 194 6
+ 1066 0042 0023     		movs	r3, #0
+ 1067 0044 7B61     		str	r3, [r7, #20]
+ 195:src/iec61107.c **** 	while (*var)
+ 1068              		.loc 1 195 8
+ 1069 0046 12E0     		b	.L57
+ 1070              	.L60:
+ 196:src/iec61107.c **** 	{
+ 197:src/iec61107.c **** 		if (i >= limit)
+ 1071              		.loc 1 197 9
+ 1072 0048 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 1073              		.loc 1 197 6
+ 1074 004a 7A69     		ldr	r2, [r7, #20]
+ 1075 004c 9A42     		cmp	r2, r3
+ 1076 004e 01DB     		blt	.L58
+ 198:src/iec61107.c **** 			return 0;
+ 1077              		.loc 1 198 11
+ 1078 0050 0023     		movs	r3, #0
+ 1079 0052 34E0     		b	.L59
+ 1080              	.L58:
+ 199:src/iec61107.c **** 		*pxBuf = *var;
+ 1081              		.loc 1 199 12
+ 1082 0054 BB68     		ldr	r3, [r7, #8]
+ 1083 0056 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 1084              		.loc 1 199 10
+ 1085 0058 FB68     		ldr	r3, [r7, #12]
+ 1086 005a 1A70     		strb	r2, [r3]
+ 200:src/iec61107.c **** 		pxBuf++;
+ 1087              		.loc 1 200 8
+ 1088 005c FB68     		ldr	r3, [r7, #12]
+ 1089 005e 0133     		adds	r3, r3, #1
+ 1090 0060 FB60     		str	r3, [r7, #12]
+ 201:src/iec61107.c **** 		var++;
+ 1091              		.loc 1 201 6
+ 1092 0062 BB68     		ldr	r3, [r7, #8]
+ 1093 0064 0133     		adds	r3, r3, #1
+ 1094 0066 BB60     		str	r3, [r7, #8]
+ 202:src/iec61107.c **** 		i++;
+ 1095              		.loc 1 202 4
+ 1096 0068 7B69     		ldr	r3, [r7, #20]
+ 1097 006a 0133     		adds	r3, r3, #1
+ 1098 006c 7B61     		str	r3, [r7, #20]
+ 1099              	.L57:
+ 195:src/iec61107.c **** 	{
+ 1100              		.loc 1 195 9
+ 1101 006e BB68     		ldr	r3, [r7, #8]
+ 1102 0070 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 195:src/iec61107.c **** 	{
+ 1103              		.loc 1 195 8
+ 1104 0072 002B     		cmp	r3, #0
+ 1105 0074 E8D1     		bne	.L60
+ 203:src/iec61107.c **** 	}
+ 204:src/iec61107.c **** 
+ 205:src/iec61107.c **** 	*pxBuf = '(';
+ 1106              		.loc 1 205 9
+ 1107 0076 FB68     		ldr	r3, [r7, #12]
+ 1108 0078 2822     		movs	r2, #40
+ 1109 007a 1A70     		strb	r2, [r3]
+ 206:src/iec61107.c **** 	pxBuf++;
+ 1110              		.loc 1 206 7
+ 1111 007c FB68     		ldr	r3, [r7, #12]
+ 1112 007e 0133     		adds	r3, r3, #1
+ 1113 0080 FB60     		str	r3, [r7, #12]
+ 207:src/iec61107.c **** 
+ 208:src/iec61107.c **** 	*pxBuf = ')';
+ 1114              		.loc 1 208 9
+ 1115 0082 FB68     		ldr	r3, [r7, #12]
+ 1116 0084 2922     		movs	r2, #41
+ 1117 0086 1A70     		strb	r2, [r3]
+ 209:src/iec61107.c **** 	pxBuf++;
+ 1118              		.loc 1 209 7
+ 1119 0088 FB68     		ldr	r3, [r7, #12]
+ 1120 008a 0133     		adds	r3, r3, #1
+ 1121 008c FB60     		str	r3, [r7, #12]
+ 210:src/iec61107.c **** 	*pxBuf = ETX;
+ 1122              		.loc 1 210 9
+ 1123 008e FB68     		ldr	r3, [r7, #12]
+ 1124 0090 0322     		movs	r2, #3
+ 1125 0092 1A70     		strb	r2, [r3]
+ 211:src/iec61107.c **** 	pxBuf++;
+ 1126              		.loc 1 211 7
+ 1127 0094 FB68     		ldr	r3, [r7, #12]
+ 1128 0096 0133     		adds	r3, r3, #1
+ 1129 0098 FB60     		str	r3, [r7, #12]
+ 212:src/iec61107.c **** 	*pxBuf = iecClaculateBCC(tmpbuff + 1, 3 + i + 2 + 1);
+ 1130              		.loc 1 212 35
+ 1131 009a 3B69     		ldr	r3, [r7, #16]
+ 1132 009c 5A1C     		adds	r2, r3, #1
+ 1133              		.loc 1 212 11
+ 1134 009e 7B69     		ldr	r3, [r7, #20]
+ 1135 00a0 9BB2     		uxth	r3, r3
+ 1136 00a2 0633     		adds	r3, r3, #6
+ 1137 00a4 9BB2     		uxth	r3, r3
+ 1138 00a6 1946     		mov	r1, r3
+ 1139 00a8 1046     		mov	r0, r2
+ 1140 00aa 074B     		ldr	r3, .L61
+ 1141 00ac 9847     		blx	r3
+ 1142              	.LVL2:
+ 1143 00ae 0346     		mov	r3, r0
+ 1144 00b0 1A46     		mov	r2, r3
+ 1145              		.loc 1 212 9
+ 1146 00b2 FB68     		ldr	r3, [r7, #12]
+ 1147 00b4 1A70     		strb	r2, [r3]
+ 213:src/iec61107.c **** 	return (4 + i + 2 + 2);
+ 1148              		.loc 1 213 20
+ 1149 00b6 7B69     		ldr	r3, [r7, #20]
+ 1150 00b8 9BB2     		uxth	r3, r3
+ 1151 00ba 0833     		adds	r3, r3, #8
+ 1152 00bc 9BB2     		uxth	r3, r3
+ 1153              	.L59:
+ 214:src/iec61107.c **** }
+ 1154              		.loc 1 214 1
+ 1155 00be 1846     		mov	r0, r3
+ 1156 00c0 1837     		adds	r7, r7, #24
+ 1157              	.LCFI48:
+ 1158              		.cfi_def_cfa_offset 8
+ 1159 00c2 BD46     		mov	sp, r7
+ 1160              	.LCFI49:
+ 1161              		.cfi_def_cfa_register 13
+ 1162              		@ sp needed
+ 1163 00c4 80BD     		pop	{r7, pc}
+ 1164              	.L62:
+ 1165 00c6 00BF     		.align	2
+ 1166              	.L61:
+ 1167 00c8 00000000 		.word	iecClaculateBCC
+ 1168              		.cfi_endproc
+ 1169              	.LFE8:
+ 1171              		.section	.text.iecProcVarReqPacketArg,"ax",%progbits
+ 1172              		.align	1
+ 1173              		.global	iecProcVarReqPacketArg
+ 1174              		.syntax unified
+ 1175              		.thumb
+ 1176              		.thumb_func
+ 1178              	iecProcVarReqPacketArg:
+ 1179              	.LFB9:
+ 215:src/iec61107.c **** 
+ 216:src/iec61107.c **** uint16 iecProcVarReqPacketArg(char *pxBuf, char *var, uint8 limit,char *param)
+ 217:src/iec61107.c **** {
+ 1180              		.loc 1 217 1
+ 1181              		.cfi_startproc
+ 1182              		@ args = 0, pretend = 0, frame = 32
+ 1183              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1184 0000 80B5     		push	{r7, lr}
+ 1185              	.LCFI50:
+ 1186              		.cfi_def_cfa_offset 8
+ 1187              		.cfi_offset 7, -8
+ 1188              		.cfi_offset 14, -4
+ 1189 0002 88B0     		sub	sp, sp, #32
+ 1190              	.LCFI51:
+ 1191              		.cfi_def_cfa_offset 40
+ 1192 0004 00AF     		add	r7, sp, #0
+ 1193              	.LCFI52:
+ 1194              		.cfi_def_cfa_register 7
+ 1195 0006 F860     		str	r0, [r7, #12]
+ 1196 0008 B960     		str	r1, [r7, #8]
+ 1197 000a 3B60     		str	r3, [r7]
+ 1198 000c 1346     		mov	r3, r2
+ 1199 000e FB71     		strb	r3, [r7, #7]
+ 218:src/iec61107.c **** 	uint8 *tmpbuff = pxBuf;
+ 1200              		.loc 1 218 9
+ 1201 0010 FB68     		ldr	r3, [r7, #12]
+ 1202 0012 7B61     		str	r3, [r7, #20]
+ 219:src/iec61107.c **** 	*pxBuf = SOH;
+ 1203              		.loc 1 219 9
+ 1204 0014 FB68     		ldr	r3, [r7, #12]
+ 1205 0016 0122     		movs	r2, #1
+ 1206 0018 1A70     		strb	r2, [r3]
+ 220:src/iec61107.c **** 	pxBuf++;
+ 1207              		.loc 1 220 7
+ 1208 001a FB68     		ldr	r3, [r7, #12]
+ 1209 001c 0133     		adds	r3, r3, #1
+ 1210 001e FB60     		str	r3, [r7, #12]
+ 221:src/iec61107.c **** 	*pxBuf = 'R';
+ 1211              		.loc 1 221 9
+ 1212 0020 FB68     		ldr	r3, [r7, #12]
+ 1213 0022 5222     		movs	r2, #82
+ 1214 0024 1A70     		strb	r2, [r3]
+ 222:src/iec61107.c **** 	pxBuf++;
+ 1215              		.loc 1 222 7
+ 1216 0026 FB68     		ldr	r3, [r7, #12]
+ 1217 0028 0133     		adds	r3, r3, #1
+ 1218 002a FB60     		str	r3, [r7, #12]
+ 223:src/iec61107.c **** 	*pxBuf = '1';
+ 1219              		.loc 1 223 9
+ 1220 002c FB68     		ldr	r3, [r7, #12]
+ 1221 002e 3122     		movs	r2, #49
+ 1222 0030 1A70     		strb	r2, [r3]
+ 224:src/iec61107.c **** 	pxBuf++;
+ 1223              		.loc 1 224 7
+ 1224 0032 FB68     		ldr	r3, [r7, #12]
+ 1225 0034 0133     		adds	r3, r3, #1
+ 1226 0036 FB60     		str	r3, [r7, #12]
+ 225:src/iec61107.c **** 	*pxBuf = STX;
+ 1227              		.loc 1 225 9
+ 1228 0038 FB68     		ldr	r3, [r7, #12]
+ 1229 003a 0222     		movs	r2, #2
+ 1230 003c 1A70     		strb	r2, [r3]
+ 226:src/iec61107.c **** 	pxBuf++;
+ 1231              		.loc 1 226 7
+ 1232 003e FB68     		ldr	r3, [r7, #12]
+ 1233 0040 0133     		adds	r3, r3, #1
+ 1234 0042 FB60     		str	r3, [r7, #12]
+ 227:src/iec61107.c **** 	int i = 0;
+ 1235              		.loc 1 227 6
+ 1236 0044 0023     		movs	r3, #0
+ 1237 0046 FB61     		str	r3, [r7, #28]
+ 228:src/iec61107.c **** 	while (*var)
+ 1238              		.loc 1 228 8
+ 1239 0048 12E0     		b	.L64
+ 1240              	.L67:
+ 229:src/iec61107.c **** 	{
+ 230:src/iec61107.c **** 		if (i >= limit)
+ 1241              		.loc 1 230 9
+ 1242 004a FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 1243              		.loc 1 230 6
+ 1244 004c FA69     		ldr	r2, [r7, #28]
+ 1245 004e 9A42     		cmp	r2, r3
+ 1246 0050 01DB     		blt	.L65
+ 231:src/iec61107.c **** 			return 0;
+ 1247              		.loc 1 231 11
+ 1248 0052 0023     		movs	r3, #0
+ 1249 0054 55E0     		b	.L66
+ 1250              	.L65:
+ 232:src/iec61107.c **** 		*pxBuf = *var;
+ 1251              		.loc 1 232 12
+ 1252 0056 BB68     		ldr	r3, [r7, #8]
+ 1253 0058 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 1254              		.loc 1 232 10
+ 1255 005a FB68     		ldr	r3, [r7, #12]
+ 1256 005c 1A70     		strb	r2, [r3]
+ 233:src/iec61107.c **** 		pxBuf++;
+ 1257              		.loc 1 233 8
+ 1258 005e FB68     		ldr	r3, [r7, #12]
+ 1259 0060 0133     		adds	r3, r3, #1
+ 1260 0062 FB60     		str	r3, [r7, #12]
+ 234:src/iec61107.c **** 		var++;
+ 1261              		.loc 1 234 6
+ 1262 0064 BB68     		ldr	r3, [r7, #8]
+ 1263 0066 0133     		adds	r3, r3, #1
+ 1264 0068 BB60     		str	r3, [r7, #8]
+ 235:src/iec61107.c **** 		i++;
+ 1265              		.loc 1 235 4
+ 1266 006a FB69     		ldr	r3, [r7, #28]
+ 1267 006c 0133     		adds	r3, r3, #1
+ 1268 006e FB61     		str	r3, [r7, #28]
+ 1269              	.L64:
+ 228:src/iec61107.c **** 	{
+ 1270              		.loc 1 228 9
+ 1271 0070 BB68     		ldr	r3, [r7, #8]
+ 1272 0072 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 228:src/iec61107.c **** 	{
+ 1273              		.loc 1 228 8
+ 1274 0074 002B     		cmp	r3, #0
+ 1275 0076 E8D1     		bne	.L67
+ 236:src/iec61107.c **** 	}
+ 237:src/iec61107.c **** 
+ 238:src/iec61107.c **** 	*pxBuf = '(';
+ 1276              		.loc 1 238 9
+ 1277 0078 FB68     		ldr	r3, [r7, #12]
+ 1278 007a 2822     		movs	r2, #40
+ 1279 007c 1A70     		strb	r2, [r3]
+ 239:src/iec61107.c **** 	pxBuf++;
+ 1280              		.loc 1 239 7
+ 1281 007e FB68     		ldr	r3, [r7, #12]
+ 1282 0080 0133     		adds	r3, r3, #1
+ 1283 0082 FB60     		str	r3, [r7, #12]
+ 240:src/iec61107.c **** 	int j = 0;
+ 1284              		.loc 1 240 6
+ 1285 0084 0023     		movs	r3, #0
+ 1286 0086 BB61     		str	r3, [r7, #24]
+ 241:src/iec61107.c **** 	while (*param)
+ 1287              		.loc 1 241 8
+ 1288 0088 12E0     		b	.L68
+ 1289              	.L70:
+ 242:src/iec61107.c **** 	{
+ 243:src/iec61107.c **** 		if (j >= limit)
+ 1290              		.loc 1 243 9
+ 1291 008a FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 1292              		.loc 1 243 6
+ 1293 008c BA69     		ldr	r2, [r7, #24]
+ 1294 008e 9A42     		cmp	r2, r3
+ 1295 0090 01DB     		blt	.L69
+ 244:src/iec61107.c **** 			return 0;
+ 1296              		.loc 1 244 11
+ 1297 0092 0023     		movs	r3, #0
+ 1298 0094 35E0     		b	.L66
+ 1299              	.L69:
+ 245:src/iec61107.c **** 		*pxBuf = *param;
+ 1300              		.loc 1 245 12
+ 1301 0096 3B68     		ldr	r3, [r7]
+ 1302 0098 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 1303              		.loc 1 245 10
+ 1304 009a FB68     		ldr	r3, [r7, #12]
+ 1305 009c 1A70     		strb	r2, [r3]
+ 246:src/iec61107.c **** 		pxBuf++;
+ 1306              		.loc 1 246 8
+ 1307 009e FB68     		ldr	r3, [r7, #12]
+ 1308 00a0 0133     		adds	r3, r3, #1
+ 1309 00a2 FB60     		str	r3, [r7, #12]
+ 247:src/iec61107.c **** 		param++;
+ 1310              		.loc 1 247 8
+ 1311 00a4 3B68     		ldr	r3, [r7]
+ 1312 00a6 0133     		adds	r3, r3, #1
+ 1313 00a8 3B60     		str	r3, [r7]
+ 248:src/iec61107.c **** 		j++;
+ 1314              		.loc 1 248 4
+ 1315 00aa BB69     		ldr	r3, [r7, #24]
+ 1316 00ac 0133     		adds	r3, r3, #1
+ 1317 00ae BB61     		str	r3, [r7, #24]
+ 1318              	.L68:
+ 241:src/iec61107.c **** 	{
+ 1319              		.loc 1 241 9
+ 1320 00b0 3B68     		ldr	r3, [r7]
+ 1321 00b2 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 241:src/iec61107.c **** 	{
+ 1322              		.loc 1 241 8
+ 1323 00b4 002B     		cmp	r3, #0
+ 1324 00b6 E8D1     		bne	.L70
+ 249:src/iec61107.c **** 	}
+ 250:src/iec61107.c **** 	*pxBuf = ')';
+ 1325              		.loc 1 250 9
+ 1326 00b8 FB68     		ldr	r3, [r7, #12]
+ 1327 00ba 2922     		movs	r2, #41
+ 1328 00bc 1A70     		strb	r2, [r3]
+ 251:src/iec61107.c **** 	pxBuf++;
+ 1329              		.loc 1 251 7
+ 1330 00be FB68     		ldr	r3, [r7, #12]
+ 1331 00c0 0133     		adds	r3, r3, #1
+ 1332 00c2 FB60     		str	r3, [r7, #12]
+ 252:src/iec61107.c **** 	*pxBuf = ETX;
+ 1333              		.loc 1 252 9
+ 1334 00c4 FB68     		ldr	r3, [r7, #12]
+ 1335 00c6 0322     		movs	r2, #3
+ 1336 00c8 1A70     		strb	r2, [r3]
+ 253:src/iec61107.c **** 	pxBuf++;
+ 1337              		.loc 1 253 7
+ 1338 00ca FB68     		ldr	r3, [r7, #12]
+ 1339 00cc 0133     		adds	r3, r3, #1
+ 1340 00ce FB60     		str	r3, [r7, #12]
+ 254:src/iec61107.c **** 	*pxBuf = iecClaculateBCC(tmpbuff + 1, 3 + i + j + 2 + 1);
+ 1341              		.loc 1 254 35
+ 1342 00d0 7B69     		ldr	r3, [r7, #20]
+ 1343 00d2 581C     		adds	r0, r3, #1
+ 1344              		.loc 1 254 46
+ 1345 00d4 FB69     		ldr	r3, [r7, #28]
+ 1346 00d6 9AB2     		uxth	r2, r3
+ 1347 00d8 BB69     		ldr	r3, [r7, #24]
+ 1348 00da 9BB2     		uxth	r3, r3
+ 1349 00dc 1344     		add	r3, r3, r2
+ 1350 00de 9BB2     		uxth	r3, r3
+ 1351              		.loc 1 254 11
+ 1352 00e0 0633     		adds	r3, r3, #6
+ 1353 00e2 9BB2     		uxth	r3, r3
+ 1354 00e4 1946     		mov	r1, r3
+ 1355 00e6 094B     		ldr	r3, .L71
+ 1356 00e8 9847     		blx	r3
+ 1357              	.LVL3:
+ 1358 00ea 0346     		mov	r3, r0
+ 1359 00ec 1A46     		mov	r2, r3
+ 1360              		.loc 1 254 9
+ 1361 00ee FB68     		ldr	r3, [r7, #12]
+ 1362 00f0 1A70     		strb	r2, [r3]
+ 255:src/iec61107.c **** 	return (4 + i +j + 2 + 2);
+ 1363              		.loc 1 255 16
+ 1364 00f2 FB69     		ldr	r3, [r7, #28]
+ 1365 00f4 9AB2     		uxth	r2, r3
+ 1366 00f6 BB69     		ldr	r3, [r7, #24]
+ 1367 00f8 9BB2     		uxth	r3, r3
+ 1368 00fa 1344     		add	r3, r3, r2
+ 1369 00fc 9BB2     		uxth	r3, r3
+ 1370              		.loc 1 255 23
+ 1371 00fe 0833     		adds	r3, r3, #8
+ 1372 0100 9BB2     		uxth	r3, r3
+ 1373              	.L66:
+ 256:src/iec61107.c **** }
+ 1374              		.loc 1 256 1
+ 1375 0102 1846     		mov	r0, r3
+ 1376 0104 2037     		adds	r7, r7, #32
+ 1377              	.LCFI53:
+ 1378              		.cfi_def_cfa_offset 8
+ 1379 0106 BD46     		mov	sp, r7
+ 1380              	.LCFI54:
+ 1381              		.cfi_def_cfa_register 13
+ 1382              		@ sp needed
+ 1383 0108 80BD     		pop	{r7, pc}
+ 1384              	.L72:
+ 1385 010a 00BF     		.align	2
+ 1386              	.L71:
+ 1387 010c 00000000 		.word	iecClaculateBCC
+ 1388              		.cfi_endproc
+ 1389              	.LFE9:
+ 1391              		.section	.text.iecProcVarAnswerPacket,"ax",%progbits
+ 1392              		.align	1
+ 1393              		.global	iecProcVarAnswerPacket
+ 1394              		.syntax unified
+ 1395              		.thumb
+ 1396              		.thumb_func
+ 1398              	iecProcVarAnswerPacket:
+ 1399              	.LFB10:
+ 257:src/iec61107.c **** 
+ 258:src/iec61107.c **** bool iecProcVarAnswerPacket(char *pxBuf, char *value, uint8 limit)
+ 259:src/iec61107.c **** {
+ 1400              		.loc 1 259 1
+ 1401              		.cfi_startproc
+ 1402              		@ args = 0, pretend = 0, frame = 32
+ 1403              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1404 0000 80B5     		push	{r7, lr}
+ 1405              	.LCFI55:
+ 1406              		.cfi_def_cfa_offset 8
+ 1407              		.cfi_offset 7, -8
+ 1408              		.cfi_offset 14, -4
+ 1409 0002 88B0     		sub	sp, sp, #32
+ 1410              	.LCFI56:
+ 1411              		.cfi_def_cfa_offset 40
+ 1412 0004 00AF     		add	r7, sp, #0
+ 1413              	.LCFI57:
+ 1414              		.cfi_def_cfa_register 7
+ 1415 0006 F860     		str	r0, [r7, #12]
+ 1416 0008 B960     		str	r1, [r7, #8]
+ 1417 000a 1346     		mov	r3, r2
+ 1418 000c FB71     		strb	r3, [r7, #7]
+ 260:src/iec61107.c **** 	int i = 0;
+ 1419              		.loc 1 260 6
+ 1420 000e 0023     		movs	r3, #0
+ 1421 0010 FB61     		str	r3, [r7, #28]
+ 261:src/iec61107.c **** 	uint8 *tmpbuff = pxBuf;
+ 1422              		.loc 1 261 9
+ 1423 0012 FB68     		ldr	r3, [r7, #12]
+ 1424 0014 BB61     		str	r3, [r7, #24]
+ 262:src/iec61107.c **** 	if (*pxBuf != STX)
+ 1425              		.loc 1 262 6
+ 1426 0016 FB68     		ldr	r3, [r7, #12]
+ 1427 0018 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1428              		.loc 1 262 5
+ 1429 001a 022B     		cmp	r3, #2
+ 1430 001c 01D0     		beq	.L74
+ 263:src/iec61107.c **** 		return false;
+ 1431              		.loc 1 263 10
+ 1432 001e 0023     		movs	r3, #0
+ 1433 0020 32E0     		b	.L75
+ 1434              	.L74:
+ 264:src/iec61107.c **** 	pxBuf++;
+ 1435              		.loc 1 264 7
+ 1436 0022 FB68     		ldr	r3, [r7, #12]
+ 1437 0024 0133     		adds	r3, r3, #1
+ 1438 0026 FB60     		str	r3, [r7, #12]
+ 265:src/iec61107.c **** 	while (*pxBuf != ETX)
+ 1439              		.loc 1 265 8
+ 1440 0028 12E0     		b	.L76
+ 1441              	.L78:
+ 266:src/iec61107.c **** 	{
+ 267:src/iec61107.c **** 		if (i >= limit)
+ 1442              		.loc 1 267 9
+ 1443 002a FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 1444              		.loc 1 267 6
+ 1445 002c FA69     		ldr	r2, [r7, #28]
+ 1446 002e 9A42     		cmp	r2, r3
+ 1447 0030 01DB     		blt	.L77
+ 268:src/iec61107.c **** 			return false;
+ 1448              		.loc 1 268 11
+ 1449 0032 0023     		movs	r3, #0
+ 1450 0034 28E0     		b	.L75
+ 1451              	.L77:
+ 269:src/iec61107.c **** 		*value = (char) *pxBuf;
+ 1452              		.loc 1 269 12
+ 1453 0036 FB68     		ldr	r3, [r7, #12]
+ 1454 0038 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 1455              		.loc 1 269 10
+ 1456 003a BB68     		ldr	r3, [r7, #8]
+ 1457 003c 1A70     		strb	r2, [r3]
+ 270:src/iec61107.c **** 		i++;
+ 1458              		.loc 1 270 4
+ 1459 003e FB69     		ldr	r3, [r7, #28]
+ 1460 0040 0133     		adds	r3, r3, #1
+ 1461 0042 FB61     		str	r3, [r7, #28]
+ 271:src/iec61107.c **** 		value++;
+ 1462              		.loc 1 271 8
+ 1463 0044 BB68     		ldr	r3, [r7, #8]
+ 1464 0046 0133     		adds	r3, r3, #1
+ 1465 0048 BB60     		str	r3, [r7, #8]
+ 272:src/iec61107.c **** 		pxBuf++;
+ 1466              		.loc 1 272 8
+ 1467 004a FB68     		ldr	r3, [r7, #12]
+ 1468 004c 0133     		adds	r3, r3, #1
+ 1469 004e FB60     		str	r3, [r7, #12]
+ 1470              	.L76:
+ 265:src/iec61107.c **** 	{
+ 1471              		.loc 1 265 9
+ 1472 0050 FB68     		ldr	r3, [r7, #12]
+ 1473 0052 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 265:src/iec61107.c **** 	{
+ 1474              		.loc 1 265 8
+ 1475 0054 032B     		cmp	r3, #3
+ 1476 0056 E8D1     		bne	.L78
+ 273:src/iec61107.c **** 	};
+ 274:src/iec61107.c **** 
+ 275:src/iec61107.c **** 	pxBuf++;
+ 1477              		.loc 1 275 7
+ 1478 0058 FB68     		ldr	r3, [r7, #12]
+ 1479 005a 0133     		adds	r3, r3, #1
+ 1480 005c FB60     		str	r3, [r7, #12]
+ 276:src/iec61107.c **** 	uint8 bcc = iecClaculateBCC((tmpbuff + 1), i + 1);
+ 1481              		.loc 1 276 39
+ 1482 005e BB69     		ldr	r3, [r7, #24]
+ 1483 0060 5A1C     		adds	r2, r3, #1
+ 1484              		.loc 1 276 14
+ 1485 0062 FB69     		ldr	r3, [r7, #28]
+ 1486 0064 9BB2     		uxth	r3, r3
+ 1487 0066 0133     		adds	r3, r3, #1
+ 1488 0068 9BB2     		uxth	r3, r3
+ 1489 006a 1946     		mov	r1, r3
+ 1490 006c 1046     		mov	r0, r2
+ 1491 006e 084B     		ldr	r3, .L80
+ 1492 0070 9847     		blx	r3
+ 1493              	.LVL4:
+ 1494 0072 0346     		mov	r3, r0
+ 1495 0074 FB75     		strb	r3, [r7, #23]
+ 277:src/iec61107.c **** 	if (bcc != *pxBuf)
+ 1496              		.loc 1 277 13
+ 1497 0076 FB68     		ldr	r3, [r7, #12]
+ 1498 0078 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1499              		.loc 1 277 5
+ 1500 007a FA7D     		ldrb	r2, [r7, #23]	@ zero_extendqisi2
+ 1501 007c 9A42     		cmp	r2, r3
+ 1502 007e 01D0     		beq	.L79
+ 278:src/iec61107.c **** 	{
+ 279:src/iec61107.c **** 		return false;
+ 1503              		.loc 1 279 10
+ 1504 0080 0023     		movs	r3, #0
+ 1505 0082 01E0     		b	.L75
+ 1506              	.L79:
+ 280:src/iec61107.c **** 	}
+ 281:src/iec61107.c **** 	return true;
+ 1507              		.loc 1 281 9
+ 1508 0084 4FF0FF33 		mov	r3, #-1
+ 1509              	.L75:
+ 282:src/iec61107.c **** }
+ 1510              		.loc 1 282 1
+ 1511 0088 1846     		mov	r0, r3
+ 1512 008a 2037     		adds	r7, r7, #32
+ 1513              	.LCFI58:
+ 1514              		.cfi_def_cfa_offset 8
+ 1515 008c BD46     		mov	sp, r7
+ 1516              	.LCFI59:
+ 1517              		.cfi_def_cfa_register 13
+ 1518              		@ sp needed
+ 1519 008e 80BD     		pop	{r7, pc}
+ 1520              	.L81:
+ 1521              		.align	2
+ 1522              	.L80:
+ 1523 0090 00000000 		.word	iecClaculateBCC
+ 1524              		.cfi_endproc
+ 1525              	.LFE10:
+ 1527              		.section	.text.iecProcExitPacket,"ax",%progbits
+ 1528              		.align	1
+ 1529              		.global	iecProcExitPacket
+ 1530              		.syntax unified
+ 1531              		.thumb
+ 1532              		.thumb_func
+ 1534              	iecProcExitPacket:
+ 1535              	.LFB11:
+ 283:src/iec61107.c **** 
+ 284:src/iec61107.c **** uint16 iecProcExitPacket(char *pxBuf)
+ 285:src/iec61107.c **** {
+ 1536              		.loc 1 285 1
+ 1537              		.cfi_startproc
+ 1538              		@ args = 0, pretend = 0, frame = 8
+ 1539              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1540              		@ link register save eliminated.
+ 1541 0000 80B4     		push	{r7}
+ 1542              	.LCFI60:
+ 1543              		.cfi_def_cfa_offset 4
+ 1544              		.cfi_offset 7, -4
+ 1545 0002 83B0     		sub	sp, sp, #12
+ 1546              	.LCFI61:
+ 1547              		.cfi_def_cfa_offset 16
+ 1548 0004 00AF     		add	r7, sp, #0
+ 1549              	.LCFI62:
+ 1550              		.cfi_def_cfa_register 7
+ 1551 0006 7860     		str	r0, [r7, #4]
+ 286:src/iec61107.c **** 	*pxBuf = 0x01;
+ 1552              		.loc 1 286 9
+ 1553 0008 7B68     		ldr	r3, [r7, #4]
+ 1554 000a 0122     		movs	r2, #1
+ 1555 000c 1A70     		strb	r2, [r3]
+ 287:src/iec61107.c **** 	pxBuf++;
+ 1556              		.loc 1 287 7
+ 1557 000e 7B68     		ldr	r3, [r7, #4]
+ 1558 0010 0133     		adds	r3, r3, #1
+ 1559 0012 7B60     		str	r3, [r7, #4]
+ 288:src/iec61107.c **** 	*pxBuf = 0x42;
+ 1560              		.loc 1 288 9
+ 1561 0014 7B68     		ldr	r3, [r7, #4]
+ 1562 0016 4222     		movs	r2, #66
+ 1563 0018 1A70     		strb	r2, [r3]
+ 289:src/iec61107.c **** 	pxBuf++;
+ 1564              		.loc 1 289 7
+ 1565 001a 7B68     		ldr	r3, [r7, #4]
+ 1566 001c 0133     		adds	r3, r3, #1
+ 1567 001e 7B60     		str	r3, [r7, #4]
+ 290:src/iec61107.c **** 	*pxBuf = 0x30;
+ 1568              		.loc 1 290 9
+ 1569 0020 7B68     		ldr	r3, [r7, #4]
+ 1570 0022 3022     		movs	r2, #48
+ 1571 0024 1A70     		strb	r2, [r3]
+ 291:src/iec61107.c **** 	pxBuf++;
+ 1572              		.loc 1 291 7
+ 1573 0026 7B68     		ldr	r3, [r7, #4]
+ 1574 0028 0133     		adds	r3, r3, #1
+ 1575 002a 7B60     		str	r3, [r7, #4]
+ 292:src/iec61107.c **** 	*pxBuf = 0x03;
+ 1576              		.loc 1 292 9
+ 1577 002c 7B68     		ldr	r3, [r7, #4]
+ 1578 002e 0322     		movs	r2, #3
+ 1579 0030 1A70     		strb	r2, [r3]
+ 293:src/iec61107.c **** 	pxBuf++;
+ 1580              		.loc 1 293 7
+ 1581 0032 7B68     		ldr	r3, [r7, #4]
+ 1582 0034 0133     		adds	r3, r3, #1
+ 1583 0036 7B60     		str	r3, [r7, #4]
+ 294:src/iec61107.c **** 	*pxBuf = 0x75;
+ 1584              		.loc 1 294 9
+ 1585 0038 7B68     		ldr	r3, [r7, #4]
+ 1586 003a 7522     		movs	r2, #117
+ 1587 003c 1A70     		strb	r2, [r3]
+ 295:src/iec61107.c **** 	return 5;
+ 1588              		.loc 1 295 9
+ 1589 003e 0523     		movs	r3, #5
+ 296:src/iec61107.c **** }
+ 1590              		.loc 1 296 1
+ 1591 0040 1846     		mov	r0, r3
+ 1592 0042 0C37     		adds	r7, r7, #12
+ 1593              	.LCFI63:
+ 1594              		.cfi_def_cfa_offset 4
+ 1595 0044 BD46     		mov	sp, r7
+ 1596              	.LCFI64:
+ 1597              		.cfi_def_cfa_register 13
+ 1598              		@ sp needed
+ 1599 0046 80BC     		pop	{r7}
+ 1600              	.LCFI65:
+ 1601              		.cfi_restore 7
+ 1602              		.cfi_def_cfa_offset 0
+ 1603 0048 7047     		bx	lr
+ 1604              		.cfi_endproc
+ 1605              	.LFE11:
+ 1607              		.text
+ 1608              	.Letext0:
+ 1609              		.file 2 "common/rtos/common/utils/typedef.h"
+ 1610              		.file 3 "src/iec61107.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 iec61107.c
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:18     .text.iecClaculateBCC:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:24     .text.iecClaculateBCC:00000000 iecClaculateBCC
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:93     .text.iecProcReqPacket:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:99     .text.iecProcReqPacket:00000000 iecProcReqPacket
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:226    .text.iecIndProc:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:232    .text.iecIndProc:00000000 iecIndProc
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:382    .text.iecOptionsAckPacket:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:388    .text.iecOptionsAckPacket:00000000 iecOptionsAckPacket
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:479    .text.iecConnect:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:485    .text.iecConnect:00000000 iecConnect
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:524    .text.iecProcInputPacked:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:530    .text.iecProcInputPacked:00000000 iecProcInputPacked
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:566    .text.iecProcInputPacked:00000028 $d
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:587    .text.iecProcInputPacked:0000007c $t
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:619    .text.iecProcAddrAnswer:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:625    .text.iecProcAddrAnswer:00000000 iecProcAddrAnswer
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:829    .text.iecProcAddrAnswer:000000f8 $d
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:834    .text.iecProcPassPacket:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:840    .text.iecProcPassPacket:00000000 iecProcPassPacket
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:998    .text.iecProcPassPacket:000000c8 $d
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:1003   .text.iecProcVarReqPacket:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:1009   .text.iecProcVarReqPacket:00000000 iecProcVarReqPacket
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:1167   .text.iecProcVarReqPacket:000000c8 $d
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:1172   .text.iecProcVarReqPacketArg:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:1178   .text.iecProcVarReqPacketArg:00000000 iecProcVarReqPacketArg
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:1387   .text.iecProcVarReqPacketArg:0000010c $d
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:1392   .text.iecProcVarAnswerPacket:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:1398   .text.iecProcVarAnswerPacket:00000000 iecProcVarAnswerPacket
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:1523   .text.iecProcVarAnswerPacket:00000090 $d
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:1528   .text.iecProcExitPacket:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc0t5ltf.s:1534   .text.iecProcExitPacket:00000000 iecProcExitPacket
+
+NO UNDEFINED SYMBOLS

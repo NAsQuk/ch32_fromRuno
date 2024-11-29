@@ -1,0 +1,806 @@
+   1              		.cpu cortex-m3
+   2              		.arch armv7-m
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"hw_config.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.section	.text.Set_USBClock,"ax",%progbits
+  18              		.align	1
+  19              		.global	Set_USBClock
+  20              		.syntax unified
+  21              		.thumb
+  22              		.thumb_func
+  24              	Set_USBClock:
+  25              	.LFB27:
+  26              		.file 1 "usb/hw_config.c"
+   1:usb/hw_config.c **** /******************** (C) COPYRIGHT 2010 STMicroelectronics ********************
+   2:usb/hw_config.c ****  * File Name          : hw_config.c
+   3:usb/hw_config.c ****  * Author             : MCD Application Team
+   4:usb/hw_config.c ****  * Version            : V3.2.1
+   5:usb/hw_config.c ****  * Date               : 07/05/2010
+   6:usb/hw_config.c ****  * Description        : Hardware Configuration & Setup
+   7:usb/hw_config.c ****  ********************************************************************************
+   8:usb/hw_config.c ****  * THE PRESENT FIRMWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING CUSTOMERS
+   9:usb/hw_config.c ****  * WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER FOR THEM TO SAVE TIME.
+  10:usb/hw_config.c ****  * AS A RESULT, STMICROELECTRONICS SHALL NOT BE HELD LIABLE FOR ANY DIRECT,
+  11:usb/hw_config.c ****  * INDIRECT OR CONSEQUENTIAL DAMAGES WITH RESPECT TO ANY CLAIMS ARISING FROM THE
+  12:usb/hw_config.c ****  * CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE CODING
+  13:usb/hw_config.c ****  * INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
+  14:usb/hw_config.c ****  *******************************************************************************/
+  15:usb/hw_config.c **** 
+  16:usb/hw_config.c **** /* Includes ------------------------------------------------------------------*/
+  17:usb/hw_config.c **** #include "stm32f10x_it.h"
+  18:usb/hw_config.c **** #include "usb_lib.h"
+  19:usb/hw_config.c **** #include "usb_prop.h"
+  20:usb/hw_config.c **** #include "usb_desc.h"
+  21:usb/hw_config.c **** #include "hw_config.h"
+  22:usb/hw_config.c **** 
+  23:usb/hw_config.c **** #include "usb_pwr.h"
+  24:usb/hw_config.c **** #include "stm32f10x.h"
+  25:usb/hw_config.c **** #include "stm32f10x_conf.h"
+  26:usb/hw_config.c **** 
+  27:usb/hw_config.c **** /* Private typedef -----------------------------------------------------------*/
+  28:usb/hw_config.c **** /* Private define ------------------------------------------------------------*/
+  29:usb/hw_config.c **** /* Private macro -------------------------------------------------------------*/
+  30:usb/hw_config.c **** /* Private variables ---------------------------------------------------------*/
+  31:usb/hw_config.c **** 
+  32:usb/hw_config.c **** 
+  33:usb/hw_config.c **** 
+  34:usb/hw_config.c **** static void IntToUnicode(uint32_t value, uint8_t *pbuf, uint8_t len);
+  35:usb/hw_config.c **** /* Extern variables ----------------------------------------------------------*/
+  36:usb/hw_config.c **** 
+  37:usb/hw_config.c **** extern LINE_CODING linecoding;
+  38:usb/hw_config.c **** 
+  39:usb/hw_config.c **** /*******************************************************************************
+  40:usb/hw_config.c ****  * Function Name  : Set_USBClock
+  41:usb/hw_config.c ****  * Description    : Configures USB Clock input (48MHz)
+  42:usb/hw_config.c ****  * Input          : None.
+  43:usb/hw_config.c ****  * Return         : None.
+  44:usb/hw_config.c ****  *******************************************************************************/
+  45:usb/hw_config.c **** void Set_USBClock(void)
+  46:usb/hw_config.c **** {
+  27              		.loc 1 46 1
+  28              		.cfi_startproc
+  29              		@ args = 0, pretend = 0, frame = 0
+  30              		@ frame_needed = 1, uses_anonymous_args = 0
+  31 0000 80B5     		push	{r7, lr}
+  32              	.LCFI0:
+  33              		.cfi_def_cfa_offset 8
+  34              		.cfi_offset 7, -8
+  35              		.cfi_offset 14, -4
+  36 0002 00AF     		add	r7, sp, #0
+  37              	.LCFI1:
+  38              		.cfi_def_cfa_register 7
+  47:usb/hw_config.c **** 	/* Select USBCLK source */
+  48:usb/hw_config.c **** 	RCC_USBCLKConfig(RCC_USBCLKSource_PLLCLK_1Div5);
+  39              		.loc 1 48 2
+  40 0004 0020     		movs	r0, #0
+  41 0006 044B     		ldr	r3, .L2
+  42 0008 9847     		blx	r3
+  43              	.LVL0:
+  49:usb/hw_config.c **** 
+  50:usb/hw_config.c **** 
+  51:usb/hw_config.c **** 	/* Enable the USB clock */
+  52:usb/hw_config.c **** 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_USB, ENABLE);
+  44              		.loc 1 52 2
+  45 000a 0121     		movs	r1, #1
+  46 000c 4FF40000 		mov	r0, #8388608
+  47 0010 024B     		ldr	r3, .L2+4
+  48 0012 9847     		blx	r3
+  49              	.LVL1:
+  53:usb/hw_config.c **** 
+  54:usb/hw_config.c **** }
+  50              		.loc 1 54 1
+  51 0014 00BF     		nop
+  52 0016 80BD     		pop	{r7, pc}
+  53              	.L3:
+  54              		.align	2
+  55              	.L2:
+  56 0018 00000000 		.word	RCC_USBCLKConfig
+  57 001c 00000000 		.word	RCC_APB1PeriphClockCmd
+  58              		.cfi_endproc
+  59              	.LFE27:
+  61              		.section	.text.Enter_LowPowerMode,"ax",%progbits
+  62              		.align	1
+  63              		.global	Enter_LowPowerMode
+  64              		.syntax unified
+  65              		.thumb
+  66              		.thumb_func
+  68              	Enter_LowPowerMode:
+  69              	.LFB28:
+  55:usb/hw_config.c **** 
+  56:usb/hw_config.c **** /*******************************************************************************
+  57:usb/hw_config.c ****  * Function Name  : Enter_LowPowerMode
+  58:usb/hw_config.c ****  * Description    : Power-off system clocks and power while entering suspend mode
+  59:usb/hw_config.c ****  * Input          : None.
+  60:usb/hw_config.c ****  * Return         : None.
+  61:usb/hw_config.c ****  *******************************************************************************/
+  62:usb/hw_config.c **** void Enter_LowPowerMode(void)
+  63:usb/hw_config.c **** {
+  70              		.loc 1 63 1
+  71              		.cfi_startproc
+  72              		@ args = 0, pretend = 0, frame = 0
+  73              		@ frame_needed = 1, uses_anonymous_args = 0
+  74              		@ link register save eliminated.
+  75 0000 80B4     		push	{r7}
+  76              	.LCFI2:
+  77              		.cfi_def_cfa_offset 4
+  78              		.cfi_offset 7, -4
+  79 0002 00AF     		add	r7, sp, #0
+  80              	.LCFI3:
+  81              		.cfi_def_cfa_register 7
+  64:usb/hw_config.c **** 	/* Set the device state to suspend */
+  65:usb/hw_config.c **** 	bDeviceState = SUSPENDED;
+  82              		.loc 1 65 15
+  83 0004 034B     		ldr	r3, .L5
+  84 0006 0322     		movs	r2, #3
+  85 0008 1A60     		str	r2, [r3]
+  66:usb/hw_config.c **** }
+  86              		.loc 1 66 1
+  87 000a 00BF     		nop
+  88 000c BD46     		mov	sp, r7
+  89              	.LCFI4:
+  90              		.cfi_def_cfa_register 13
+  91              		@ sp needed
+  92 000e 80BC     		pop	{r7}
+  93              	.LCFI5:
+  94              		.cfi_restore 7
+  95              		.cfi_def_cfa_offset 0
+  96 0010 7047     		bx	lr
+  97              	.L6:
+  98 0012 00BF     		.align	2
+  99              	.L5:
+ 100 0014 00000000 		.word	bDeviceState
+ 101              		.cfi_endproc
+ 102              	.LFE28:
+ 104              		.section	.text.Leave_LowPowerMode,"ax",%progbits
+ 105              		.align	1
+ 106              		.global	Leave_LowPowerMode
+ 107              		.syntax unified
+ 108              		.thumb
+ 109              		.thumb_func
+ 111              	Leave_LowPowerMode:
+ 112              	.LFB29:
+  67:usb/hw_config.c **** 
+  68:usb/hw_config.c **** /*******************************************************************************
+  69:usb/hw_config.c ****  * Function Name  : Leave_LowPowerMode
+  70:usb/hw_config.c ****  * Description    : Restores system clocks and power while exiting suspend mode
+  71:usb/hw_config.c ****  * Input          : None.
+  72:usb/hw_config.c ****  * Return         : None.
+  73:usb/hw_config.c ****  *******************************************************************************/
+  74:usb/hw_config.c **** void Leave_LowPowerMode(void)
+  75:usb/hw_config.c **** {
+ 113              		.loc 1 75 1
+ 114              		.cfi_startproc
+ 115              		@ args = 0, pretend = 0, frame = 8
+ 116              		@ frame_needed = 1, uses_anonymous_args = 0
+ 117              		@ link register save eliminated.
+ 118 0000 80B4     		push	{r7}
+ 119              	.LCFI6:
+ 120              		.cfi_def_cfa_offset 4
+ 121              		.cfi_offset 7, -4
+ 122 0002 83B0     		sub	sp, sp, #12
+ 123              	.LCFI7:
+ 124              		.cfi_def_cfa_offset 16
+ 125 0004 00AF     		add	r7, sp, #0
+ 126              	.LCFI8:
+ 127              		.cfi_def_cfa_register 7
+  76:usb/hw_config.c **** 	DEVICE_INFO *pInfo = &Device_Info;
+ 128              		.loc 1 76 15
+ 129 0006 094B     		ldr	r3, .L11
+ 130 0008 7B60     		str	r3, [r7, #4]
+  77:usb/hw_config.c **** 
+  78:usb/hw_config.c **** 	/* Set the device state to the correct state */
+  79:usb/hw_config.c **** 	if (pInfo->Current_Configuration != 0)
+ 131              		.loc 1 79 11
+ 132 000a 7B68     		ldr	r3, [r7, #4]
+ 133 000c 9B7A     		ldrb	r3, [r3, #10]	@ zero_extendqisi2
+ 134              		.loc 1 79 5
+ 135 000e 002B     		cmp	r3, #0
+ 136 0010 03D0     		beq	.L8
+  80:usb/hw_config.c **** 	{
+  81:usb/hw_config.c **** 		/* Device configured */
+  82:usb/hw_config.c **** 		bDeviceState = CONFIGURED;
+ 137              		.loc 1 82 16
+ 138 0012 074B     		ldr	r3, .L11+4
+ 139 0014 0522     		movs	r2, #5
+ 140 0016 1A60     		str	r2, [r3]
+  83:usb/hw_config.c **** 	}
+  84:usb/hw_config.c **** 	else
+  85:usb/hw_config.c **** 	{
+  86:usb/hw_config.c **** 		bDeviceState = ATTACHED;
+  87:usb/hw_config.c **** 	}
+  88:usb/hw_config.c **** }
+ 141              		.loc 1 88 1
+ 142 0018 02E0     		b	.L10
+ 143              	.L8:
+  86:usb/hw_config.c **** 	}
+ 144              		.loc 1 86 16
+ 145 001a 054B     		ldr	r3, .L11+4
+ 146 001c 0122     		movs	r2, #1
+ 147 001e 1A60     		str	r2, [r3]
+ 148              	.L10:
+ 149              		.loc 1 88 1
+ 150 0020 00BF     		nop
+ 151 0022 0C37     		adds	r7, r7, #12
+ 152              	.LCFI9:
+ 153              		.cfi_def_cfa_offset 4
+ 154 0024 BD46     		mov	sp, r7
+ 155              	.LCFI10:
+ 156              		.cfi_def_cfa_register 13
+ 157              		@ sp needed
+ 158 0026 80BC     		pop	{r7}
+ 159              	.LCFI11:
+ 160              		.cfi_restore 7
+ 161              		.cfi_def_cfa_offset 0
+ 162 0028 7047     		bx	lr
+ 163              	.L12:
+ 164 002a 00BF     		.align	2
+ 165              	.L11:
+ 166 002c 00000000 		.word	Device_Info
+ 167 0030 00000000 		.word	bDeviceState
+ 168              		.cfi_endproc
+ 169              	.LFE29:
+ 171              		.section	.text.USB_Interrupts_Config,"ax",%progbits
+ 172              		.align	1
+ 173              		.global	USB_Interrupts_Config
+ 174              		.syntax unified
+ 175              		.thumb
+ 176              		.thumb_func
+ 178              	USB_Interrupts_Config:
+ 179              	.LFB30:
+  89:usb/hw_config.c **** 
+  90:usb/hw_config.c **** /*******************************************************************************
+  91:usb/hw_config.c ****  * Function Name  : USB_Interrupts_Config
+  92:usb/hw_config.c ****  * Description    : Configures the USB interrupts
+  93:usb/hw_config.c ****  * Input          : None.
+  94:usb/hw_config.c ****  * Return         : None.
+  95:usb/hw_config.c ****  *******************************************************************************/
+  96:usb/hw_config.c **** void USB_Interrupts_Config(void)
+  97:usb/hw_config.c **** {
+ 180              		.loc 1 97 1
+ 181              		.cfi_startproc
+ 182              		@ args = 0, pretend = 0, frame = 8
+ 183              		@ frame_needed = 1, uses_anonymous_args = 0
+ 184 0000 80B5     		push	{r7, lr}
+ 185              	.LCFI12:
+ 186              		.cfi_def_cfa_offset 8
+ 187              		.cfi_offset 7, -8
+ 188              		.cfi_offset 14, -4
+ 189 0002 82B0     		sub	sp, sp, #8
+ 190              	.LCFI13:
+ 191              		.cfi_def_cfa_offset 16
+ 192 0004 00AF     		add	r7, sp, #0
+ 193              	.LCFI14:
+ 194              		.cfi_def_cfa_register 7
+  98:usb/hw_config.c **** 	NVIC_InitTypeDef NVIC_InitStructure;
+  99:usb/hw_config.c **** 
+ 100:usb/hw_config.c **** 	//NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
+ 101:usb/hw_config.c **** 	/* Enable the USB Interrupts */
+ 102:usb/hw_config.c **** 	  NVIC_InitStructure.NVIC_IRQChannel = USB_LP_CAN1_RX0_IRQn;
+ 195              		.loc 1 102 39
+ 196 0006 1423     		movs	r3, #20
+ 197 0008 3B71     		strb	r3, [r7, #4]
+ 103:usb/hw_config.c **** 	  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
+ 198              		.loc 1 103 57
+ 199 000a 0223     		movs	r3, #2
+ 200 000c 7B71     		strb	r3, [r7, #5]
+ 104:usb/hw_config.c **** 	  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+ 201              		.loc 1 104 50
+ 202 000e 0023     		movs	r3, #0
+ 203 0010 BB71     		strb	r3, [r7, #6]
+ 105:usb/hw_config.c **** 	  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+ 204              		.loc 1 105 42
+ 205 0012 0123     		movs	r3, #1
+ 206 0014 FB71     		strb	r3, [r7, #7]
+ 106:usb/hw_config.c **** 	  NVIC_Init(&NVIC_InitStructure);
+ 207              		.loc 1 106 4
+ 208 0016 3B1D     		adds	r3, r7, #4
+ 209 0018 1846     		mov	r0, r3
+ 210 001a 034B     		ldr	r3, .L14
+ 211 001c 9847     		blx	r3
+ 212              	.LVL2:
+ 107:usb/hw_config.c **** }
+ 213              		.loc 1 107 1
+ 214 001e 00BF     		nop
+ 215 0020 0837     		adds	r7, r7, #8
+ 216              	.LCFI15:
+ 217              		.cfi_def_cfa_offset 8
+ 218 0022 BD46     		mov	sp, r7
+ 219              	.LCFI16:
+ 220              		.cfi_def_cfa_register 13
+ 221              		@ sp needed
+ 222 0024 80BD     		pop	{r7, pc}
+ 223              	.L15:
+ 224 0026 00BF     		.align	2
+ 225              	.L14:
+ 226 0028 00000000 		.word	NVIC_Init
+ 227              		.cfi_endproc
+ 228              	.LFE30:
+ 230              		.section	.text.USB_Cable_Config,"ax",%progbits
+ 231              		.align	1
+ 232              		.global	USB_Cable_Config
+ 233              		.syntax unified
+ 234              		.thumb
+ 235              		.thumb_func
+ 237              	USB_Cable_Config:
+ 238              	.LFB31:
+ 108:usb/hw_config.c **** 
+ 109:usb/hw_config.c **** /*******************************************************************************
+ 110:usb/hw_config.c ****  * Function Name  : USB_Cable_Config
+ 111:usb/hw_config.c ****  * Description    : Software Connection/Disconnection of USB Cable
+ 112:usb/hw_config.c ****  * Input          : None.
+ 113:usb/hw_config.c ****  * Return         : Status
+ 114:usb/hw_config.c ****  *******************************************************************************/
+ 115:usb/hw_config.c **** void USB_Cable_Config(FunctionalState NewState)
+ 116:usb/hw_config.c **** {
+ 239              		.loc 1 116 1
+ 240              		.cfi_startproc
+ 241              		@ args = 0, pretend = 0, frame = 8
+ 242              		@ frame_needed = 1, uses_anonymous_args = 0
+ 243              		@ link register save eliminated.
+ 244 0000 80B4     		push	{r7}
+ 245              	.LCFI17:
+ 246              		.cfi_def_cfa_offset 4
+ 247              		.cfi_offset 7, -4
+ 248 0002 83B0     		sub	sp, sp, #12
+ 249              	.LCFI18:
+ 250              		.cfi_def_cfa_offset 16
+ 251 0004 00AF     		add	r7, sp, #0
+ 252              	.LCFI19:
+ 253              		.cfi_def_cfa_register 7
+ 254 0006 0346     		mov	r3, r0
+ 255 0008 FB71     		strb	r3, [r7, #7]
+ 117:usb/hw_config.c **** 
+ 118:usb/hw_config.c **** 	if (NewState != DISABLE)
+ 119:usb/hw_config.c **** 	{
+ 120:usb/hw_config.c **** 		// GPIO_ResetBits(USB_DISCONNECT, USB_DISCONNECT_PIN);
+ 121:usb/hw_config.c **** 	}
+ 122:usb/hw_config.c **** 	else
+ 123:usb/hw_config.c **** 	{
+ 124:usb/hw_config.c **** 		// GPIO_SetBits(USB_DISCONNECT, USB_DISCONNECT_PIN);
+ 125:usb/hw_config.c **** 	}
+ 126:usb/hw_config.c **** }
+ 256              		.loc 1 126 1
+ 257 000a 00BF     		nop
+ 258 000c 0C37     		adds	r7, r7, #12
+ 259              	.LCFI20:
+ 260              		.cfi_def_cfa_offset 4
+ 261 000e BD46     		mov	sp, r7
+ 262              	.LCFI21:
+ 263              		.cfi_def_cfa_register 13
+ 264              		@ sp needed
+ 265 0010 80BC     		pop	{r7}
+ 266              	.LCFI22:
+ 267              		.cfi_restore 7
+ 268              		.cfi_def_cfa_offset 0
+ 269 0012 7047     		bx	lr
+ 270              		.cfi_endproc
+ 271              	.LFE31:
+ 273              		.section	.text.Handle_USBAsynchXfer,"ax",%progbits
+ 274              		.align	1
+ 275              		.global	Handle_USBAsynchXfer
+ 276              		.syntax unified
+ 277              		.thumb
+ 278              		.thumb_func
+ 280              	Handle_USBAsynchXfer:
+ 281              	.LFB32:
+ 127:usb/hw_config.c **** 
+ 128:usb/hw_config.c **** /*******************************************************************************
+ 129:usb/hw_config.c ****  * Function Name  : Handle_USBAsynchXfer.
+ 130:usb/hw_config.c ****  * Description    : send data to USB.
+ 131:usb/hw_config.c ****  * Input          : None.
+ 132:usb/hw_config.c ****  * Return         : none.
+ 133:usb/hw_config.c ****  *******************************************************************************/
+ 134:usb/hw_config.c **** void Handle_USBAsynchXfer(void)
+ 135:usb/hw_config.c **** {
+ 282              		.loc 1 135 1
+ 283              		.cfi_startproc
+ 284              		@ args = 0, pretend = 0, frame = 0
+ 285              		@ frame_needed = 1, uses_anonymous_args = 0
+ 286 0000 80B5     		push	{r7, lr}
+ 287              	.LCFI23:
+ 288              		.cfi_def_cfa_offset 8
+ 289              		.cfi_offset 7, -8
+ 290              		.cfi_offset 14, -4
+ 291 0002 00AF     		add	r7, sp, #0
+ 292              	.LCFI24:
+ 293              		.cfi_def_cfa_register 7
+ 136:usb/hw_config.c **** 
+ 137:usb/hw_config.c **** 	 //UserToPMABufferCopy("Handle_USBAsynchXfer\n\r", ENDP1_TXADDR, 15);
+ 138:usb/hw_config.c **** 	  SetEPTxCount(ENDP1, 0);
+ 294              		.loc 1 138 4
+ 295 0004 0021     		movs	r1, #0
+ 296 0006 0120     		movs	r0, #1
+ 297 0008 034B     		ldr	r3, .L18
+ 298 000a 9847     		blx	r3
+ 299              	.LVL3:
+ 139:usb/hw_config.c **** 	  SetEPTxValid(ENDP1);
+ 300              		.loc 1 139 4
+ 301 000c 0120     		movs	r0, #1
+ 302 000e 034B     		ldr	r3, .L18+4
+ 303 0010 9847     		blx	r3
+ 304              	.LVL4:
+ 140:usb/hw_config.c **** }
+ 305              		.loc 1 140 1
+ 306 0012 00BF     		nop
+ 307 0014 80BD     		pop	{r7, pc}
+ 308              	.L19:
+ 309 0016 00BF     		.align	2
+ 310              	.L18:
+ 311 0018 00000000 		.word	SetEPTxCount
+ 312 001c 00000000 		.word	SetEPTxValid
+ 313              		.cfi_endproc
+ 314              	.LFE32:
+ 316              		.section	.text.USART_To_USB_Send_Data,"ax",%progbits
+ 317              		.align	1
+ 318              		.global	USART_To_USB_Send_Data
+ 319              		.syntax unified
+ 320              		.thumb
+ 321              		.thumb_func
+ 323              	USART_To_USB_Send_Data:
+ 324              	.LFB33:
+ 141:usb/hw_config.c **** /*******************************************************************************
+ 142:usb/hw_config.c ****  * Function Name  : UART_To_USB_Send_Data.
+ 143:usb/hw_config.c ****  * Description    : send the received data from UART 0 to USB.
+ 144:usb/hw_config.c ****  * Input          : None.
+ 145:usb/hw_config.c ****  * Return         : none.
+ 146:usb/hw_config.c ****  *******************************************************************************/
+ 147:usb/hw_config.c **** void USART_To_USB_Send_Data(void)
+ 148:usb/hw_config.c **** {
+ 325              		.loc 1 148 1
+ 326              		.cfi_startproc
+ 327              		@ args = 0, pretend = 0, frame = 0
+ 328              		@ frame_needed = 1, uses_anonymous_args = 0
+ 329              		@ link register save eliminated.
+ 330 0000 80B4     		push	{r7}
+ 331              	.LCFI25:
+ 332              		.cfi_def_cfa_offset 4
+ 333              		.cfi_offset 7, -4
+ 334 0002 00AF     		add	r7, sp, #0
+ 335              	.LCFI26:
+ 336              		.cfi_def_cfa_register 7
+ 149:usb/hw_config.c **** 	/*
+ 150:usb/hw_config.c **** 	 if (linecoding.datatype == 7)
+ 151:usb/hw_config.c **** 	 {
+ 152:usb/hw_config.c **** 	 USART_Rx_Buffer[USART_Rx_ptr_in] = USART_ReceiveData(EVAL_COM1) & 0x7F;
+ 153:usb/hw_config.c **** 	 }
+ 154:usb/hw_config.c **** 	 else if (linecoding.datatype == 8)
+ 155:usb/hw_config.c **** 	 {
+ 156:usb/hw_config.c **** 	 USART_Rx_Buffer[USART_Rx_ptr_in] = USART_ReceiveData(EVAL_COM1);
+ 157:usb/hw_config.c **** 	 }
+ 158:usb/hw_config.c **** 
+ 159:usb/hw_config.c **** 	 USART_Rx_ptr_in++;
+ 160:usb/hw_config.c **** 	 // To avoid buffer overflow
+ 161:usb/hw_config.c **** 	 if(USART_Rx_ptr_in == USART_RX_DATA_SIZE)
+ 162:usb/hw_config.c **** 	 {
+ 163:usb/hw_config.c **** 	 USART_Rx_ptr_in = 0;
+ 164:usb/hw_config.c **** 	 }
+ 165:usb/hw_config.c **** 	 */
+ 166:usb/hw_config.c **** }
+ 337              		.loc 1 166 1
+ 338 0004 00BF     		nop
+ 339 0006 BD46     		mov	sp, r7
+ 340              	.LCFI27:
+ 341              		.cfi_def_cfa_register 13
+ 342              		@ sp needed
+ 343 0008 80BC     		pop	{r7}
+ 344              	.LCFI28:
+ 345              		.cfi_restore 7
+ 346              		.cfi_def_cfa_offset 0
+ 347 000a 7047     		bx	lr
+ 348              		.cfi_endproc
+ 349              	.LFE33:
+ 351              		.section	.text.Get_SerialNum,"ax",%progbits
+ 352              		.align	1
+ 353              		.global	Get_SerialNum
+ 354              		.syntax unified
+ 355              		.thumb
+ 356              		.thumb_func
+ 358              	Get_SerialNum:
+ 359              	.LFB34:
+ 167:usb/hw_config.c **** 
+ 168:usb/hw_config.c **** /*******************************************************************************
+ 169:usb/hw_config.c ****  * Function Name  : Get_SerialNum.
+ 170:usb/hw_config.c ****  * Description    : Create the serial number string descriptor.
+ 171:usb/hw_config.c ****  * Input          : None.
+ 172:usb/hw_config.c ****  * Output         : None.
+ 173:usb/hw_config.c ****  * Return         : None.
+ 174:usb/hw_config.c ****  *******************************************************************************/
+ 175:usb/hw_config.c **** void Get_SerialNum(void)
+ 176:usb/hw_config.c **** {
+ 360              		.loc 1 176 1
+ 361              		.cfi_startproc
+ 362              		@ args = 0, pretend = 0, frame = 16
+ 363              		@ frame_needed = 1, uses_anonymous_args = 0
+ 364 0000 80B5     		push	{r7, lr}
+ 365              	.LCFI29:
+ 366              		.cfi_def_cfa_offset 8
+ 367              		.cfi_offset 7, -8
+ 368              		.cfi_offset 14, -4
+ 369 0002 84B0     		sub	sp, sp, #16
+ 370              	.LCFI30:
+ 371              		.cfi_def_cfa_offset 24
+ 372 0004 00AF     		add	r7, sp, #0
+ 373              	.LCFI31:
+ 374              		.cfi_def_cfa_register 7
+ 177:usb/hw_config.c **** 	uint32_t Device_Serial0, Device_Serial1, Device_Serial2;
+ 178:usb/hw_config.c **** 
+ 179:usb/hw_config.c **** 	Device_Serial0 = *(__IO uint32_t*) (0x1FFFF7E8);
+ 375              		.loc 1 179 19
+ 376 0006 0F4B     		ldr	r3, .L24
+ 377              		.loc 1 179 17
+ 378 0008 1B68     		ldr	r3, [r3]
+ 379 000a FB60     		str	r3, [r7, #12]
+ 180:usb/hw_config.c **** 	Device_Serial1 = *(__IO uint32_t*) (0x1FFFF7EC);
+ 380              		.loc 1 180 19
+ 381 000c 0E4B     		ldr	r3, .L24+4
+ 382              		.loc 1 180 17
+ 383 000e 1B68     		ldr	r3, [r3]
+ 384 0010 BB60     		str	r3, [r7, #8]
+ 181:usb/hw_config.c **** 	Device_Serial2 = *(__IO uint32_t*) (0x1FFFF7F0);
+ 385              		.loc 1 181 19
+ 386 0012 0E4B     		ldr	r3, .L24+8
+ 387              		.loc 1 181 17
+ 388 0014 1B68     		ldr	r3, [r3]
+ 389 0016 7B60     		str	r3, [r7, #4]
+ 182:usb/hw_config.c **** 
+ 183:usb/hw_config.c **** 	Device_Serial0 += Device_Serial2;
+ 390              		.loc 1 183 17
+ 391 0018 FA68     		ldr	r2, [r7, #12]
+ 392 001a 7B68     		ldr	r3, [r7, #4]
+ 393 001c 1344     		add	r3, r3, r2
+ 394 001e FB60     		str	r3, [r7, #12]
+ 184:usb/hw_config.c **** 
+ 185:usb/hw_config.c **** 	if (Device_Serial0 != 0)
+ 395              		.loc 1 185 5
+ 396 0020 FB68     		ldr	r3, [r7, #12]
+ 397 0022 002B     		cmp	r3, #0
+ 398 0024 09D0     		beq	.L23
+ 186:usb/hw_config.c **** 	{
+ 187:usb/hw_config.c **** 		IntToUnicode(Device_Serial0, &Virtual_Com_Port_StringSerial[2], 8);
+ 399              		.loc 1 187 3
+ 400 0026 0822     		movs	r2, #8
+ 401 0028 0949     		ldr	r1, .L24+12
+ 402 002a F868     		ldr	r0, [r7, #12]
+ 403 002c 094B     		ldr	r3, .L24+16
+ 404 002e 9847     		blx	r3
+ 405              	.LVL5:
+ 188:usb/hw_config.c **** 		IntToUnicode(Device_Serial1, &Virtual_Com_Port_StringSerial[18], 4);
+ 406              		.loc 1 188 3
+ 407 0030 0422     		movs	r2, #4
+ 408 0032 0949     		ldr	r1, .L24+20
+ 409 0034 B868     		ldr	r0, [r7, #8]
+ 410 0036 074B     		ldr	r3, .L24+16
+ 411 0038 9847     		blx	r3
+ 412              	.LVL6:
+ 413              	.L23:
+ 189:usb/hw_config.c **** 	}
+ 190:usb/hw_config.c **** }
+ 414              		.loc 1 190 1
+ 415 003a 00BF     		nop
+ 416 003c 1037     		adds	r7, r7, #16
+ 417              	.LCFI32:
+ 418              		.cfi_def_cfa_offset 8
+ 419 003e BD46     		mov	sp, r7
+ 420              	.LCFI33:
+ 421              		.cfi_def_cfa_register 13
+ 422              		@ sp needed
+ 423 0040 80BD     		pop	{r7, pc}
+ 424              	.L25:
+ 425 0042 00BF     		.align	2
+ 426              	.L24:
+ 427 0044 E8F7FF1F 		.word	536868840
+ 428 0048 ECF7FF1F 		.word	536868844
+ 429 004c F0F7FF1F 		.word	536868848
+ 430 0050 02000000 		.word	Virtual_Com_Port_StringSerial+2
+ 431 0054 00000000 		.word	IntToUnicode
+ 432 0058 12000000 		.word	Virtual_Com_Port_StringSerial+18
+ 433              		.cfi_endproc
+ 434              	.LFE34:
+ 436              		.section	.text.IntToUnicode,"ax",%progbits
+ 437              		.align	1
+ 438              		.syntax unified
+ 439              		.thumb
+ 440              		.thumb_func
+ 442              	IntToUnicode:
+ 443              	.LFB35:
+ 191:usb/hw_config.c **** 
+ 192:usb/hw_config.c **** /*******************************************************************************
+ 193:usb/hw_config.c ****  * Function Name  : HexToChar.
+ 194:usb/hw_config.c ****  * Description    : Convert Hex 32Bits value into char.
+ 195:usb/hw_config.c ****  * Input          : None.
+ 196:usb/hw_config.c ****  * Output         : None.
+ 197:usb/hw_config.c ****  * Return         : None.
+ 198:usb/hw_config.c ****  *******************************************************************************/
+ 199:usb/hw_config.c **** static void IntToUnicode(uint32_t value, uint8_t *pbuf, uint8_t len)
+ 200:usb/hw_config.c **** {
+ 444              		.loc 1 200 1
+ 445              		.cfi_startproc
+ 446              		@ args = 0, pretend = 0, frame = 24
+ 447              		@ frame_needed = 1, uses_anonymous_args = 0
+ 448              		@ link register save eliminated.
+ 449 0000 80B4     		push	{r7}
+ 450              	.LCFI34:
+ 451              		.cfi_def_cfa_offset 4
+ 452              		.cfi_offset 7, -4
+ 453 0002 87B0     		sub	sp, sp, #28
+ 454              	.LCFI35:
+ 455              		.cfi_def_cfa_offset 32
+ 456 0004 00AF     		add	r7, sp, #0
+ 457              	.LCFI36:
+ 458              		.cfi_def_cfa_register 7
+ 459 0006 F860     		str	r0, [r7, #12]
+ 460 0008 B960     		str	r1, [r7, #8]
+ 461 000a 1346     		mov	r3, r2
+ 462 000c FB71     		strb	r3, [r7, #7]
+ 201:usb/hw_config.c **** 	uint8_t idx = 0;
+ 463              		.loc 1 201 10
+ 464 000e 0023     		movs	r3, #0
+ 465 0010 FB75     		strb	r3, [r7, #23]
+ 202:usb/hw_config.c **** 
+ 203:usb/hw_config.c **** 	for (idx = 0; idx < len; idx++)
+ 466              		.loc 1 203 11
+ 467 0012 0023     		movs	r3, #0
+ 468 0014 FB75     		strb	r3, [r7, #23]
+ 469              		.loc 1 203 2
+ 470 0016 27E0     		b	.L27
+ 471              	.L30:
+ 204:usb/hw_config.c **** 	{
+ 205:usb/hw_config.c **** 		if (((value >> 28)) < 0xA)
+ 472              		.loc 1 205 15
+ 473 0018 FB68     		ldr	r3, [r7, #12]
+ 474 001a 1B0F     		lsrs	r3, r3, #28
+ 475              		.loc 1 205 6
+ 476 001c 092B     		cmp	r3, #9
+ 477 001e 0BD8     		bhi	.L28
+ 206:usb/hw_config.c **** 		{
+ 207:usb/hw_config.c **** 			pbuf[2* idx ] = (value >> 28) + '0';
+ 478              		.loc 1 207 27
+ 479 0020 FB68     		ldr	r3, [r7, #12]
+ 480 0022 1B0F     		lsrs	r3, r3, #28
+ 481              		.loc 1 207 34
+ 482 0024 DAB2     		uxtb	r2, r3
+ 483              		.loc 1 207 10
+ 484 0026 FB7D     		ldrb	r3, [r7, #23]	@ zero_extendqisi2
+ 485 0028 5B00     		lsls	r3, r3, #1
+ 486 002a 1946     		mov	r1, r3
+ 487              		.loc 1 207 8
+ 488 002c BB68     		ldr	r3, [r7, #8]
+ 489 002e 0B44     		add	r3, r3, r1
+ 490              		.loc 1 207 34
+ 491 0030 3032     		adds	r2, r2, #48
+ 492 0032 D2B2     		uxtb	r2, r2
+ 493              		.loc 1 207 18
+ 494 0034 1A70     		strb	r2, [r3]
+ 495 0036 0AE0     		b	.L29
+ 496              	.L28:
+ 208:usb/hw_config.c **** 		}
+ 209:usb/hw_config.c **** 		else
+ 210:usb/hw_config.c **** 		{
+ 211:usb/hw_config.c **** 			pbuf[2* idx ] = (value >> 28) + 'A' - 10;
+ 497              		.loc 1 211 27
+ 498 0038 FB68     		ldr	r3, [r7, #12]
+ 499 003a 1B0F     		lsrs	r3, r3, #28
+ 500              		.loc 1 211 40
+ 501 003c DAB2     		uxtb	r2, r3
+ 502              		.loc 1 211 10
+ 503 003e FB7D     		ldrb	r3, [r7, #23]	@ zero_extendqisi2
+ 504 0040 5B00     		lsls	r3, r3, #1
+ 505 0042 1946     		mov	r1, r3
+ 506              		.loc 1 211 8
+ 507 0044 BB68     		ldr	r3, [r7, #8]
+ 508 0046 0B44     		add	r3, r3, r1
+ 509              		.loc 1 211 40
+ 510 0048 3732     		adds	r2, r2, #55
+ 511 004a D2B2     		uxtb	r2, r2
+ 512              		.loc 1 211 18
+ 513 004c 1A70     		strb	r2, [r3]
+ 514              	.L29:
+ 212:usb/hw_config.c **** 		}
+ 213:usb/hw_config.c **** 
+ 214:usb/hw_config.c **** 		value = value << 4;
+ 515              		.loc 1 214 9 discriminator 2
+ 516 004e FB68     		ldr	r3, [r7, #12]
+ 517 0050 1B01     		lsls	r3, r3, #4
+ 518 0052 FB60     		str	r3, [r7, #12]
+ 215:usb/hw_config.c **** 
+ 216:usb/hw_config.c **** 		pbuf[2* idx + 1] = 0;
+ 519              		.loc 1 216 9 discriminator 2
+ 520 0054 FB7D     		ldrb	r3, [r7, #23]	@ zero_extendqisi2
+ 521 0056 5B00     		lsls	r3, r3, #1
+ 522              		.loc 1 216 7 discriminator 2
+ 523 0058 0133     		adds	r3, r3, #1
+ 524 005a BA68     		ldr	r2, [r7, #8]
+ 525 005c 1344     		add	r3, r3, r2
+ 526              		.loc 1 216 20 discriminator 2
+ 527 005e 0022     		movs	r2, #0
+ 528 0060 1A70     		strb	r2, [r3]
+ 203:usb/hw_config.c **** 	{
+ 529              		.loc 1 203 30 discriminator 2
+ 530 0062 FB7D     		ldrb	r3, [r7, #23]	@ zero_extendqisi2
+ 531 0064 0133     		adds	r3, r3, #1
+ 532 0066 FB75     		strb	r3, [r7, #23]
+ 533              	.L27:
+ 203:usb/hw_config.c **** 	{
+ 534              		.loc 1 203 2 discriminator 1
+ 535 0068 FA7D     		ldrb	r2, [r7, #23]	@ zero_extendqisi2
+ 536 006a FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 537 006c 9A42     		cmp	r2, r3
+ 538 006e D3D3     		bcc	.L30
+ 217:usb/hw_config.c **** 	}
+ 218:usb/hw_config.c **** }
+ 539              		.loc 1 218 1
+ 540 0070 00BF     		nop
+ 541 0072 00BF     		nop
+ 542 0074 1C37     		adds	r7, r7, #28
+ 543              	.LCFI37:
+ 544              		.cfi_def_cfa_offset 4
+ 545 0076 BD46     		mov	sp, r7
+ 546              	.LCFI38:
+ 547              		.cfi_def_cfa_register 13
+ 548              		@ sp needed
+ 549 0078 80BC     		pop	{r7}
+ 550              	.LCFI39:
+ 551              		.cfi_restore 7
+ 552              		.cfi_def_cfa_offset 0
+ 553 007a 7047     		bx	lr
+ 554              		.cfi_endproc
+ 555              	.LFE35:
+ 557              		.text
+ 558              	.Letext0:
+ 559              		.file 2 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 560              		.file 3 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 561              		.file 4 "common/lib.stm32/CMSIS/Core/CM3/stm32f10x.h"
+ 562              		.file 5 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/misc.h"
+ 563              		.file 6 "common/lib.stm32/STM32_USB-FS-Device_Driver/inc/usb_core.h"
+ 564              		.file 7 "usb/usb_desc.h"
+ 565              		.file 8 "usb/usb_pwr.h"
+ 566              		.file 9 "common/lib.stm32/STM32_USB-FS-Device_Driver/inc/usb_regs.h"
+ 567              		.file 10 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_rcc.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 hw_config.c
+C:\Users\Admin\AppData\Local\Temp\ccX02lxh.s:18     .text.Set_USBClock:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccX02lxh.s:24     .text.Set_USBClock:00000000 Set_USBClock
+C:\Users\Admin\AppData\Local\Temp\ccX02lxh.s:56     .text.Set_USBClock:00000018 $d
+C:\Users\Admin\AppData\Local\Temp\ccX02lxh.s:62     .text.Enter_LowPowerMode:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccX02lxh.s:68     .text.Enter_LowPowerMode:00000000 Enter_LowPowerMode
+C:\Users\Admin\AppData\Local\Temp\ccX02lxh.s:100    .text.Enter_LowPowerMode:00000014 $d
+C:\Users\Admin\AppData\Local\Temp\ccX02lxh.s:105    .text.Leave_LowPowerMode:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccX02lxh.s:111    .text.Leave_LowPowerMode:00000000 Leave_LowPowerMode
+C:\Users\Admin\AppData\Local\Temp\ccX02lxh.s:166    .text.Leave_LowPowerMode:0000002c $d
+C:\Users\Admin\AppData\Local\Temp\ccX02lxh.s:172    .text.USB_Interrupts_Config:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccX02lxh.s:178    .text.USB_Interrupts_Config:00000000 USB_Interrupts_Config
+C:\Users\Admin\AppData\Local\Temp\ccX02lxh.s:226    .text.USB_Interrupts_Config:00000028 $d
+C:\Users\Admin\AppData\Local\Temp\ccX02lxh.s:231    .text.USB_Cable_Config:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccX02lxh.s:237    .text.USB_Cable_Config:00000000 USB_Cable_Config
+C:\Users\Admin\AppData\Local\Temp\ccX02lxh.s:274    .text.Handle_USBAsynchXfer:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccX02lxh.s:280    .text.Handle_USBAsynchXfer:00000000 Handle_USBAsynchXfer
+C:\Users\Admin\AppData\Local\Temp\ccX02lxh.s:311    .text.Handle_USBAsynchXfer:00000018 $d
+C:\Users\Admin\AppData\Local\Temp\ccX02lxh.s:317    .text.USART_To_USB_Send_Data:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccX02lxh.s:323    .text.USART_To_USB_Send_Data:00000000 USART_To_USB_Send_Data
+C:\Users\Admin\AppData\Local\Temp\ccX02lxh.s:352    .text.Get_SerialNum:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccX02lxh.s:358    .text.Get_SerialNum:00000000 Get_SerialNum
+C:\Users\Admin\AppData\Local\Temp\ccX02lxh.s:427    .text.Get_SerialNum:00000044 $d
+C:\Users\Admin\AppData\Local\Temp\ccX02lxh.s:442    .text.IntToUnicode:00000000 IntToUnicode
+C:\Users\Admin\AppData\Local\Temp\ccX02lxh.s:437    .text.IntToUnicode:00000000 $t
+
+UNDEFINED SYMBOLS
+RCC_USBCLKConfig
+RCC_APB1PeriphClockCmd
+bDeviceState
+Device_Info
+NVIC_Init
+SetEPTxCount
+SetEPTxValid
+Virtual_Com_Port_StringSerial

@@ -1,0 +1,305 @@
+   1              		.cpu cortex-m3
+   2              		.arch armv7-m
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"usb_mem.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.section	.text.UserToPMABufferCopy,"ax",%progbits
+  18              		.align	1
+  19              		.global	UserToPMABufferCopy
+  20              		.syntax unified
+  21              		.thumb
+  22              		.thumb_func
+  24              	UserToPMABufferCopy:
+  25              	.LFB27:
+  26              		.file 1 "common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c"
+   1:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** /******************** (C) COPYRIGHT 2010 STMicroelectronics ********************
+   2:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** * File Name          : usb_mem.c
+   3:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** * Author             : MCD Application Team
+   4:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** * Version            : V3.2.1
+   5:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** * Date               : 07/05/2010
+   6:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** * Description        : Utility functions for memory transfers to/from PMA
+   7:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** ********************************************************************************
+   8:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** * THE PRESENT FIRMWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING CUSTOMERS
+   9:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** * WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER FOR THEM TO SAVE TIME.
+  10:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** * AS A RESULT, STMICROELECTRONICS SHALL NOT BE HELD LIABLE FOR ANY DIRECT,
+  11:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** * INDIRECT OR CONSEQUENTIAL DAMAGES WITH RESPECT TO ANY CLAIMS ARISING FROM THE
+  12:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** * CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE CODING
+  13:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** * INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
+  14:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** *******************************************************************************/
+  15:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** #ifndef STM32F10X_CL
+  16:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** 
+  17:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** /* Includes ------------------------------------------------------------------*/
+  18:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** #include "usb_lib.h"
+  19:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** 
+  20:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** /* Private typedef -----------------------------------------------------------*/
+  21:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** /* Private define ------------------------------------------------------------*/
+  22:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** /* Private macro -------------------------------------------------------------*/
+  23:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** /* Private variables ---------------------------------------------------------*/
+  24:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** /* Extern variables ----------------------------------------------------------*/
+  25:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** /* Private function prototypes -----------------------------------------------*/
+  26:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** /* Private functions ---------------------------------------------------------*/
+  27:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** /*******************************************************************************
+  28:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** * Function Name  : UserToPMABufferCopy
+  29:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** * Description    : Copy a buffer from user memory area to packet memory area (PMA)
+  30:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** * Input          : - pbUsrBuf: pointer to user memory area.
+  31:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** *                  - wPMABufAddr: address into PMA.
+  32:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** *                  - wNBytes: no. of bytes to be copied.
+  33:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** * Output         : None.
+  34:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** * Return         : None	.
+  35:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** *******************************************************************************/
+  36:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** void UserToPMABufferCopy(uint8_t *pbUsrBuf, uint16_t wPMABufAddr, uint16_t wNBytes)
+  37:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** {
+  27              		.loc 1 37 1
+  28              		.cfi_startproc
+  29              		@ args = 0, pretend = 0, frame = 32
+  30              		@ frame_needed = 1, uses_anonymous_args = 0
+  31              		@ link register save eliminated.
+  32 0000 80B4     		push	{r7}
+  33              	.LCFI0:
+  34              		.cfi_def_cfa_offset 4
+  35              		.cfi_offset 7, -4
+  36 0002 89B0     		sub	sp, sp, #36
+  37              	.LCFI1:
+  38              		.cfi_def_cfa_offset 40
+  39 0004 00AF     		add	r7, sp, #0
+  40              	.LCFI2:
+  41              		.cfi_def_cfa_register 7
+  42 0006 7860     		str	r0, [r7, #4]
+  43 0008 0B46     		mov	r3, r1
+  44 000a 7B80     		strh	r3, [r7, #2]	@ movhi
+  45 000c 1346     		mov	r3, r2	@ movhi
+  46 000e 3B80     		strh	r3, [r7]	@ movhi
+  38:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c ****   uint32_t n = (wNBytes + 1) >> 1;   /* n = (wNBytes + 1) / 2 */
+  47              		.loc 1 38 25
+  48 0010 3B88     		ldrh	r3, [r7]
+  49 0012 0133     		adds	r3, r3, #1
+  50              		.loc 1 38 30
+  51 0014 5B10     		asrs	r3, r3, #1
+  52              		.loc 1 38 12
+  53 0016 7B61     		str	r3, [r7, #20]
+  39:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c ****   uint32_t i, temp1, temp2;
+  40:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c ****   uint16_t *pdwVal;
+  41:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c ****   pdwVal = (uint16_t *)(wPMABufAddr * 2 + PMAAddr);
+  54              		.loc 1 41 41
+  55 0018 7B88     		ldrh	r3, [r7, #2]
+  56 001a 03F10053 		add	r3, r3, #536870912
+  57 001e 03F54053 		add	r3, r3, #12288
+  58 0022 5B00     		lsls	r3, r3, #1
+  59              		.loc 1 41 10
+  60 0024 BB61     		str	r3, [r7, #24]
+  42:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c ****   for (i = n; i != 0; i--)
+  61              		.loc 1 42 10
+  62 0026 7B69     		ldr	r3, [r7, #20]
+  63 0028 FB61     		str	r3, [r7, #28]
+  64              		.loc 1 42 3
+  65 002a 1BE0     		b	.L2
+  66              	.L3:
+  43:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c ****   {
+  44:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c ****     temp1 = (uint16_t) * pbUsrBuf;
+  67              		.loc 1 44 24 discriminator 3
+  68 002c 7B68     		ldr	r3, [r7, #4]
+  69 002e 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+  70              		.loc 1 44 11 discriminator 3
+  71 0030 3B61     		str	r3, [r7, #16]
+  45:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c ****     pbUsrBuf++;
+  72              		.loc 1 45 13 discriminator 3
+  73 0032 7B68     		ldr	r3, [r7, #4]
+  74 0034 0133     		adds	r3, r3, #1
+  75 0036 7B60     		str	r3, [r7, #4]
+  46:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c ****     temp2 = temp1 | (uint16_t) * pbUsrBuf << 8;
+  76              		.loc 1 46 32 discriminator 3
+  77 0038 7B68     		ldr	r3, [r7, #4]
+  78 003a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+  79              		.loc 1 46 43 discriminator 3
+  80 003c 1B02     		lsls	r3, r3, #8
+  81 003e 1A46     		mov	r2, r3
+  82              		.loc 1 46 11 discriminator 3
+  83 0040 3B69     		ldr	r3, [r7, #16]
+  84 0042 1343     		orrs	r3, r3, r2
+  85 0044 FB60     		str	r3, [r7, #12]
+  47:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c ****     *pdwVal++ = temp2;
+  86              		.loc 1 47 12 discriminator 3
+  87 0046 BB69     		ldr	r3, [r7, #24]
+  88 0048 9A1C     		adds	r2, r3, #2
+  89 004a BA61     		str	r2, [r7, #24]
+  90              		.loc 1 47 15 discriminator 3
+  91 004c FA68     		ldr	r2, [r7, #12]
+  92 004e 92B2     		uxth	r2, r2
+  93 0050 1A80     		strh	r2, [r3]	@ movhi
+  48:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c ****     pdwVal++;
+  94              		.loc 1 48 11 discriminator 3
+  95 0052 BB69     		ldr	r3, [r7, #24]
+  96 0054 0233     		adds	r3, r3, #2
+  97 0056 BB61     		str	r3, [r7, #24]
+  49:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c ****     pbUsrBuf++;
+  98              		.loc 1 49 13 discriminator 3
+  99 0058 7B68     		ldr	r3, [r7, #4]
+ 100 005a 0133     		adds	r3, r3, #1
+ 101 005c 7B60     		str	r3, [r7, #4]
+  42:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c ****   {
+ 102              		.loc 1 42 24 discriminator 3
+ 103 005e FB69     		ldr	r3, [r7, #28]
+ 104 0060 013B     		subs	r3, r3, #1
+ 105 0062 FB61     		str	r3, [r7, #28]
+ 106              	.L2:
+  42:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c ****   {
+ 107              		.loc 1 42 3 discriminator 1
+ 108 0064 FB69     		ldr	r3, [r7, #28]
+ 109 0066 002B     		cmp	r3, #0
+ 110 0068 E0D1     		bne	.L3
+  50:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c ****   }
+  51:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** }
+ 111              		.loc 1 51 1
+ 112 006a 00BF     		nop
+ 113 006c 00BF     		nop
+ 114 006e 2437     		adds	r7, r7, #36
+ 115              	.LCFI3:
+ 116              		.cfi_def_cfa_offset 4
+ 117 0070 BD46     		mov	sp, r7
+ 118              	.LCFI4:
+ 119              		.cfi_def_cfa_register 13
+ 120              		@ sp needed
+ 121 0072 80BC     		pop	{r7}
+ 122              	.LCFI5:
+ 123              		.cfi_restore 7
+ 124              		.cfi_def_cfa_offset 0
+ 125 0074 7047     		bx	lr
+ 126              		.cfi_endproc
+ 127              	.LFE27:
+ 129              		.section	.text.PMAToUserBufferCopy,"ax",%progbits
+ 130              		.align	1
+ 131              		.global	PMAToUserBufferCopy
+ 132              		.syntax unified
+ 133              		.thumb
+ 134              		.thumb_func
+ 136              	PMAToUserBufferCopy:
+ 137              	.LFB28:
+  52:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** /*******************************************************************************
+  53:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** * Function Name  : PMAToUserBufferCopy
+  54:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** * Description    : Copy a buffer from user memory area to packet memory area (PMA)
+  55:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** * Input          : - pbUsrBuf    = pointer to user memory area.
+  56:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** *                  - wPMABufAddr = address into PMA.
+  57:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** *                  - wNBytes     = no. of bytes to be copied.
+  58:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** * Output         : None.
+  59:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** * Return         : None.
+  60:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** *******************************************************************************/
+  61:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** void PMAToUserBufferCopy(uint8_t *pbUsrBuf, uint16_t wPMABufAddr, uint16_t wNBytes)
+  62:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** {
+ 138              		.loc 1 62 1
+ 139              		.cfi_startproc
+ 140              		@ args = 0, pretend = 0, frame = 24
+ 141              		@ frame_needed = 1, uses_anonymous_args = 0
+ 142              		@ link register save eliminated.
+ 143 0000 80B4     		push	{r7}
+ 144              	.LCFI6:
+ 145              		.cfi_def_cfa_offset 4
+ 146              		.cfi_offset 7, -4
+ 147 0002 87B0     		sub	sp, sp, #28
+ 148              	.LCFI7:
+ 149              		.cfi_def_cfa_offset 32
+ 150 0004 00AF     		add	r7, sp, #0
+ 151              	.LCFI8:
+ 152              		.cfi_def_cfa_register 7
+ 153 0006 7860     		str	r0, [r7, #4]
+ 154 0008 0B46     		mov	r3, r1
+ 155 000a 7B80     		strh	r3, [r7, #2]	@ movhi
+ 156 000c 1346     		mov	r3, r2	@ movhi
+ 157 000e 3B80     		strh	r3, [r7]	@ movhi
+  63:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c ****   uint32_t n = (wNBytes + 1) >> 1;/* /2*/
+ 158              		.loc 1 63 25
+ 159 0010 3B88     		ldrh	r3, [r7]
+ 160 0012 0133     		adds	r3, r3, #1
+ 161              		.loc 1 63 30
+ 162 0014 5B10     		asrs	r3, r3, #1
+ 163              		.loc 1 63 12
+ 164 0016 FB60     		str	r3, [r7, #12]
+  64:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c ****   uint32_t i;
+  65:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c ****   uint32_t *pdwVal;
+  66:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c ****   pdwVal = (uint32_t *)(wPMABufAddr * 2 + PMAAddr);
+ 165              		.loc 1 66 41
+ 166 0018 7B88     		ldrh	r3, [r7, #2]
+ 167 001a 03F10053 		add	r3, r3, #536870912
+ 168 001e 03F54053 		add	r3, r3, #12288
+ 169 0022 5B00     		lsls	r3, r3, #1
+ 170              		.loc 1 66 10
+ 171 0024 3B61     		str	r3, [r7, #16]
+  67:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c ****   for (i = n; i != 0; i--)
+ 172              		.loc 1 67 10
+ 173 0026 FB68     		ldr	r3, [r7, #12]
+ 174 0028 7B61     		str	r3, [r7, #20]
+ 175              		.loc 1 67 3
+ 176 002a 0EE0     		b	.L5
+ 177              	.L6:
+  68:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c ****   {
+  69:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c ****     *(uint16_t*)pbUsrBuf++ = *pdwVal++;
+ 178              		.loc 1 69 37 discriminator 3
+ 179 002c 3B69     		ldr	r3, [r7, #16]
+ 180 002e 1A1D     		adds	r2, r3, #4
+ 181 0030 3A61     		str	r2, [r7, #16]
+ 182              		.loc 1 69 30 discriminator 3
+ 183 0032 1968     		ldr	r1, [r3]
+ 184              		.loc 1 69 6 discriminator 3
+ 185 0034 7B68     		ldr	r3, [r7, #4]
+ 186 0036 5A1C     		adds	r2, r3, #1
+ 187 0038 7A60     		str	r2, [r7, #4]
+ 188              		.loc 1 69 28 discriminator 3
+ 189 003a 8AB2     		uxth	r2, r1
+ 190 003c 1A80     		strh	r2, [r3]	@ movhi
+  70:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c ****     pbUsrBuf++;
+ 191              		.loc 1 70 13 discriminator 3
+ 192 003e 7B68     		ldr	r3, [r7, #4]
+ 193 0040 0133     		adds	r3, r3, #1
+ 194 0042 7B60     		str	r3, [r7, #4]
+  67:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c ****   for (i = n; i != 0; i--)
+ 195              		.loc 1 67 24 discriminator 3
+ 196 0044 7B69     		ldr	r3, [r7, #20]
+ 197 0046 013B     		subs	r3, r3, #1
+ 198 0048 7B61     		str	r3, [r7, #20]
+ 199              	.L5:
+  67:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c ****   for (i = n; i != 0; i--)
+ 200              		.loc 1 67 3 discriminator 1
+ 201 004a 7B69     		ldr	r3, [r7, #20]
+ 202 004c 002B     		cmp	r3, #0
+ 203 004e EDD1     		bne	.L6
+  71:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c ****   }
+  72:common/lib.stm32/STM32_USB-FS-Device_Driver/src/usb_mem.c **** }
+ 204              		.loc 1 72 1
+ 205 0050 00BF     		nop
+ 206 0052 00BF     		nop
+ 207 0054 1C37     		adds	r7, r7, #28
+ 208              	.LCFI9:
+ 209              		.cfi_def_cfa_offset 4
+ 210 0056 BD46     		mov	sp, r7
+ 211              	.LCFI10:
+ 212              		.cfi_def_cfa_register 13
+ 213              		@ sp needed
+ 214 0058 80BC     		pop	{r7}
+ 215              	.LCFI11:
+ 216              		.cfi_restore 7
+ 217              		.cfi_def_cfa_offset 0
+ 218 005a 7047     		bx	lr
+ 219              		.cfi_endproc
+ 220              	.LFE28:
+ 222              		.text
+ 223              	.Letext0:
+ 224              		.file 2 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 225              		.file 3 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+DEFINED SYMBOLS
+                            *ABS*:00000000 usb_mem.c
+C:\Users\Admin\AppData\Local\Temp\ccKvw31P.s:18     .text.UserToPMABufferCopy:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccKvw31P.s:24     .text.UserToPMABufferCopy:00000000 UserToPMABufferCopy
+C:\Users\Admin\AppData\Local\Temp\ccKvw31P.s:130    .text.PMAToUserBufferCopy:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccKvw31P.s:136    .text.PMAToUserBufferCopy:00000000 PMAToUserBufferCopy
+
+NO UNDEFINED SYMBOLS
