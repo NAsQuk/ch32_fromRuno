@@ -1,0 +1,276 @@
+   1              		.cpu cortex-m3
+   2              		.arch armv7-m
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"usbtask.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.global	PrevXferComplete
+  18              		.section	.data.PrevXferComplete,"aw"
+  21              	PrevXferComplete:
+  22 0000 01       		.byte	1
+  23              		.section	.text.vUSBTask,"ax",%progbits
+  24              		.align	1
+  25              		.global	vUSBTask
+  26              		.syntax unified
+  27              		.thumb
+  28              		.thumb_func
+  30              	vUSBTask:
+  31              	.LFB30:
+  32              		.file 1 "tasks/usbtask.c"
+   1:tasks/usbtask.c **** #include <stdlib.h>
+   2:tasks/usbtask.c **** #include <stdio.h>
+   3:tasks/usbtask.c **** #include <string.h>
+   4:tasks/usbtask.c **** #include "FreeRTOS.h"
+   5:tasks/usbtask.c **** #include "task.h"
+   6:tasks/usbtask.c **** //#include "adc.h"
+   7:tasks/usbtask.c **** //#include "pwmcapture.h"
+   8:tasks/usbtask.c **** #include "rvnet.h"
+   9:tasks/usbtask.c **** #include "uart.h"
+  10:tasks/usbtask.c **** #include "crc.h"
+  11:tasks/usbtask.c **** #include "stm32f10x.h"
+  12:tasks/usbtask.c **** //#include "usb_lib.h"
+  13:tasks/usbtask.c **** //#include "usb_desc.h"
+  14:tasks/usbtask.c **** //#include "hw_config.h"
+  15:tasks/usbtask.c **** //#include "usb_pwr.h"
+  16:tasks/usbtask.c **** 
+  17:tasks/usbtask.c **** 
+  18:tasks/usbtask.c **** extern __IO uint32_t count_out;
+  19:tasks/usbtask.c **** 
+  20:tasks/usbtask.c **** __IO uint8_t PrevXferComplete = 1;
+  21:tasks/usbtask.c **** //extern uint8_t buffer_out[VIRTUAL_COM_PORT_DATA_SIZE];
+  22:tasks/usbtask.c **** 
+  23:tasks/usbtask.c **** /* Private variables ---------------------------------------------------------*/
+  24:tasks/usbtask.c **** 
+  25:tasks/usbtask.c **** 
+  26:tasks/usbtask.c **** struct CONTENTS
+  27:tasks/usbtask.c **** {
+  28:tasks/usbtask.c **** 	uint8 buf[5];
+  29:tasks/usbtask.c **** 	uint16 size;
+  30:tasks/usbtask.c **** };
+  31:tasks/usbtask.c **** 
+  32:tasks/usbtask.c **** 
+  33:tasks/usbtask.c **** void vUSBTask(void *pvParameters)
+  34:tasks/usbtask.c **** {
+  33              		.loc 1 34 1
+  34              		.cfi_startproc
+  35              		@ args = 0, pretend = 0, frame = 24
+  36              		@ frame_needed = 1, uses_anonymous_args = 0
+  37 0000 2DE9B043 		push	{r4, r5, r7, r8, r9, lr}
+  38              	.LCFI0:
+  39              		.cfi_def_cfa_offset 24
+  40              		.cfi_offset 4, -24
+  41              		.cfi_offset 5, -20
+  42              		.cfi_offset 7, -16
+  43              		.cfi_offset 8, -12
+  44              		.cfi_offset 9, -8
+  45              		.cfi_offset 14, -4
+  46 0004 86B0     		sub	sp, sp, #24
+  47              	.LCFI1:
+  48              		.cfi_def_cfa_offset 48
+  49 0006 00AF     		add	r7, sp, #0
+  50              	.LCFI2:
+  51              		.cfi_def_cfa_register 7
+  52 0008 7860     		str	r0, [r7, #4]
+  35:tasks/usbtask.c **** 	//usb
+  36:tasks/usbtask.c **** 	vTaskDelay(100);
+  53              		.loc 1 36 2
+  54 000a 6420     		movs	r0, #100
+  55 000c 304B     		ldr	r3, .L4
+  56 000e 9847     		blx	r3
+  57              	.LVL0:
+  37:tasks/usbtask.c **** 	uint16 usbsize = 256;
+  58              		.loc 1 37 9
+  59 0010 4FF48073 		mov	r3, #256
+  60 0014 FB82     		strh	r3, [r7, #22]	@ movhi
+  38:tasks/usbtask.c **** 	uint8 usbbuf[usbsize];
+  61              		.loc 1 38 2
+  62 0016 F98A     		ldrh	r1, [r7, #22]
+  63              		.loc 1 38 8
+  64 0018 0B46     		mov	r3, r1
+  65 001a 013B     		subs	r3, r3, #1
+  66 001c 3B61     		str	r3, [r7, #16]
+  67 001e 8BB2     		uxth	r3, r1
+  68 0020 0022     		movs	r2, #0
+  69 0022 9846     		mov	r8, r3
+  70 0024 9146     		mov	r9, r2
+  71 0026 4FF00002 		mov	r2, #0
+  72 002a 4FF00003 		mov	r3, #0
+  73 002e 4FEAC903 		lsl	r3, r9, #3
+  74 0032 43EA5873 		orr	r3, r3, r8, lsr #29
+  75 0036 4FEAC802 		lsl	r2, r8, #3
+  76 003a 8BB2     		uxth	r3, r1
+  77 003c 0022     		movs	r2, #0
+  78 003e 1C46     		mov	r4, r3
+  79 0040 1546     		mov	r5, r2
+  80 0042 4FF00002 		mov	r2, #0
+  81 0046 4FF00003 		mov	r3, #0
+  82 004a EB00     		lsls	r3, r5, #3
+  83 004c 43EA5473 		orr	r3, r3, r4, lsr #29
+  84 0050 E200     		lsls	r2, r4, #3
+  85 0052 0B46     		mov	r3, r1
+  86 0054 0733     		adds	r3, r3, #7
+  87 0056 DB08     		lsrs	r3, r3, #3
+  88 0058 DB00     		lsls	r3, r3, #3
+  89 005a ADEB030D 		sub	sp, sp, r3
+  90 005e 6B46     		mov	r3, sp
+  91 0060 0033     		adds	r3, r3, #0
+  92 0062 FB60     		str	r3, [r7, #12]
+  39:tasks/usbtask.c **** 
+  40:tasks/usbtask.c **** 	int heapSize = 0;
+  93              		.loc 1 40 6
+  94 0064 0023     		movs	r3, #0
+  95 0066 BB60     		str	r3, [r7, #8]
+  41:tasks/usbtask.c **** 	/* The parameters are not used. */
+  42:tasks/usbtask.c **** 	(void) pvParameters;
+  43:tasks/usbtask.c **** 
+  44:tasks/usbtask.c **** 	uart1Init(115200);
+  96              		.loc 1 44 2
+  97 0068 4FF4E130 		mov	r0, #115200
+  98 006c 194B     		ldr	r3, .L4+4
+  99 006e 9847     		blx	r3
+ 100              	.LVL1:
+  45:tasks/usbtask.c **** 	vTaskDelay(50);
+ 101              		.loc 1 45 2
+ 102 0070 3220     		movs	r0, #50
+ 103 0072 174B     		ldr	r3, .L4
+ 104 0074 9847     		blx	r3
+ 105              	.LVL2:
+ 106              	.L3:
+ 107              	.LBB2:
+  46:tasks/usbtask.c **** 
+  47:tasks/usbtask.c **** 	while (1) {
+  48:tasks/usbtask.c **** 		heapSize = xPortGetFreeHeapSize();
+ 108              		.loc 1 48 14
+ 109 0076 184B     		ldr	r3, .L4+8
+ 110 0078 9847     		blx	r3
+ 111              	.LVL3:
+ 112 007a 0346     		mov	r3, r0
+ 113              		.loc 1 48 12
+ 114 007c BB60     		str	r3, [r7, #8]
+  49:tasks/usbtask.c **** 		heapSize += 0;
+  50:tasks/usbtask.c **** 
+  51:tasks/usbtask.c **** 		usbsize = uart1Read(usbbuf, 256);
+ 115              		.loc 1 51 13
+ 116 007e 4FF48071 		mov	r1, #256
+ 117 0082 F868     		ldr	r0, [r7, #12]
+ 118 0084 154B     		ldr	r3, .L4+12
+ 119 0086 9847     		blx	r3
+ 120              	.LVL4:
+ 121 0088 0346     		mov	r3, r0
+ 122              		.loc 1 51 11
+ 123 008a FB82     		strh	r3, [r7, #22]	@ movhi
+  52:tasks/usbtask.c **** 		vTaskDelay(50);
+ 124              		.loc 1 52 3
+ 125 008c 3220     		movs	r0, #50
+ 126 008e 104B     		ldr	r3, .L4
+ 127 0090 9847     		blx	r3
+ 128              	.LVL5:
+  53:tasks/usbtask.c **** 
+  54:tasks/usbtask.c **** 		if (usbsize > 0) {
+ 129              		.loc 1 54 6
+ 130 0092 FB8A     		ldrh	r3, [r7, #22]
+ 131 0094 002B     		cmp	r3, #0
+ 132 0096 EED0     		beq	.L3
+  55:tasks/usbtask.c **** 			portENTER_CRITICAL();
+ 133              		.loc 1 55 4
+ 134 0098 114B     		ldr	r3, .L4+16
+ 135 009a 9847     		blx	r3
+ 136              	.LVL6:
+  56:tasks/usbtask.c **** 			usbsize = RVnetSlaveProcess(usbbuf, usbsize, 1);
+ 137              		.loc 1 56 14
+ 138 009c FB8A     		ldrh	r3, [r7, #22]	@ movhi
+ 139 009e DBB2     		uxtb	r3, r3
+ 140 00a0 0122     		movs	r2, #1
+ 141 00a2 1946     		mov	r1, r3
+ 142 00a4 F868     		ldr	r0, [r7, #12]
+ 143 00a6 0F4B     		ldr	r3, .L4+20
+ 144 00a8 9847     		blx	r3
+ 145              	.LVL7:
+ 146 00aa 0346     		mov	r3, r0
+ 147              		.loc 1 56 12
+ 148 00ac FB82     		strh	r3, [r7, #22]	@ movhi
+  57:tasks/usbtask.c **** 			portEXIT_CRITICAL();
+ 149              		.loc 1 57 4
+ 150 00ae 0E4B     		ldr	r3, .L4+24
+ 151 00b0 9847     		blx	r3
+ 152              	.LVL8:
+  58:tasks/usbtask.c **** 			vTaskDelay(15); // чтобы не тормозил usb
+ 153              		.loc 1 58 4
+ 154 00b2 0F20     		movs	r0, #15
+ 155 00b4 064B     		ldr	r3, .L4
+ 156 00b6 9847     		blx	r3
+ 157              	.LVL9:
+  59:tasks/usbtask.c **** 
+  60:tasks/usbtask.c **** 			if (usbsize > 0) {
+ 158              		.loc 1 60 7
+ 159 00b8 FB8A     		ldrh	r3, [r7, #22]
+ 160 00ba 002B     		cmp	r3, #0
+ 161 00bc DBD0     		beq	.L3
+ 162              	.LBB3:
+  61:tasks/usbtask.c **** 				uart1Write(usbbuf, usbsize);
+ 163              		.loc 1 61 5
+ 164 00be FB8A     		ldrh	r3, [r7, #22]
+ 165 00c0 1946     		mov	r1, r3
+ 166 00c2 F868     		ldr	r0, [r7, #12]
+ 167 00c4 094B     		ldr	r3, .L4+28
+ 168 00c6 9847     		blx	r3
+ 169              	.LVL10:
+  62:tasks/usbtask.c **** 				vTaskDelay(15);
+ 170              		.loc 1 62 5
+ 171 00c8 0F20     		movs	r0, #15
+ 172 00ca 014B     		ldr	r3, .L4
+ 173 00cc 9847     		blx	r3
+ 174              	.LVL11:
+ 175              	.LBE3:
+ 176              	.LBE2:
+  47:tasks/usbtask.c **** 		heapSize = xPortGetFreeHeapSize();
+ 177              		.loc 1 47 12
+ 178 00ce D2E7     		b	.L3
+ 179              	.L5:
+ 180              		.align	2
+ 181              	.L4:
+ 182 00d0 00000000 		.word	vTaskDelay
+ 183 00d4 00000000 		.word	uart1Init
+ 184 00d8 00000000 		.word	xPortGetFreeHeapSize
+ 185 00dc 00000000 		.word	uart1Read
+ 186 00e0 00000000 		.word	vPortEnterCritical
+ 187 00e4 00000000 		.word	RVnetSlaveProcess
+ 188 00e8 00000000 		.word	vPortExitCritical
+ 189 00ec 00000000 		.word	uart1Write
+ 190              		.cfi_endproc
+ 191              	.LFE30:
+ 193              		.text
+ 194              	.Letext0:
+ 195              		.file 2 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 196              		.file 3 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 197              		.file 4 "common/rtos/common/utils/typedef.h"
+ 198              		.file 5 "common/rtos/include/task.h"
+ 199              		.file 6 "common/rtos/include/portable.h"
+ 200              		.file 7 "common/rtos/portable/GCC/ARM_CM3/portmacro.h"
+ 201              		.file 8 "common/rtos/common/utils/rvnet.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 usbtask.c
+C:\Users\Admin\AppData\Local\Temp\ccWXYMdm.s:21     .data.PrevXferComplete:00000000 PrevXferComplete
+C:\Users\Admin\AppData\Local\Temp\ccWXYMdm.s:24     .text.vUSBTask:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccWXYMdm.s:30     .text.vUSBTask:00000000 vUSBTask
+C:\Users\Admin\AppData\Local\Temp\ccWXYMdm.s:182    .text.vUSBTask:000000d0 $d
+
+UNDEFINED SYMBOLS
+vTaskDelay
+uart1Init
+xPortGetFreeHeapSize
+uart1Read
+vPortEnterCritical
+RVnetSlaveProcess
+vPortExitCritical
+uart1Write

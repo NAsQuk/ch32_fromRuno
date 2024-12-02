@@ -1,0 +1,1022 @@
+   1              		.cpu cortex-m3
+   2              		.arch armv7-m
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"main.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.global	CountAnswer
+  18              		.section	.bss.CountAnswer,"aw",%nobits
+  19              		.align	2
+  22              	CountAnswer:
+  23 0000 00000000 		.space	4
+  24              		.global	initMK
+  25              		.section	.bss.initMK,"aw",%nobits
+  26              		.align	2
+  29              	initMK:
+  30 0000 00000000 		.space	4
+  31              		.global	T1
+  32              		.section	.bss.T1,"aw",%nobits
+  33              		.align	1
+  36              	T1:
+  37 0000 0000     		.space	2
+  38              		.global	counttick
+  39              		.section	.bss.counttick,"aw",%nobits
+  40              		.align	2
+  43              	counttick:
+  44 0000 00000000 		.space	4
+  45              		.section	.rodata
+  46              		.align	2
+  47              	.LC0:
+  48 0000 4C6F6769 		.ascii	"Logica\000"
+  48      636100
+  49 0007 00       		.align	2
+  50              	.LC1:
+  51 0008 52533438 		.ascii	"RS485\000"
+  51      3500
+  52 000e 0000     		.align	2
+  53              	.LC2:
+  54 0010 52656C65 		.ascii	"Reletest\000"
+  54      74657374 
+  54      00
+  55 0019 000000   		.align	2
+  56              	.LC3:
+  57 001c 55534200 		.ascii	"USB\000"
+  58              		.align	2
+  59              	.LC4:
+  60 0020 47505253 		.ascii	"GPRS\000"
+  60      00
+  61 0025 000000   		.align	2
+  62              	.LC5:
+  63 0028 4C454400 		.ascii	"LED\000"
+  64              		.align	2
+  65              	.LC6:
+  66 002c 434C4F43 		.ascii	"CLOCK\000"
+  66      4B00
+  67              		.section	.text.main,"ax",%progbits
+  68              		.align	1
+  69              		.global	main
+  70              		.syntax unified
+  71              		.thumb
+  72              		.thumb_func
+  74              	main:
+  75              	.LFB27:
+  76              		.file 1 "main.c"
+   1:main.c        **** /*******************************************************************************
+   2:main.c        ****  * Project            : STM32 MINI Digital Picture Frame
+   3:main.c        **** 
+   4:main.c        ****  * File Name          : main.c
+   5:main.c        ****  * Author             : Martin Thomas, main-skeleton based on code from the
+   6:main.c        ****  *                      STMicroelectronics MCD Application Team
+   7:main.c        ****  * Version            : see VERSION_STRING below
+   8:main.c        ****  * Date               : see VERSION_STRING below
+   9:main.c        ****  * Description        : Main program body for the SD-Card tests
+  10:main.c        ****  ********************************************************************************
+  11:main.c        ****  * License: BSD
+  12:main.c        ****  *******************************************************************************/
+  13:main.c        **** //ѕривет///
+  14:main.c        **** #define VERSION_STRING "V1.0.0 24.03.2011"
+  15:main.c        **** /* Includes ------------------------------------------------------------------*/
+  16:main.c        **** 
+  17:main.c        **** #include <stdint.h>
+  18:main.c        **** #include "board.h"
+  19:main.c        **** #include "hwinit.h"
+  20:main.c        **** #include "FreeRTOS.h"
+  21:main.c        **** #include "task.h"
+  22:main.c        **** #include "gprscon.h"
+  23:main.c        **** #include "logica.h"
+  24:main.c        **** #include "reletest.h"
+  25:main.c        **** #include "rs485.h"
+  26:main.c        **** #include "usbtask.h"
+  27:main.c        **** #include "led.h"
+  28:main.c        **** #include "clock.h"
+  29:main.c        **** #include "I2CRoutines.h"
+  30:main.c        **** #include "usermemory.h"
+  31:main.c        **** #include "rtclock.h"
+  32:main.c        **** #include "stm32f10x_iwdg.h"
+  33:main.c        **** 
+  34:main.c        **** int CountAnswer = 0;
+  35:main.c        **** 
+  36:main.c        **** /* Private function prototypes -----------------------------------------------*/
+  37:main.c        **** void GPIO_Configuration(void);
+  38:main.c        **** void IWD_Start(void);
+  39:main.c        **** int initMK;
+  40:main.c        **** uint16_t T1;
+  41:main.c        **** /* Public functions -- -------------------------------------------------------*/
+  42:main.c        **** 
+  43:main.c        **** /////////////////////////////////////////////////////////////////
+  44:main.c        **** #define vLogicaTask_PRIORITY            ( tskIDLE_PRIORITY + 4 )
+  45:main.c        **** #define vRs485Task_PRIORITY            ( tskIDLE_PRIORITY + 3 )
+  46:main.c        **** #define vUSBTask_PRIORITY            ( tskIDLE_PRIORITY + 1 )
+  47:main.c        **** #define vReletestTask_PRIORITY            ( tskIDLE_PRIORITY + 5 )
+  48:main.c        **** #define vGprsConTask_PRIORITY           ( tskIDLE_PRIORITY + 5 )
+  49:main.c        **** #define vLedTask_PRIORITY           ( tskIDLE_PRIORITY)
+  50:main.c        **** #define vClockTask_PRIORITY           ( tskIDLE_PRIORITY+2)
+  51:main.c        **** /////////////////////////////////////////////////////////////////
+  52:main.c        **** int counttick = 0;
+  53:main.c        **** 
+  54:main.c        **** int main(void) {
+  77              		.loc 1 54 16
+  78              		.cfi_startproc
+  79              		@ args = 0, pretend = 0, frame = 8
+  80              		@ frame_needed = 1, uses_anonymous_args = 0
+  81 0000 90B5     		push	{r4, r7, lr}
+  82              	.LCFI0:
+  83              		.cfi_def_cfa_offset 12
+  84              		.cfi_offset 4, -12
+  85              		.cfi_offset 7, -8
+  86              		.cfi_offset 14, -4
+  87 0002 87B0     		sub	sp, sp, #28
+  88              	.LCFI1:
+  89              		.cfi_def_cfa_offset 40
+  90 0004 04AF     		add	r7, sp, #16
+  91              	.LCFI2:
+  92              		.cfi_def_cfa 7, 24
+  55:main.c        **** 	manualwork = 0;
+  93              		.loc 1 55 13
+  94 0006 4A4B     		ldr	r3, .L5
+  95 0008 0022     		movs	r2, #0
+  96 000a 1A60     		str	r2, [r3]
+  56:main.c        **** 	// онфигурирование микроконтроллера
+  57:main.c        **** 	uint8_t *TestByte;
+  58:main.c        **** 	TestByte = (uint8_t*) 0xE00FFFD0;
+  97              		.loc 1 58 11
+  98 000c 494B     		ldr	r3, .L5+4
+  99 000e 7B60     		str	r3, [r7, #4]
+  59:main.c        **** 	if (*TestByte == 7) {
+ 100              		.loc 1 59 6
+ 101 0010 7B68     		ldr	r3, [r7, #4]
+ 102 0012 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 103              		.loc 1 59 5
+ 104 0014 072B     		cmp	r3, #7
+ 105 0016 03D1     		bne	.L2
+  60:main.c        **** 		initMK = 1; //GD
+ 106              		.loc 1 60 10
+ 107 0018 474B     		ldr	r3, .L5+8
+ 108 001a 0122     		movs	r2, #1
+ 109 001c 1A60     		str	r2, [r3]
+ 110 001e 02E0     		b	.L3
+ 111              	.L2:
+  61:main.c        **** 	} else {
+  62:main.c        **** 		initMK = 0; //STM32
+ 112              		.loc 1 62 10
+ 113 0020 454B     		ldr	r3, .L5+8
+ 114 0022 0022     		movs	r2, #0
+ 115 0024 1A60     		str	r2, [r3]
+ 116              	.L3:
+  63:main.c        **** 	}
+  64:main.c        **** 	GPIO_Configuration();
+ 117              		.loc 1 64 2
+ 118 0026 454B     		ldr	r3, .L5+12
+ 119 0028 9847     		blx	r3
+ 120              	.LVL0:
+  65:main.c        **** 	hwInit();
+ 121              		.loc 1 65 2
+ 122 002a 454B     		ldr	r3, .L5+16
+ 123 002c 9847     		blx	r3
+ 124              	.LVL1:
+  66:main.c        **** 	MemInit();
+ 125              		.loc 1 66 2
+ 126 002e 454B     		ldr	r3, .L5+20
+ 127 0030 9847     		blx	r3
+ 128              	.LVL2:
+  67:main.c        **** 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR | RCC_APB1Periph_BKP, ENABLE);
+ 129              		.loc 1 67 2
+ 130 0032 0121     		movs	r1, #1
+ 131 0034 4FF0C050 		mov	r0, #402653184
+ 132 0038 434B     		ldr	r3, .L5+24
+ 133 003a 9847     		blx	r3
+ 134              	.LVL3:
+  68:main.c        **** 	PWR_BackupAccessCmd(ENABLE);
+ 135              		.loc 1 68 2
+ 136 003c 0120     		movs	r0, #1
+ 137 003e 434B     		ldr	r3, .L5+28
+ 138 0040 9847     		blx	r3
+ 139              	.LVL4:
+  69:main.c        **** 	T1 = BKP_ReadBackupRegister(BKP_DR7);
+ 140              		.loc 1 69 7
+ 141 0042 1C20     		movs	r0, #28
+ 142 0044 424B     		ldr	r3, .L5+32
+ 143 0046 9847     		blx	r3
+ 144              	.LVL5:
+ 145 0048 0346     		mov	r3, r0
+ 146 004a 1A46     		mov	r2, r3
+ 147              		.loc 1 69 5
+ 148 004c 414B     		ldr	r3, .L5+36
+ 149 004e 1A80     		strh	r2, [r3]	@ movhi
+  70:main.c        **** 	BKP_WriteBackupRegister(BKP_DR7, 2);
+ 150              		.loc 1 70 2
+ 151 0050 0221     		movs	r1, #2
+ 152 0052 1C20     		movs	r0, #28
+ 153 0054 404B     		ldr	r3, .L5+40
+ 154 0056 9847     		blx	r3
+ 155              	.LVL6:
+  71:main.c        **** 	IWD_Start();
+ 156              		.loc 1 71 2
+ 157 0058 404B     		ldr	r3, .L5+44
+ 158 005a 9847     		blx	r3
+ 159              	.LVL7:
+  72:main.c        **** 
+  73:main.c        **** 	// Turn on/off LED(s)
+  74:main.c        **** 	xTaskCreate(vLogicaTask, (const signed portCHAR * const ) "Logica",
+ 160              		.loc 1 74 2
+ 161 005c 0023     		movs	r3, #0
+ 162 005e 0393     		str	r3, [sp, #12]
+ 163 0060 0023     		movs	r3, #0
+ 164 0062 0293     		str	r3, [sp, #8]
+ 165 0064 0023     		movs	r3, #0
+ 166 0066 0193     		str	r3, [sp, #4]
+ 167 0068 0423     		movs	r3, #4
+ 168 006a 0093     		str	r3, [sp]
+ 169 006c 0023     		movs	r3, #0
+ 170 006e 4FF47A72 		mov	r2, #1000
+ 171 0072 3B49     		ldr	r1, .L5+48
+ 172 0074 3B48     		ldr	r0, .L5+52
+ 173 0076 3C4C     		ldr	r4, .L5+56
+ 174 0078 A047     		blx	r4
+ 175              	.LVL8:
+  75:main.c        **** 			vLogicaTask_STACK_SIZE, NULL, vLogicaTask_PRIORITY,
+  76:main.c        **** 			(xTaskHandle* ) NULL);
+  77:main.c        **** 
+  78:main.c        **** 	xTaskCreate(vRs485Task, (const signed portCHAR * const ) "RS485",
+ 176              		.loc 1 78 2
+ 177 007a 0023     		movs	r3, #0
+ 178 007c 0393     		str	r3, [sp, #12]
+ 179 007e 0023     		movs	r3, #0
+ 180 0080 0293     		str	r3, [sp, #8]
+ 181 0082 0023     		movs	r3, #0
+ 182 0084 0193     		str	r3, [sp, #4]
+ 183 0086 0323     		movs	r3, #3
+ 184 0088 0093     		str	r3, [sp]
+ 185 008a 0023     		movs	r3, #0
+ 186 008c 4FF47A72 		mov	r2, #1000
+ 187 0090 3649     		ldr	r1, .L5+60
+ 188 0092 3748     		ldr	r0, .L5+64
+ 189 0094 344C     		ldr	r4, .L5+56
+ 190 0096 A047     		blx	r4
+ 191              	.LVL9:
+  79:main.c        **** 			vRs485Task_STACK_SIZE, NULL, vRs485Task_PRIORITY,
+  80:main.c        **** 			(xTaskHandle* ) NULL);
+  81:main.c        **** 
+  82:main.c        **** 	xTaskCreate(vReletestTask, (const signed portCHAR * const ) "Reletest",
+ 192              		.loc 1 82 2
+ 193 0098 0023     		movs	r3, #0
+ 194 009a 0393     		str	r3, [sp, #12]
+ 195 009c 0023     		movs	r3, #0
+ 196 009e 0293     		str	r3, [sp, #8]
+ 197 00a0 0023     		movs	r3, #0
+ 198 00a2 0193     		str	r3, [sp, #4]
+ 199 00a4 0523     		movs	r3, #5
+ 200 00a6 0093     		str	r3, [sp]
+ 201 00a8 0023     		movs	r3, #0
+ 202 00aa C822     		movs	r2, #200
+ 203 00ac 3149     		ldr	r1, .L5+68
+ 204 00ae 3248     		ldr	r0, .L5+72
+ 205 00b0 2D4C     		ldr	r4, .L5+56
+ 206 00b2 A047     		blx	r4
+ 207              	.LVL10:
+  83:main.c        **** 			vReletestTask_STACK_SIZE, NULL, vReletestTask_PRIORITY,
+  84:main.c        **** 			(xTaskHandle* ) NULL);
+  85:main.c        **** 
+  86:main.c        **** 	xTaskCreate(vUSBTask, (const signed portCHAR * const ) "USB",
+ 208              		.loc 1 86 2
+ 209 00b4 0023     		movs	r3, #0
+ 210 00b6 0393     		str	r3, [sp, #12]
+ 211 00b8 0023     		movs	r3, #0
+ 212 00ba 0293     		str	r3, [sp, #8]
+ 213 00bc 0023     		movs	r3, #0
+ 214 00be 0193     		str	r3, [sp, #4]
+ 215 00c0 0123     		movs	r3, #1
+ 216 00c2 0093     		str	r3, [sp]
+ 217 00c4 0023     		movs	r3, #0
+ 218 00c6 4FF47A72 		mov	r2, #1000
+ 219 00ca 2C49     		ldr	r1, .L5+76
+ 220 00cc 2C48     		ldr	r0, .L5+80
+ 221 00ce 264C     		ldr	r4, .L5+56
+ 222 00d0 A047     		blx	r4
+ 223              	.LVL11:
+  87:main.c        **** 			vUSBTask_STACK_SIZE, NULL, vUSBTask_PRIORITY, (xTaskHandle* ) NULL);
+  88:main.c        **** 
+  89:main.c        **** 	xTaskCreate(vGprsConTask, (const signed portCHAR * const ) "GPRS",
+ 224              		.loc 1 89 2
+ 225 00d2 0023     		movs	r3, #0
+ 226 00d4 0393     		str	r3, [sp, #12]
+ 227 00d6 0023     		movs	r3, #0
+ 228 00d8 0293     		str	r3, [sp, #8]
+ 229 00da 0023     		movs	r3, #0
+ 230 00dc 0193     		str	r3, [sp, #4]
+ 231 00de 0523     		movs	r3, #5
+ 232 00e0 0093     		str	r3, [sp]
+ 233 00e2 0023     		movs	r3, #0
+ 234 00e4 4FF47A72 		mov	r2, #1000
+ 235 00e8 2649     		ldr	r1, .L5+84
+ 236 00ea 2748     		ldr	r0, .L5+88
+ 237 00ec 1E4C     		ldr	r4, .L5+56
+ 238 00ee A047     		blx	r4
+ 239              	.LVL12:
+  90:main.c        **** 			vGprsConTask_STACK_SIZE, NULL, vGprsConTask_PRIORITY,
+  91:main.c        **** 			(xTaskHandle* ) NULL);
+  92:main.c        **** 
+  93:main.c        **** 	xTaskCreate(vLedTask, (const signed portCHAR * const ) "LED",
+ 240              		.loc 1 93 2
+ 241 00f0 0023     		movs	r3, #0
+ 242 00f2 0393     		str	r3, [sp, #12]
+ 243 00f4 0023     		movs	r3, #0
+ 244 00f6 0293     		str	r3, [sp, #8]
+ 245 00f8 0023     		movs	r3, #0
+ 246 00fa 0193     		str	r3, [sp, #4]
+ 247 00fc 0023     		movs	r3, #0
+ 248 00fe 0093     		str	r3, [sp]
+ 249 0100 0023     		movs	r3, #0
+ 250 0102 C822     		movs	r2, #200
+ 251 0104 2149     		ldr	r1, .L5+92
+ 252 0106 2248     		ldr	r0, .L5+96
+ 253 0108 174C     		ldr	r4, .L5+56
+ 254 010a A047     		blx	r4
+ 255              	.LVL13:
+  94:main.c        **** 			vLedTask_STACK_SIZE, NULL, vLedTask_PRIORITY, (xTaskHandle* ) NULL);
+  95:main.c        **** 
+  96:main.c        **** 	xTaskCreate(vClockTask, (const signed portCHAR * const ) "CLOCK",
+ 256              		.loc 1 96 2
+ 257 010c 0023     		movs	r3, #0
+ 258 010e 0393     		str	r3, [sp, #12]
+ 259 0110 0023     		movs	r3, #0
+ 260 0112 0293     		str	r3, [sp, #8]
+ 261 0114 0023     		movs	r3, #0
+ 262 0116 0193     		str	r3, [sp, #4]
+ 263 0118 0223     		movs	r3, #2
+ 264 011a 0093     		str	r3, [sp]
+ 265 011c 0023     		movs	r3, #0
+ 266 011e C822     		movs	r2, #200
+ 267 0120 1C49     		ldr	r1, .L5+100
+ 268 0122 1D48     		ldr	r0, .L5+104
+ 269 0124 104C     		ldr	r4, .L5+56
+ 270 0126 A047     		blx	r4
+ 271              	.LVL14:
+  97:main.c        **** 			vClockTask_STACK_SIZE, NULL, vClockTask_PRIORITY,
+  98:main.c        **** 			(xTaskHandle* ) NULL);
+  99:main.c        **** 
+ 100:main.c        **** 	//Start the scheduler.
+ 101:main.c        **** 	vTaskStartScheduler();
+ 272              		.loc 1 101 2
+ 273 0128 1C4B     		ldr	r3, .L5+108
+ 274 012a 9847     		blx	r3
+ 275              	.LVL15:
+ 276              	.L4:
+ 102:main.c        **** 
+ 103:main.c        **** 	while (1) {
+ 277              		.loc 1 103 8 discriminator 1
+ 278 012c FEE7     		b	.L4
+ 279              	.L6:
+ 280 012e 00BF     		.align	2
+ 281              	.L5:
+ 282 0130 00000000 		.word	manualwork
+ 283 0134 D0FF0FE0 		.word	-535822384
+ 284 0138 00000000 		.word	initMK
+ 285 013c 00000000 		.word	GPIO_Configuration
+ 286 0140 00000000 		.word	hwInit
+ 287 0144 00000000 		.word	MemInit
+ 288 0148 00000000 		.word	RCC_APB1PeriphClockCmd
+ 289 014c 00000000 		.word	PWR_BackupAccessCmd
+ 290 0150 00000000 		.word	BKP_ReadBackupRegister
+ 291 0154 00000000 		.word	T1
+ 292 0158 00000000 		.word	BKP_WriteBackupRegister
+ 293 015c 00000000 		.word	IWD_Start
+ 294 0160 00000000 		.word	.LC0
+ 295 0164 00000000 		.word	vLogicaTask
+ 296 0168 00000000 		.word	xTaskGenericCreate
+ 297 016c 08000000 		.word	.LC1
+ 298 0170 00000000 		.word	vRs485Task
+ 299 0174 10000000 		.word	.LC2
+ 300 0178 00000000 		.word	vReletestTask
+ 301 017c 1C000000 		.word	.LC3
+ 302 0180 00000000 		.word	vUSBTask
+ 303 0184 20000000 		.word	.LC4
+ 304 0188 00000000 		.word	vGprsConTask
+ 305 018c 28000000 		.word	.LC5
+ 306 0190 00000000 		.word	vLedTask
+ 307 0194 2C000000 		.word	.LC6
+ 308 0198 00000000 		.word	vClockTask
+ 309 019c 00000000 		.word	vTaskStartScheduler
+ 310              		.cfi_endproc
+ 311              	.LFE27:
+ 313              		.section	.text.vApplicationIdleHook,"ax",%progbits
+ 314              		.align	1
+ 315              		.global	vApplicationIdleHook
+ 316              		.syntax unified
+ 317              		.thumb
+ 318              		.thumb_func
+ 320              	vApplicationIdleHook:
+ 321              	.LFB28:
+ 104:main.c        **** 
+ 105:main.c        **** 	};
+ 106:main.c        **** 
+ 107:main.c        **** 	return 0;
+ 108:main.c        **** }
+ 109:main.c        **** 
+ 110:main.c        **** void vApplicationIdleHook(void) {
+ 322              		.loc 1 110 33
+ 323              		.cfi_startproc
+ 324              		@ args = 0, pretend = 0, frame = 0
+ 325              		@ frame_needed = 1, uses_anonymous_args = 0
+ 326              		@ link register save eliminated.
+ 327 0000 80B4     		push	{r7}
+ 328              	.LCFI3:
+ 329              		.cfi_def_cfa_offset 4
+ 330              		.cfi_offset 7, -4
+ 331 0002 00AF     		add	r7, sp, #0
+ 332              	.LCFI4:
+ 333              		.cfi_def_cfa_register 7
+ 111:main.c        **** 
+ 112:main.c        **** }
+ 334              		.loc 1 112 1
+ 335 0004 00BF     		nop
+ 336 0006 BD46     		mov	sp, r7
+ 337              	.LCFI5:
+ 338              		.cfi_def_cfa_register 13
+ 339              		@ sp needed
+ 340 0008 80BC     		pop	{r7}
+ 341              	.LCFI6:
+ 342              		.cfi_restore 7
+ 343              		.cfi_def_cfa_offset 0
+ 344 000a 7047     		bx	lr
+ 345              		.cfi_endproc
+ 346              	.LFE28:
+ 348              		.section	.text.vApplicationTickHook,"ax",%progbits
+ 349              		.align	1
+ 350              		.global	vApplicationTickHook
+ 351              		.syntax unified
+ 352              		.thumb
+ 353              		.thumb_func
+ 355              	vApplicationTickHook:
+ 356              	.LFB29:
+ 113:main.c        **** 
+ 114:main.c        **** void vApplicationTickHook(void) {
+ 357              		.loc 1 114 33
+ 358              		.cfi_startproc
+ 359              		@ args = 0, pretend = 0, frame = 0
+ 360              		@ frame_needed = 1, uses_anonymous_args = 0
+ 361 0000 80B5     		push	{r7, lr}
+ 362              	.LCFI7:
+ 363              		.cfi_def_cfa_offset 8
+ 364              		.cfi_offset 7, -8
+ 365              		.cfi_offset 14, -4
+ 366 0002 00AF     		add	r7, sp, #0
+ 367              	.LCFI8:
+ 368              		.cfi_def_cfa_register 7
+ 115:main.c        **** 	counttick++;
+ 369              		.loc 1 115 11
+ 370 0004 054B     		ldr	r3, .L9
+ 371 0006 1B68     		ldr	r3, [r3]
+ 372 0008 0133     		adds	r3, r3, #1
+ 373 000a 044A     		ldr	r2, .L9
+ 374 000c 1360     		str	r3, [r2]
+ 116:main.c        **** 	GprsIdleIncMSec();
+ 375              		.loc 1 116 2
+ 376 000e 044B     		ldr	r3, .L9+4
+ 377 0010 9847     		blx	r3
+ 378              	.LVL16:
+ 117:main.c        **** 	atcIncrementCounter();
+ 379              		.loc 1 117 2
+ 380 0012 044B     		ldr	r3, .L9+8
+ 381 0014 9847     		blx	r3
+ 382              	.LVL17:
+ 118:main.c        **** }
+ 383              		.loc 1 118 1
+ 384 0016 00BF     		nop
+ 385 0018 80BD     		pop	{r7, pc}
+ 386              	.L10:
+ 387 001a 00BF     		.align	2
+ 388              	.L9:
+ 389 001c 00000000 		.word	counttick
+ 390 0020 00000000 		.word	GprsIdleIncMSec
+ 391 0024 00000000 		.word	atcIncrementCounter
+ 392              		.cfi_endproc
+ 393              	.LFE29:
+ 395              		.section	.text.vApplicationStackOverflowHook,"ax",%progbits
+ 396              		.align	1
+ 397              		.global	vApplicationStackOverflowHook
+ 398              		.syntax unified
+ 399              		.thumb
+ 400              		.thumb_func
+ 402              	vApplicationStackOverflowHook:
+ 403              	.LFB30:
+ 119:main.c        **** 
+ 120:main.c        **** void vApplicationStackOverflowHook(xTaskHandle *pxTask,
+ 121:main.c        **** 		signed portCHAR *pcTaskName) {
+ 404              		.loc 1 121 32
+ 405              		.cfi_startproc
+ 406              		@ args = 0, pretend = 0, frame = 8
+ 407              		@ frame_needed = 1, uses_anonymous_args = 0
+ 408 0000 80B5     		push	{r7, lr}
+ 409              	.LCFI9:
+ 410              		.cfi_def_cfa_offset 8
+ 411              		.cfi_offset 7, -8
+ 412              		.cfi_offset 14, -4
+ 413 0002 82B0     		sub	sp, sp, #8
+ 414              	.LCFI10:
+ 415              		.cfi_def_cfa_offset 16
+ 416 0004 00AF     		add	r7, sp, #0
+ 417              	.LCFI11:
+ 418              		.cfi_def_cfa_register 7
+ 419 0006 7860     		str	r0, [r7, #4]
+ 420 0008 3960     		str	r1, [r7]
+ 122:main.c        **** 	BKP_WriteBackupRegister(BKP_DR7, 1);
+ 421              		.loc 1 122 2
+ 422 000a 0121     		movs	r1, #1
+ 423 000c 1C20     		movs	r0, #28
+ 424 000e 014B     		ldr	r3, .L13
+ 425 0010 9847     		blx	r3
+ 426              	.LVL18:
+ 427              	.L12:
+ 123:main.c        **** 	while (1)
+ 428              		.loc 1 123 8 discriminator 1
+ 429 0012 FEE7     		b	.L12
+ 430              	.L14:
+ 431              		.align	2
+ 432              	.L13:
+ 433 0014 00000000 		.word	BKP_WriteBackupRegister
+ 434              		.cfi_endproc
+ 435              	.LFE30:
+ 437              		.section	.text.GPIO_Configuration,"ax",%progbits
+ 438              		.align	1
+ 439              		.global	GPIO_Configuration
+ 440              		.syntax unified
+ 441              		.thumb
+ 442              		.thumb_func
+ 444              	GPIO_Configuration:
+ 445              	.LFB31:
+ 124:main.c        **** 		;
+ 125:main.c        **** }
+ 126:main.c        **** 
+ 127:main.c        **** void GPIO_Configuration(void) {
+ 446              		.loc 1 127 31
+ 447              		.cfi_startproc
+ 448              		@ args = 0, pretend = 0, frame = 8
+ 449              		@ frame_needed = 1, uses_anonymous_args = 0
+ 450 0000 80B5     		push	{r7, lr}
+ 451              	.LCFI12:
+ 452              		.cfi_def_cfa_offset 8
+ 453              		.cfi_offset 7, -8
+ 454              		.cfi_offset 14, -4
+ 455 0002 82B0     		sub	sp, sp, #8
+ 456              	.LCFI13:
+ 457              		.cfi_def_cfa_offset 16
+ 458 0004 00AF     		add	r7, sp, #0
+ 459              	.LCFI14:
+ 460              		.cfi_def_cfa_register 7
+ 128:main.c        **** 
+ 129:main.c        **** 	GPIO_InitTypeDef GPIO_InitStructure;
+ 130:main.c        **** 	/* Enable GPIOA clock */
+ 131:main.c        **** 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+ 461              		.loc 1 131 2
+ 462 0006 0121     		movs	r1, #1
+ 463 0008 0420     		movs	r0, #4
+ 464 000a 4B4B     		ldr	r3, .L16
+ 465 000c 9847     		blx	r3
+ 466              	.LVL19:
+ 132:main.c        **** 	/* Enable GPIOC clock */
+ 133:main.c        **** 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
+ 467              		.loc 1 133 2
+ 468 000e 0121     		movs	r1, #1
+ 469 0010 1020     		movs	r0, #16
+ 470 0012 494B     		ldr	r3, .L16
+ 471 0014 9847     		blx	r3
+ 472              	.LVL20:
+ 134:main.c        **** 	/* Enable GPIOB clock */
+ 135:main.c        **** 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
+ 473              		.loc 1 135 2
+ 474 0016 0121     		movs	r1, #1
+ 475 0018 0820     		movs	r0, #8
+ 476 001a 474B     		ldr	r3, .L16
+ 477 001c 9847     		blx	r3
+ 478              	.LVL21:
+ 136:main.c        **** 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+ 479              		.loc 1 136 2
+ 480 001e 0121     		movs	r1, #1
+ 481 0020 0120     		movs	r0, #1
+ 482 0022 454B     		ldr	r3, .L16
+ 483 0024 9847     		blx	r3
+ 484              	.LVL22:
+ 137:main.c        **** 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1, ENABLE);
+ 485              		.loc 1 137 2
+ 486 0026 0121     		movs	r1, #1
+ 487 0028 4FF40010 		mov	r0, #2097152
+ 488 002c 434B     		ldr	r3, .L16+4
+ 489 002e 9847     		blx	r3
+ 490              	.LVL23:
+ 138:main.c        **** 	GPIO_PinRemapConfig(GPIO_Remap_I2C1,ENABLE);
+ 491              		.loc 1 138 2
+ 492 0030 0121     		movs	r1, #1
+ 493 0032 0220     		movs	r0, #2
+ 494 0034 424B     		ldr	r3, .L16+8
+ 495 0036 9847     		blx	r3
+ 496              	.LVL24:
+ 139:main.c        **** 	/* Configure I2C1 pins: SCL and SDA ----------------------------------------*/
+ 140:main.c        **** 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_9;
+ 497              		.loc 1 140 30
+ 498 0038 4FF44073 		mov	r3, #768
+ 499 003c BB80     		strh	r3, [r7, #4]	@ movhi
+ 141:main.c        **** 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+ 500              		.loc 1 141 32
+ 501 003e 0323     		movs	r3, #3
+ 502 0040 BB71     		strb	r3, [r7, #6]
+ 142:main.c        **** 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_OD;
+ 503              		.loc 1 142 31
+ 504 0042 1C23     		movs	r3, #28
+ 505 0044 FB71     		strb	r3, [r7, #7]
+ 143:main.c        **** 	GPIO_Init(GPIOB, &GPIO_InitStructure);
+ 506              		.loc 1 143 2
+ 507 0046 3B1D     		adds	r3, r7, #4
+ 508 0048 1946     		mov	r1, r3
+ 509 004a 3E48     		ldr	r0, .L16+12
+ 510 004c 3E4B     		ldr	r3, .L16+16
+ 511 004e 9847     		blx	r3
+ 512              	.LVL25:
+ 144:main.c        **** 
+ 145:main.c        **** 	//===================== RS232 =========================
+ 146:main.c        **** 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
+ 513              		.loc 1 146 30
+ 514 0050 0123     		movs	r3, #1
+ 515 0052 BB80     		strh	r3, [r7, #4]	@ movhi
+ 147:main.c        **** 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
+ 516              		.loc 1 147 32
+ 517 0054 0123     		movs	r3, #1
+ 518 0056 BB71     		strb	r3, [r7, #6]
+ 148:main.c        **** 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+ 519              		.loc 1 148 31
+ 520 0058 1023     		movs	r3, #16
+ 521 005a FB71     		strb	r3, [r7, #7]
+ 149:main.c        **** 	GPIO_Init(GPIOB, &GPIO_InitStructure);
+ 522              		.loc 1 149 2
+ 523 005c 3B1D     		adds	r3, r7, #4
+ 524 005e 1946     		mov	r1, r3
+ 525 0060 3848     		ldr	r0, .L16+12
+ 526 0062 394B     		ldr	r3, .L16+16
+ 527 0064 9847     		blx	r3
+ 528              	.LVL26:
+ 150:main.c        **** 
+ 151:main.c        **** 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;
+ 529              		.loc 1 151 30
+ 530 0066 4FF40053 		mov	r3, #8192
+ 531 006a BB80     		strh	r3, [r7, #4]	@ movhi
+ 152:main.c        **** 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
+ 532              		.loc 1 152 32
+ 533 006c 0123     		movs	r3, #1
+ 534 006e BB71     		strb	r3, [r7, #6]
+ 153:main.c        **** 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+ 535              		.loc 1 153 31
+ 536 0070 1023     		movs	r3, #16
+ 537 0072 FB71     		strb	r3, [r7, #7]
+ 154:main.c        **** 	GPIO_Init(GPIOB, &GPIO_InitStructure);
+ 538              		.loc 1 154 2
+ 539 0074 3B1D     		adds	r3, r7, #4
+ 540 0076 1946     		mov	r1, r3
+ 541 0078 3248     		ldr	r0, .L16+12
+ 542 007a 334B     		ldr	r3, .L16+16
+ 543 007c 9847     		blx	r3
+ 544              	.LVL27:
+ 155:main.c        **** 
+ 156:main.c        **** 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;
+ 545              		.loc 1 156 30
+ 546 007e 4FF48053 		mov	r3, #4096
+ 547 0082 BB80     		strh	r3, [r7, #4]	@ movhi
+ 157:main.c        **** 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+ 548              		.loc 1 157 32
+ 549 0084 0323     		movs	r3, #3
+ 550 0086 BB71     		strb	r3, [r7, #6]
+ 158:main.c        **** 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+ 551              		.loc 1 158 31
+ 552 0088 1023     		movs	r3, #16
+ 553 008a FB71     		strb	r3, [r7, #7]
+ 159:main.c        **** 	GPIO_Init(GPIOC, &GPIO_InitStructure);
+ 554              		.loc 1 159 2
+ 555 008c 3B1D     		adds	r3, r7, #4
+ 556 008e 1946     		mov	r1, r3
+ 557 0090 2E48     		ldr	r0, .L16+20
+ 558 0092 2D4B     		ldr	r3, .L16+16
+ 559 0094 9847     		blx	r3
+ 560              	.LVL28:
+ 160:main.c        **** 
+ 161:main.c        **** 	//===================== End of RS232 =========================
+ 162:main.c        **** 	/* Relays and Led */
+ 163:main.c        **** 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_6
+ 561              		.loc 1 163 30
+ 562 0096 F023     		movs	r3, #240
+ 563 0098 BB80     		strh	r3, [r7, #4]	@ movhi
+ 164:main.c        **** 			| GPIO_Pin_7;
+ 165:main.c        **** 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
+ 564              		.loc 1 165 32
+ 565 009a 0123     		movs	r3, #1
+ 566 009c BB71     		strb	r3, [r7, #6]
+ 166:main.c        **** 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+ 567              		.loc 1 166 31
+ 568 009e 1023     		movs	r3, #16
+ 569 00a0 FB71     		strb	r3, [r7, #7]
+ 167:main.c        **** 	GPIO_Init(GPIOA, &GPIO_InitStructure);
+ 570              		.loc 1 167 2
+ 571 00a2 3B1D     		adds	r3, r7, #4
+ 572 00a4 1946     		mov	r1, r3
+ 573 00a6 2A48     		ldr	r0, .L16+24
+ 574 00a8 274B     		ldr	r3, .L16+16
+ 575 00aa 9847     		blx	r3
+ 576              	.LVL29:
+ 168:main.c        **** 
+ 169:main.c        **** 	//DS1
+ 170:main.c        **** 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;
+ 577              		.loc 1 170 30
+ 578 00ac 4FF48063 		mov	r3, #1024
+ 579 00b0 BB80     		strh	r3, [r7, #4]	@ movhi
+ 171:main.c        **** 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
+ 580              		.loc 1 171 32
+ 581 00b2 0123     		movs	r3, #1
+ 582 00b4 BB71     		strb	r3, [r7, #6]
+ 172:main.c        **** 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+ 583              		.loc 1 172 31
+ 584 00b6 4823     		movs	r3, #72
+ 585 00b8 FB71     		strb	r3, [r7, #7]
+ 173:main.c        **** 	GPIO_Init(GPIOA, &GPIO_InitStructure);
+ 586              		.loc 1 173 2
+ 587 00ba 3B1D     		adds	r3, r7, #4
+ 588 00bc 1946     		mov	r1, r3
+ 589 00be 2448     		ldr	r0, .L16+24
+ 590 00c0 214B     		ldr	r3, .L16+16
+ 591 00c2 9847     		blx	r3
+ 592              	.LVL30:
+ 174:main.c        **** 
+ 175:main.c        **** 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
+ 593              		.loc 1 175 30
+ 594 00c4 0423     		movs	r3, #4
+ 595 00c6 BB80     		strh	r3, [r7, #4]	@ movhi
+ 176:main.c        **** 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
+ 596              		.loc 1 176 32
+ 597 00c8 0123     		movs	r3, #1
+ 598 00ca BB71     		strb	r3, [r7, #6]
+ 177:main.c        **** 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD;
+ 599              		.loc 1 177 31
+ 600 00cc 1423     		movs	r3, #20
+ 601 00ce FB71     		strb	r3, [r7, #7]
+ 178:main.c        **** 	GPIO_Init(GPIOC, &GPIO_InitStructure);
+ 602              		.loc 1 178 2
+ 603 00d0 3B1D     		adds	r3, r7, #4
+ 604 00d2 1946     		mov	r1, r3
+ 605 00d4 1D48     		ldr	r0, .L16+20
+ 606 00d6 1C4B     		ldr	r3, .L16+16
+ 607 00d8 9847     		blx	r3
+ 608              	.LVL31:
+ 179:main.c        **** 
+ 180:main.c        **** 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
+ 609              		.loc 1 180 30
+ 610 00da 0823     		movs	r3, #8
+ 611 00dc BB80     		strh	r3, [r7, #4]	@ movhi
+ 181:main.c        **** 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
+ 612              		.loc 1 181 32
+ 613 00de 0123     		movs	r3, #1
+ 614 00e0 BB71     		strb	r3, [r7, #6]
+ 182:main.c        **** 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD;
+ 615              		.loc 1 182 31
+ 616 00e2 1423     		movs	r3, #20
+ 617 00e4 FB71     		strb	r3, [r7, #7]
+ 183:main.c        **** 	GPIO_Init(GPIOC, &GPIO_InitStructure);
+ 618              		.loc 1 183 2
+ 619 00e6 3B1D     		adds	r3, r7, #4
+ 620 00e8 1946     		mov	r1, r3
+ 621 00ea 1848     		ldr	r0, .L16+20
+ 622 00ec 164B     		ldr	r3, .L16+16
+ 623 00ee 9847     		blx	r3
+ 624              	.LVL32:
+ 184:main.c        **** 
+ 185:main.c        **** 	//DS4 DS5 DS6 DS7
+ 186:main.c        **** 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9 | GPIO_Pin_8 | GPIO_Pin_7
+ 625              		.loc 1 186 30
+ 626 00f0 4FF47C73 		mov	r3, #1008
+ 627 00f4 BB80     		strh	r3, [r7, #4]	@ movhi
+ 187:main.c        **** 			| GPIO_Pin_6 | GPIO_Pin_4 | GPIO_Pin_5;
+ 188:main.c        **** 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
+ 628              		.loc 1 188 32
+ 629 00f6 0123     		movs	r3, #1
+ 630 00f8 BB71     		strb	r3, [r7, #6]
+ 189:main.c        **** 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+ 631              		.loc 1 189 31
+ 632 00fa 4823     		movs	r3, #72
+ 633 00fc FB71     		strb	r3, [r7, #7]
+ 190:main.c        **** 	GPIO_Init(GPIOC, &GPIO_InitStructure);
+ 634              		.loc 1 190 2
+ 635 00fe 3B1D     		adds	r3, r7, #4
+ 636 0100 1946     		mov	r1, r3
+ 637 0102 1248     		ldr	r0, .L16+20
+ 638 0104 104B     		ldr	r3, .L16+16
+ 639 0106 9847     		blx	r3
+ 640              	.LVL33:
+ 191:main.c        **** 
+ 192:main.c        **** 	//DS8 DS9 DS10 DS11
+ 193:main.c        **** 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_15 | GPIO_Pin_12 | GPIO_Pin_2
+ 641              		.loc 1 193 30
+ 642 0108 49F20603 		movw	r3, #36870
+ 643 010c BB80     		strh	r3, [r7, #4]	@ movhi
+ 194:main.c        **** 			| GPIO_Pin_1;
+ 195:main.c        **** 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
+ 644              		.loc 1 195 32
+ 645 010e 0123     		movs	r3, #1
+ 646 0110 BB71     		strb	r3, [r7, #6]
+ 196:main.c        **** 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+ 647              		.loc 1 196 31
+ 648 0112 4823     		movs	r3, #72
+ 649 0114 FB71     		strb	r3, [r7, #7]
+ 197:main.c        **** 	GPIO_Init(GPIOB, &GPIO_InitStructure);
+ 650              		.loc 1 197 2
+ 651 0116 3B1D     		adds	r3, r7, #4
+ 652 0118 1946     		mov	r1, r3
+ 653 011a 0A48     		ldr	r0, .L16+12
+ 654 011c 0A4B     		ldr	r3, .L16+16
+ 655 011e 9847     		blx	r3
+ 656              	.LVL34:
+ 198:main.c        **** 
+ 199:main.c        **** 	GPIO_SetBits(GPIOC, GPIO_Pin_2);
+ 657              		.loc 1 199 2
+ 658 0120 0421     		movs	r1, #4
+ 659 0122 0A48     		ldr	r0, .L16+20
+ 660 0124 0B4B     		ldr	r3, .L16+28
+ 661 0126 9847     		blx	r3
+ 662              	.LVL35:
+ 200:main.c        **** 	GPIO_SetBits(GPIOC, GPIO_Pin_3);
+ 663              		.loc 1 200 2
+ 664 0128 0821     		movs	r1, #8
+ 665 012a 0848     		ldr	r0, .L16+20
+ 666 012c 094B     		ldr	r3, .L16+28
+ 667 012e 9847     		blx	r3
+ 668              	.LVL36:
+ 201:main.c        **** 
+ 202:main.c        **** }
+ 669              		.loc 1 202 1
+ 670 0130 00BF     		nop
+ 671 0132 0837     		adds	r7, r7, #8
+ 672              	.LCFI15:
+ 673              		.cfi_def_cfa_offset 8
+ 674 0134 BD46     		mov	sp, r7
+ 675              	.LCFI16:
+ 676              		.cfi_def_cfa_register 13
+ 677              		@ sp needed
+ 678 0136 80BD     		pop	{r7, pc}
+ 679              	.L17:
+ 680              		.align	2
+ 681              	.L16:
+ 682 0138 00000000 		.word	RCC_APB2PeriphClockCmd
+ 683 013c 00000000 		.word	RCC_APB1PeriphClockCmd
+ 684 0140 00000000 		.word	GPIO_PinRemapConfig
+ 685 0144 000C0140 		.word	1073810432
+ 686 0148 00000000 		.word	GPIO_Init
+ 687 014c 00100140 		.word	1073811456
+ 688 0150 00080140 		.word	1073809408
+ 689 0154 00000000 		.word	GPIO_SetBits
+ 690              		.cfi_endproc
+ 691              	.LFE31:
+ 693              		.section	.text.IWD_Start,"ax",%progbits
+ 694              		.align	1
+ 695              		.global	IWD_Start
+ 696              		.syntax unified
+ 697              		.thumb
+ 698              		.thumb_func
+ 700              	IWD_Start:
+ 701              	.LFB32:
+ 203:main.c        **** 
+ 204:main.c        **** void IWD_Start(void) {
+ 702              		.loc 1 204 22
+ 703              		.cfi_startproc
+ 704              		@ args = 0, pretend = 0, frame = 0
+ 705              		@ frame_needed = 1, uses_anonymous_args = 0
+ 706 0000 80B5     		push	{r7, lr}
+ 707              	.LCFI17:
+ 708              		.cfi_def_cfa_offset 8
+ 709              		.cfi_offset 7, -8
+ 710              		.cfi_offset 14, -4
+ 711 0002 00AF     		add	r7, sp, #0
+ 712              	.LCFI18:
+ 713              		.cfi_def_cfa_register 7
+ 205:main.c        **** // разрешаем доступ к регистам IWDG
+ 206:main.c        **** 	IWDG_WriteAccessCmd(IWDG_WriteAccess_Enable);
+ 714              		.loc 1 206 2
+ 715 0004 45F25550 		movw	r0, #21845
+ 716 0008 074B     		ldr	r3, .L19
+ 717 000a 9847     		blx	r3
+ 718              	.LVL37:
+ 207:main.c        **** // устанавливаем предделитель тактировани€ вач дога
+ 208:main.c        **** 	IWDG_SetPrescaler(IWDG_Prescaler_256);
+ 719              		.loc 1 208 2
+ 720 000c 0620     		movs	r0, #6
+ 721 000e 074B     		ldr	r3, .L19+4
+ 722 0010 9847     		blx	r3
+ 723              	.LVL38:
+ 209:main.c        **** // устанавливаем "до куда считать"
+ 210:main.c        **** 	IWDG_SetReload(0x0fff);
+ 724              		.loc 1 210 2
+ 725 0012 40F6FF70 		movw	r0, #4095
+ 726 0016 064B     		ldr	r3, .L19+8
+ 727 0018 9847     		blx	r3
+ 728              	.LVL39:
+ 211:main.c        **** // перезагружаем IWDG
+ 212:main.c        **** 	IWDG_ReloadCounter();
+ 729              		.loc 1 212 2
+ 730 001a 064B     		ldr	r3, .L19+12
+ 731 001c 9847     		blx	r3
+ 732              	.LVL40:
+ 213:main.c        **** // запускаем IWDG
+ 214:main.c        **** 	IWDG_Enable();
+ 733              		.loc 1 214 2
+ 734 001e 064B     		ldr	r3, .L19+16
+ 735 0020 9847     		blx	r3
+ 736              	.LVL41:
+ 215:main.c        **** }
+ 737              		.loc 1 215 1
+ 738 0022 00BF     		nop
+ 739 0024 80BD     		pop	{r7, pc}
+ 740              	.L20:
+ 741 0026 00BF     		.align	2
+ 742              	.L19:
+ 743 0028 00000000 		.word	IWDG_WriteAccessCmd
+ 744 002c 00000000 		.word	IWDG_SetPrescaler
+ 745 0030 00000000 		.word	IWDG_SetReload
+ 746 0034 00000000 		.word	IWDG_ReloadCounter
+ 747 0038 00000000 		.word	IWDG_Enable
+ 748              		.cfi_endproc
+ 749              	.LFE32:
+ 751              		.text
+ 752              	.Letext0:
+ 753              		.file 2 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 754              		.file 3 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 755              		.file 4 "common/lib.stm32/CMSIS/Core/CM3/stm32f10x.h"
+ 756              		.file 5 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_gpio.h"
+ 757              		.file 6 "board.h"
+ 758              		.file 7 "common/rtos/include/task.h"
+ 759              		.file 8 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_iwdg.h"
+ 760              		.file 9 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_rcc.h"
+ 761              		.file 10 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_bkp.h"
+ 762              		.file 11 "common/lib.stm32/hwinit.h"
+ 763              		.file 12 "./src/usermemory.h"
+ 764              		.file 13 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_pwr.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 main.c
+C:\Users\Admin\AppData\Local\Temp\ccc2VuMd.s:22     .bss.CountAnswer:00000000 CountAnswer
+C:\Users\Admin\AppData\Local\Temp\ccc2VuMd.s:19     .bss.CountAnswer:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\ccc2VuMd.s:29     .bss.initMK:00000000 initMK
+C:\Users\Admin\AppData\Local\Temp\ccc2VuMd.s:26     .bss.initMK:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\ccc2VuMd.s:36     .bss.T1:00000000 T1
+C:\Users\Admin\AppData\Local\Temp\ccc2VuMd.s:33     .bss.T1:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\ccc2VuMd.s:43     .bss.counttick:00000000 counttick
+C:\Users\Admin\AppData\Local\Temp\ccc2VuMd.s:40     .bss.counttick:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\ccc2VuMd.s:46     .rodata:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\ccc2VuMd.s:68     .text.main:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccc2VuMd.s:74     .text.main:00000000 main
+C:\Users\Admin\AppData\Local\Temp\ccc2VuMd.s:282    .text.main:00000130 $d
+C:\Users\Admin\AppData\Local\Temp\ccc2VuMd.s:444    .text.GPIO_Configuration:00000000 GPIO_Configuration
+C:\Users\Admin\AppData\Local\Temp\ccc2VuMd.s:700    .text.IWD_Start:00000000 IWD_Start
+C:\Users\Admin\AppData\Local\Temp\ccc2VuMd.s:314    .text.vApplicationIdleHook:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccc2VuMd.s:320    .text.vApplicationIdleHook:00000000 vApplicationIdleHook
+C:\Users\Admin\AppData\Local\Temp\ccc2VuMd.s:349    .text.vApplicationTickHook:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccc2VuMd.s:355    .text.vApplicationTickHook:00000000 vApplicationTickHook
+C:\Users\Admin\AppData\Local\Temp\ccc2VuMd.s:389    .text.vApplicationTickHook:0000001c $d
+C:\Users\Admin\AppData\Local\Temp\ccc2VuMd.s:396    .text.vApplicationStackOverflowHook:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccc2VuMd.s:402    .text.vApplicationStackOverflowHook:00000000 vApplicationStackOverflowHook
+C:\Users\Admin\AppData\Local\Temp\ccc2VuMd.s:433    .text.vApplicationStackOverflowHook:00000014 $d
+C:\Users\Admin\AppData\Local\Temp\ccc2VuMd.s:438    .text.GPIO_Configuration:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccc2VuMd.s:682    .text.GPIO_Configuration:00000138 $d
+C:\Users\Admin\AppData\Local\Temp\ccc2VuMd.s:694    .text.IWD_Start:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccc2VuMd.s:743    .text.IWD_Start:00000028 $d
+
+UNDEFINED SYMBOLS
+manualwork
+hwInit
+MemInit
+RCC_APB1PeriphClockCmd
+PWR_BackupAccessCmd
+BKP_ReadBackupRegister
+BKP_WriteBackupRegister
+vLogicaTask
+xTaskGenericCreate
+vRs485Task
+vReletestTask
+vUSBTask
+vGprsConTask
+vLedTask
+vClockTask
+vTaskStartScheduler
+GprsIdleIncMSec
+atcIncrementCounter
+RCC_APB2PeriphClockCmd
+GPIO_PinRemapConfig
+GPIO_Init
+GPIO_SetBits
+IWDG_WriteAccessCmd
+IWDG_SetPrescaler
+IWDG_SetReload
+IWDG_ReloadCounter
+IWDG_Enable

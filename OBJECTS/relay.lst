@@ -1,0 +1,367 @@
+   1              		.cpu cortex-m3
+   2              		.arch armv7-m
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"relay.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.global	Relay
+  18              		.section	.bss.Relay,"aw",%nobits
+  19              		.align	2
+  22              	Relay:
+  23 0000 000000   		.space	3
+  24              		.section	.text.ReleysReset,"ax",%progbits
+  25              		.align	1
+  26              		.global	ReleysReset
+  27              		.syntax unified
+  28              		.thumb
+  29              		.thumb_func
+  31              	ReleysReset:
+  32              	.LFB27:
+  33              		.file 1 "src/relay.c"
+   1:src/relay.c   **** // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿
+   2:src/relay.c   **** #include "relay.h"
+   3:src/relay.c   **** #include "usermemory.h"
+   4:src/relay.c   **** 
+   5:src/relay.c   **** 
+   6:src/relay.c   **** RELAY Relay[RELAYS_AMOUNT];
+   7:src/relay.c   **** //=================================================================================================
+   8:src/relay.c   **** // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+   9:src/relay.c   **** //=================================================================================================
+  10:src/relay.c   **** void ReleysReset(void)
+  11:src/relay.c   ****   {
+  34              		.loc 1 11 3
+  35              		.cfi_startproc
+  36              		@ args = 0, pretend = 0, frame = 8
+  37              		@ frame_needed = 1, uses_anonymous_args = 0
+  38              		@ link register save eliminated.
+  39 0000 80B4     		push	{r7}
+  40              	.LCFI0:
+  41              		.cfi_def_cfa_offset 4
+  42              		.cfi_offset 7, -4
+  43 0002 83B0     		sub	sp, sp, #12
+  44              	.LCFI1:
+  45              		.cfi_def_cfa_offset 16
+  46 0004 00AF     		add	r7, sp, #0
+  47              	.LCFI2:
+  48              		.cfi_def_cfa_register 7
+  12:src/relay.c   ****     int i = RELAYS_AMOUNT;
+  49              		.loc 1 12 9
+  50 0006 0323     		movs	r3, #3
+  51 0008 7B60     		str	r3, [r7, #4]
+  13:src/relay.c   ****     while (i--)
+  52              		.loc 1 13 11
+  53 000a 04E0     		b	.L2
+  54              	.L3:
+  14:src/relay.c   ****       {
+  15:src/relay.c   ****         Relay[i] = RELAY_STATE_OFF;
+  55              		.loc 1 15 18
+  56 000c 074A     		ldr	r2, .L4
+  57 000e 7B68     		ldr	r3, [r7, #4]
+  58 0010 1344     		add	r3, r3, r2
+  59 0012 0022     		movs	r2, #0
+  60 0014 1A70     		strb	r2, [r3]
+  61              	.L2:
+  13:src/relay.c   ****     while (i--)
+  62              		.loc 1 13 13
+  63 0016 7B68     		ldr	r3, [r7, #4]
+  64 0018 5A1E     		subs	r2, r3, #1
+  65 001a 7A60     		str	r2, [r7, #4]
+  13:src/relay.c   ****     while (i--)
+  66              		.loc 1 13 11
+  67 001c 002B     		cmp	r3, #0
+  68 001e F5D1     		bne	.L3
+  16:src/relay.c   ****       }
+  17:src/relay.c   ****   }
+  69              		.loc 1 17 3
+  70 0020 00BF     		nop
+  71 0022 00BF     		nop
+  72 0024 0C37     		adds	r7, r7, #12
+  73              	.LCFI3:
+  74              		.cfi_def_cfa_offset 4
+  75 0026 BD46     		mov	sp, r7
+  76              	.LCFI4:
+  77              		.cfi_def_cfa_register 13
+  78              		@ sp needed
+  79 0028 80BC     		pop	{r7}
+  80              	.LCFI5:
+  81              		.cfi_restore 7
+  82              		.cfi_def_cfa_offset 0
+  83 002a 7047     		bx	lr
+  84              	.L5:
+  85              		.align	2
+  86              	.L4:
+  87 002c 00000000 		.word	Relay
+  88              		.cfi_endproc
+  89              	.LFE27:
+  91              		.section	.text.RelayGet,"ax",%progbits
+  92              		.align	1
+  93              		.global	RelayGet
+  94              		.syntax unified
+  95              		.thumb
+  96              		.thumb_func
+  98              	RelayGet:
+  99              	.LFB28:
+  18:src/relay.c   **** RELAY RelayGet(uint16 num)
+  19:src/relay.c   ****   {
+ 100              		.loc 1 19 3
+ 101              		.cfi_startproc
+ 102              		@ args = 0, pretend = 0, frame = 8
+ 103              		@ frame_needed = 1, uses_anonymous_args = 0
+ 104              		@ link register save eliminated.
+ 105 0000 80B4     		push	{r7}
+ 106              	.LCFI6:
+ 107              		.cfi_def_cfa_offset 4
+ 108              		.cfi_offset 7, -4
+ 109 0002 83B0     		sub	sp, sp, #12
+ 110              	.LCFI7:
+ 111              		.cfi_def_cfa_offset 16
+ 112 0004 00AF     		add	r7, sp, #0
+ 113              	.LCFI8:
+ 114              		.cfi_def_cfa_register 7
+ 115 0006 0346     		mov	r3, r0
+ 116 0008 FB80     		strh	r3, [r7, #6]	@ movhi
+  20:src/relay.c   ****     return Relay[num];
+ 117              		.loc 1 20 17
+ 118 000a FB88     		ldrh	r3, [r7, #6]
+ 119 000c 034A     		ldr	r2, .L8
+ 120 000e D35C     		ldrb	r3, [r2, r3]	@ zero_extendqisi2
+  21:src/relay.c   ****   }
+ 121              		.loc 1 21 3
+ 122 0010 1846     		mov	r0, r3
+ 123 0012 0C37     		adds	r7, r7, #12
+ 124              	.LCFI9:
+ 125              		.cfi_def_cfa_offset 4
+ 126 0014 BD46     		mov	sp, r7
+ 127              	.LCFI10:
+ 128              		.cfi_def_cfa_register 13
+ 129              		@ sp needed
+ 130 0016 80BC     		pop	{r7}
+ 131              	.LCFI11:
+ 132              		.cfi_restore 7
+ 133              		.cfi_def_cfa_offset 0
+ 134 0018 7047     		bx	lr
+ 135              	.L9:
+ 136 001a 00BF     		.align	2
+ 137              	.L8:
+ 138 001c 00000000 		.word	Relay
+ 139              		.cfi_endproc
+ 140              	.LFE28:
+ 142              		.section	.text.RelaySet,"ax",%progbits
+ 143              		.align	1
+ 144              		.global	RelaySet
+ 145              		.syntax unified
+ 146              		.thumb
+ 147              		.thumb_func
+ 149              	RelaySet:
+ 150              	.LFB29:
+  22:src/relay.c   **** void RelaySet(uint16 num, RELAY vol)
+  23:src/relay.c   ****   {
+ 151              		.loc 1 23 3
+ 152              		.cfi_startproc
+ 153              		@ args = 0, pretend = 0, frame = 8
+ 154              		@ frame_needed = 1, uses_anonymous_args = 0
+ 155              		@ link register save eliminated.
+ 156 0000 80B4     		push	{r7}
+ 157              	.LCFI12:
+ 158              		.cfi_def_cfa_offset 4
+ 159              		.cfi_offset 7, -4
+ 160 0002 83B0     		sub	sp, sp, #12
+ 161              	.LCFI13:
+ 162              		.cfi_def_cfa_offset 16
+ 163 0004 00AF     		add	r7, sp, #0
+ 164              	.LCFI14:
+ 165              		.cfi_def_cfa_register 7
+ 166 0006 0346     		mov	r3, r0
+ 167 0008 0A46     		mov	r2, r1
+ 168 000a FB80     		strh	r3, [r7, #6]	@ movhi
+ 169 000c 1346     		mov	r3, r2
+ 170 000e 7B71     		strb	r3, [r7, #5]
+  24:src/relay.c   ****     if ((num < RELAYS_AMOUNT) && ((vol == RELAY_STATE_ON) || (vol
+ 171              		.loc 1 24 8
+ 172 0010 FB88     		ldrh	r3, [r7, #6]
+ 173 0012 022B     		cmp	r3, #2
+ 174 0014 09D8     		bhi	.L13
+ 175              		.loc 1 24 31 discriminator 1
+ 176 0016 7B79     		ldrb	r3, [r7, #5]	@ zero_extendqisi2
+ 177 0018 012B     		cmp	r3, #1
+ 178 001a 02D0     		beq	.L12
+ 179              		.loc 1 24 59 discriminator 2
+ 180 001c 7B79     		ldrb	r3, [r7, #5]	@ zero_extendqisi2
+ 181 001e 002B     		cmp	r3, #0
+ 182 0020 03D1     		bne	.L13
+ 183              	.L12:
+  25:src/relay.c   ****         == RELAY_STATE_OFF)))
+  26:src/relay.c   ****       {
+  27:src/relay.c   ****         Relay[num] = vol;
+ 184              		.loc 1 27 14
+ 185 0022 FB88     		ldrh	r3, [r7, #6]
+ 186              		.loc 1 27 20
+ 187 0024 0349     		ldr	r1, .L14
+ 188 0026 7A79     		ldrb	r2, [r7, #5]
+ 189 0028 CA54     		strb	r2, [r1, r3]
+ 190              	.L13:
+  28:src/relay.c   ****       }
+  29:src/relay.c   ****   }
+ 191              		.loc 1 29 3
+ 192 002a 00BF     		nop
+ 193 002c 0C37     		adds	r7, r7, #12
+ 194              	.LCFI15:
+ 195              		.cfi_def_cfa_offset 4
+ 196 002e BD46     		mov	sp, r7
+ 197              	.LCFI16:
+ 198              		.cfi_def_cfa_register 13
+ 199              		@ sp needed
+ 200 0030 80BC     		pop	{r7}
+ 201              	.LCFI17:
+ 202              		.cfi_restore 7
+ 203              		.cfi_def_cfa_offset 0
+ 204 0032 7047     		bx	lr
+ 205              	.L15:
+ 206              		.align	2
+ 207              	.L14:
+ 208 0034 00000000 		.word	Relay
+ 209              		.cfi_endproc
+ 210              	.LFE29:
+ 212              		.section	.text.RelaysProcess,"ax",%progbits
+ 213              		.align	1
+ 214              		.global	RelaysProcess
+ 215              		.syntax unified
+ 216              		.thumb
+ 217              		.thumb_func
+ 219              	RelaysProcess:
+ 220              	.LFB30:
+  30:src/relay.c   **** 
+  31:src/relay.c   **** void RelaysProcess()
+  32:src/relay.c   ****   {
+ 221              		.loc 1 32 3
+ 222              		.cfi_startproc
+ 223              		@ args = 0, pretend = 0, frame = 8
+ 224              		@ frame_needed = 1, uses_anonymous_args = 0
+ 225 0000 80B5     		push	{r7, lr}
+ 226              	.LCFI18:
+ 227              		.cfi_def_cfa_offset 8
+ 228              		.cfi_offset 7, -8
+ 229              		.cfi_offset 14, -4
+ 230 0002 82B0     		sub	sp, sp, #8
+ 231              	.LCFI19:
+ 232              		.cfi_def_cfa_offset 16
+ 233 0004 00AF     		add	r7, sp, #0
+ 234              	.LCFI20:
+ 235              		.cfi_def_cfa_register 7
+  33:src/relay.c   ****     int i = RELAYS_AMOUNT;
+ 236              		.loc 1 33 9
+ 237 0006 0323     		movs	r3, #3
+ 238 0008 7B60     		str	r3, [r7, #4]
+  34:src/relay.c   ****     while (i--)
+ 239              		.loc 1 34 11
+ 240 000a 1EE0     		b	.L17
+ 241              	.L19:
+  35:src/relay.c   ****       {
+  36:src/relay.c   ****         if ((RAM.relays[(i>>4)] & (1<<(i&0x0f))) != 0 )
+ 242              		.loc 1 36 27
+ 243 000c 7B68     		ldr	r3, [r7, #4]
+ 244 000e 1B11     		asrs	r3, r3, #4
+ 245              		.loc 1 36 24
+ 246 0010 134A     		ldr	r2, .L20
+ 247 0012 03F50173 		add	r3, r3, #516
+ 248 0016 32F81330 		ldrh	r3, [r2, r3, lsl #1]	@ unaligned
+ 249 001a 9BB2     		uxth	r3, r3
+ 250 001c 1A46     		mov	r2, r3
+ 251              		.loc 1 36 41
+ 252 001e 7B68     		ldr	r3, [r7, #4]
+ 253 0020 03F00F03 		and	r3, r3, #15
+ 254              		.loc 1 36 50
+ 255 0024 42FA03F3 		asr	r3, r2, r3
+ 256 0028 03F00103 		and	r3, r3, #1
+ 257              		.loc 1 36 12
+ 258 002c 002B     		cmp	r3, #0
+ 259 002e 06D0     		beq	.L18
+  37:src/relay.c   ****           {
+  38:src/relay.c   ****             RelaySet(i, RELAY_STATE_ON);
+ 260              		.loc 1 38 13
+ 261 0030 7B68     		ldr	r3, [r7, #4]
+ 262 0032 9BB2     		uxth	r3, r3
+ 263 0034 0121     		movs	r1, #1
+ 264 0036 1846     		mov	r0, r3
+ 265 0038 0A4B     		ldr	r3, .L20+4
+ 266 003a 9847     		blx	r3
+ 267              	.LVL0:
+ 268 003c 05E0     		b	.L17
+ 269              	.L18:
+  39:src/relay.c   ****           }
+  40:src/relay.c   ****         else
+  41:src/relay.c   ****           {
+  42:src/relay.c   ****             RelaySet(i, RELAY_STATE_OFF);
+ 270              		.loc 1 42 13
+ 271 003e 7B68     		ldr	r3, [r7, #4]
+ 272 0040 9BB2     		uxth	r3, r3
+ 273 0042 0021     		movs	r1, #0
+ 274 0044 1846     		mov	r0, r3
+ 275 0046 074B     		ldr	r3, .L20+4
+ 276 0048 9847     		blx	r3
+ 277              	.LVL1:
+ 278              	.L17:
+  34:src/relay.c   ****       {
+ 279              		.loc 1 34 13
+ 280 004a 7B68     		ldr	r3, [r7, #4]
+ 281 004c 5A1E     		subs	r2, r3, #1
+ 282 004e 7A60     		str	r2, [r7, #4]
+  34:src/relay.c   ****       {
+ 283              		.loc 1 34 11
+ 284 0050 002B     		cmp	r3, #0
+ 285 0052 DBD1     		bne	.L19
+  43:src/relay.c   ****           }
+  44:src/relay.c   ****       }
+  45:src/relay.c   ****   }
+ 286              		.loc 1 45 3
+ 287 0054 00BF     		nop
+ 288 0056 00BF     		nop
+ 289 0058 0837     		adds	r7, r7, #8
+ 290              	.LCFI21:
+ 291              		.cfi_def_cfa_offset 8
+ 292 005a BD46     		mov	sp, r7
+ 293              	.LCFI22:
+ 294              		.cfi_def_cfa_register 13
+ 295              		@ sp needed
+ 296 005c 80BD     		pop	{r7, pc}
+ 297              	.L21:
+ 298 005e 00BF     		.align	2
+ 299              	.L20:
+ 300 0060 00000000 		.word	RAM
+ 301 0064 00000000 		.word	RelaySet
+ 302              		.cfi_endproc
+ 303              	.LFE30:
+ 305              		.text
+ 306              	.Letext0:
+ 307              		.file 2 "common/rtos/common/utils/typedef.h"
+ 308              		.file 3 "src/relay.h"
+ 309              		.file 4 "src/usermemory.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 relay.c
+C:\Users\Admin\AppData\Local\Temp\cclwu0qT.s:22     .bss.Relay:00000000 Relay
+C:\Users\Admin\AppData\Local\Temp\cclwu0qT.s:19     .bss.Relay:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\cclwu0qT.s:25     .text.ReleysReset:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cclwu0qT.s:31     .text.ReleysReset:00000000 ReleysReset
+C:\Users\Admin\AppData\Local\Temp\cclwu0qT.s:87     .text.ReleysReset:0000002c $d
+C:\Users\Admin\AppData\Local\Temp\cclwu0qT.s:92     .text.RelayGet:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cclwu0qT.s:98     .text.RelayGet:00000000 RelayGet
+C:\Users\Admin\AppData\Local\Temp\cclwu0qT.s:138    .text.RelayGet:0000001c $d
+C:\Users\Admin\AppData\Local\Temp\cclwu0qT.s:143    .text.RelaySet:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cclwu0qT.s:149    .text.RelaySet:00000000 RelaySet
+C:\Users\Admin\AppData\Local\Temp\cclwu0qT.s:208    .text.RelaySet:00000034 $d
+C:\Users\Admin\AppData\Local\Temp\cclwu0qT.s:213    .text.RelaysProcess:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cclwu0qT.s:219    .text.RelaysProcess:00000000 RelaysProcess
+C:\Users\Admin\AppData\Local\Temp\cclwu0qT.s:300    .text.RelaysProcess:00000060 $d
+
+UNDEFINED SYMBOLS
+RAM

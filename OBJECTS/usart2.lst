@@ -1,0 +1,595 @@
+   1              		.cpu cortex-m3
+   2              		.arch armv7-m
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"usart2.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.global	ReceivedMsg
+  18              		.section	.bss.ReceivedMsg,"aw",%nobits
+  19              		.align	2
+  22              	ReceivedMsg:
+  23 0000 00000000 		.space	516
+  23      00000000 
+  23      00000000 
+  23      00000000 
+  23      00000000 
+  24              		.section	.text.USART2TIMConfigure,"ax",%progbits
+  25              		.align	1
+  26              		.global	USART2TIMConfigure
+  27              		.syntax unified
+  28              		.thumb
+  29              		.thumb_func
+  31              	USART2TIMConfigure:
+  32              	.LFB27:
+  33              		.file 1 "src/usart2.c"
+   1:src/usart2.c  **** /*
+   2:src/usart2.c  ****  *  uart.c
+   3:src/usart2.c  ****  *  Created on: Mar 24, 2011
+   4:src/usart2.c  ****  *  Author: baron
+   5:src/usart2.c  ****  */
+   6:src/usart2.c  **** 
+   7:src/usart2.c  **** 
+   8:src/usart2.c  **** #include "usart2.h"
+   9:src/usart2.c  **** 
+  10:src/usart2.c  **** //UART_FIFO_STR u2Fifo;
+  11:src/usart2.c  **** struct ReceivedMsgStr ReceivedMsg;
+  12:src/usart2.c  **** void USART2TIMConfigure(uint16_t aTIMtime)
+  13:src/usart2.c  **** {
+  34              		.loc 1 13 1
+  35              		.cfi_startproc
+  36              		@ args = 0, pretend = 0, frame = 32
+  37              		@ frame_needed = 1, uses_anonymous_args = 0
+  38 0000 80B5     		push	{r7, lr}
+  39              	.LCFI0:
+  40              		.cfi_def_cfa_offset 8
+  41              		.cfi_offset 7, -8
+  42              		.cfi_offset 14, -4
+  43 0002 88B0     		sub	sp, sp, #32
+  44              	.LCFI1:
+  45              		.cfi_def_cfa_offset 40
+  46 0004 00AF     		add	r7, sp, #0
+  47              	.LCFI2:
+  48              		.cfi_def_cfa_register 7
+  49 0006 0346     		mov	r3, r0
+  50 0008 FB80     		strh	r3, [r7, #6]	@ movhi
+  14:src/usart2.c  **** 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM5, ENABLE);
+  51              		.loc 1 14 2
+  52 000a 0121     		movs	r1, #1
+  53 000c 0820     		movs	r0, #8
+  54 000e 184B     		ldr	r3, .L2
+  55 0010 9847     		blx	r3
+  56              	.LVL0:
+  15:src/usart2.c  **** 
+  16:src/usart2.c  **** 	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
+  17:src/usart2.c  **** 	TIM_TimeBaseStructure.TIM_Period = 100000;
+  57              		.loc 1 17 35
+  58 0012 48F2A063 		movw	r3, #34464
+  59 0016 3B83     		strh	r3, [r7, #24]	@ movhi
+  18:src/usart2.c  **** 	TIM_TimeBaseStructure.TIM_Prescaler = 1000;
+  60              		.loc 1 18 38
+  61 0018 4FF47A73 		mov	r3, #1000
+  62 001c BB82     		strh	r3, [r7, #20]	@ movhi
+  19:src/usart2.c  **** 	TIM_TimeBaseStructure.TIM_ClockDivision = 0;
+  63              		.loc 1 19 42
+  64 001e 0023     		movs	r3, #0
+  65 0020 7B83     		strh	r3, [r7, #26]	@ movhi
+  20:src/usart2.c  **** 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+  66              		.loc 1 20 40
+  67 0022 0023     		movs	r3, #0
+  68 0024 FB82     		strh	r3, [r7, #22]	@ movhi
+  21:src/usart2.c  **** 	TIM_TimeBaseInit(TIM5, &TIM_TimeBaseStructure);
+  69              		.loc 1 21 2
+  70 0026 07F11403 		add	r3, r7, #20
+  71 002a 1946     		mov	r1, r3
+  72 002c 1148     		ldr	r0, .L2+4
+  73 002e 124B     		ldr	r3, .L2+8
+  74 0030 9847     		blx	r3
+  75              	.LVL1:
+  22:src/usart2.c  **** 
+  23:src/usart2.c  **** 	TIM_ARRPreloadConfig(TIM5, ENABLE);
+  76              		.loc 1 23 2
+  77 0032 0121     		movs	r1, #1
+  78 0034 0F48     		ldr	r0, .L2+4
+  79 0036 114B     		ldr	r3, .L2+12
+  80 0038 9847     		blx	r3
+  81              	.LVL2:
+  24:src/usart2.c  **** 
+  25:src/usart2.c  **** 	TIM_ICInitTypeDef TIM_ICInitStructure;
+  26:src/usart2.c  **** 	TIM_ICInitStructure.TIM_Channel = TIM_Channel_2;
+  82              		.loc 1 26 34
+  83 003a 0423     		movs	r3, #4
+  84 003c 3B81     		strh	r3, [r7, #8]	@ movhi
+  27:src/usart2.c  **** 	TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_Rising;
+  85              		.loc 1 27 37
+  86 003e 0023     		movs	r3, #0
+  87 0040 7B81     		strh	r3, [r7, #10]	@ movhi
+  28:src/usart2.c  **** 	TIM_ICInitStructure.TIM_ICSelection = TIM_ICSelection_DirectTI;
+  88              		.loc 1 28 38
+  89 0042 0123     		movs	r3, #1
+  90 0044 BB81     		strh	r3, [r7, #12]	@ movhi
+  29:src/usart2.c  **** 	TIM_ICInitStructure.TIM_ICPrescaler = TIM_ICPSC_DIV1;
+  91              		.loc 1 29 38
+  92 0046 0023     		movs	r3, #0
+  93 0048 FB81     		strh	r3, [r7, #14]	@ movhi
+  30:src/usart2.c  **** 	TIM_ICInitStructure.TIM_ICFilter = 0x0;
+  94              		.loc 1 30 35
+  95 004a 0023     		movs	r3, #0
+  96 004c 3B82     		strh	r3, [r7, #16]	@ movhi
+  31:src/usart2.c  **** 
+  32:src/usart2.c  **** 	//TIM5->ARR = aTIMtime;
+  33:src/usart2.c  **** 	//TIM_ARRPreloadConfig(TIM5,ENABLE);
+  34:src/usart2.c  **** //	TIM_ICInit(TIM5, &TIM_ICInitStructure);
+  35:src/usart2.c  **** 
+  36:src/usart2.c  **** 	//TIM_SelectInputTrigger(TIM5, TIM_TS_TI2FP2);
+  37:src/usart2.c  **** //	TIM_SelectSlaveMode(TIM5, TIM_SlaveMode_Reset);
+  38:src/usart2.c  **** //	TIM_SelectMasterSlaveMode(TIM5, TIM_MasterSlaveMode_Enable);
+  39:src/usart2.c  ****     TIM_ClearFlag(TIM5,TIM_FLAG_Update);//
+  97              		.loc 1 39 5
+  98 004e 0121     		movs	r1, #1
+  99 0050 0848     		ldr	r0, .L2+4
+ 100 0052 0B4B     		ldr	r3, .L2+16
+ 101 0054 9847     		blx	r3
+ 102              	.LVL3:
+  40:src/usart2.c  **** //	TIM_Cmd(TIM5, ENABLE);
+  41:src/usart2.c  **** 
+  42:src/usart2.c  **** 	TIM_ITConfig(TIM5, TIM_IT_Update, ENABLE);
+ 103              		.loc 1 42 2
+ 104 0056 0122     		movs	r2, #1
+ 105 0058 0121     		movs	r1, #1
+ 106 005a 0648     		ldr	r0, .L2+4
+ 107 005c 094B     		ldr	r3, .L2+20
+ 108 005e 9847     		blx	r3
+ 109              	.LVL4:
+  43:src/usart2.c  **** 
+  44:src/usart2.c  **** //	TIM_ClearITPendingBit(TIM5, TIM_IT_Update);
+  45:src/usart2.c  ****     TIM_Cmd(TIM5, ENABLE);//
+ 110              		.loc 1 45 5
+ 111 0060 0121     		movs	r1, #1
+ 112 0062 0448     		ldr	r0, .L2+4
+ 113 0064 084B     		ldr	r3, .L2+24
+ 114 0066 9847     		blx	r3
+ 115              	.LVL5:
+  46:src/usart2.c  **** 
+  47:src/usart2.c  **** 
+  48:src/usart2.c  **** /*
+  49:src/usart2.c  **** 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM5, ENABLE);
+  50:src/usart2.c  **** 
+  51:src/usart2.c  **** 	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
+  52:src/usart2.c  **** 	TIM_TimeBaseStructure.TIM_Period = 10000;
+  53:src/usart2.c  **** 	TIM_TimeBaseStructure.TIM_Prescaler = 1000;
+  54:src/usart2.c  **** 	TIM_TimeBaseStructure.TIM_ClockDivision = 0;
+  55:src/usart2.c  **** 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+  56:src/usart2.c  **** 	TIM_TimeBaseInit(TIM5, &TIM_TimeBaseStructure);
+  57:src/usart2.c  **** 
+  58:src/usart2.c  **** 	TIM_ARRPreloadConfig(TIM5, ENABLE);
+  59:src/usart2.c  **** 
+  60:src/usart2.c  **** 
+  61:src/usart2.c  **** 	TIM_Cmd(TIM5, ENABLE);
+  62:src/usart2.c  **** 	TIM_ITConfig(TIM5,TIM_IT_Update,ENABLE);
+  63:src/usart2.c  **** 
+  64:src/usart2.c  **** 	TIM_ClearITPendingBit(TIM5, TIM_IT_Update);
+  65:src/usart2.c  **** */
+  66:src/usart2.c  **** }
+ 116              		.loc 1 66 1
+ 117 0068 00BF     		nop
+ 118 006a 2037     		adds	r7, r7, #32
+ 119              	.LCFI3:
+ 120              		.cfi_def_cfa_offset 8
+ 121 006c BD46     		mov	sp, r7
+ 122              	.LCFI4:
+ 123              		.cfi_def_cfa_register 13
+ 124              		@ sp needed
+ 125 006e 80BD     		pop	{r7, pc}
+ 126              	.L3:
+ 127              		.align	2
+ 128              	.L2:
+ 129 0070 00000000 		.word	RCC_APB1PeriphClockCmd
+ 130 0074 000C0040 		.word	1073744896
+ 131 0078 00000000 		.word	TIM_TimeBaseInit
+ 132 007c 00000000 		.word	TIM_ARRPreloadConfig
+ 133 0080 00000000 		.word	TIM_ClearFlag
+ 134 0084 00000000 		.word	TIM_ITConfig
+ 135 0088 00000000 		.word	TIM_Cmd
+ 136              		.cfi_endproc
+ 137              	.LFE27:
+ 139              		.section	.text.TIM5_IRQHandler,"ax",%progbits
+ 140              		.align	1
+ 141              		.global	TIM5_IRQHandler
+ 142              		.syntax unified
+ 143              		.thumb
+ 144              		.thumb_func
+ 146              	TIM5_IRQHandler:
+ 147              	.LFB28:
+  67:src/usart2.c  **** 
+  68:src/usart2.c  **** void TIM5_IRQHandler(void)
+  69:src/usart2.c  **** {
+ 148              		.loc 1 69 1
+ 149              		.cfi_startproc
+ 150              		@ args = 0, pretend = 0, frame = 8
+ 151              		@ frame_needed = 1, uses_anonymous_args = 0
+ 152 0000 80B5     		push	{r7, lr}
+ 153              	.LCFI5:
+ 154              		.cfi_def_cfa_offset 8
+ 155              		.cfi_offset 7, -8
+ 156              		.cfi_offset 14, -4
+ 157 0002 82B0     		sub	sp, sp, #8
+ 158              	.LCFI6:
+ 159              		.cfi_def_cfa_offset 16
+ 160 0004 00AF     		add	r7, sp, #0
+ 161              	.LCFI7:
+ 162              		.cfi_def_cfa_register 7
+  70:src/usart2.c  **** 	//ReceivedMsgStr ReceivedMsg;
+  71:src/usart2.c  **** 	TIM_ClearITPendingBit(TIM5, TIM_IT_Update);
+ 163              		.loc 1 71 2
+ 164 0006 0121     		movs	r1, #1
+ 165 0008 1048     		ldr	r0, .L7
+ 166 000a 114B     		ldr	r3, .L7+4
+ 167 000c 9847     		blx	r3
+ 168              	.LVL6:
+  72:src/usart2.c  **** 
+  73:src/usart2.c  ****     int asize = uart2Read(ReceivedMsg.buffer,260);
+ 169              		.loc 1 73 17
+ 170 000e 4FF48271 		mov	r1, #260
+ 171 0012 1048     		ldr	r0, .L7+8
+ 172 0014 104B     		ldr	r3, .L7+12
+ 173 0016 9847     		blx	r3
+ 174              	.LVL7:
+ 175 0018 0346     		mov	r3, r0
+ 176              		.loc 1 73 9
+ 177 001a 7B60     		str	r3, [r7, #4]
+  74:src/usart2.c  **** 	if(asize>0)
+ 178              		.loc 1 74 4
+ 179 001c 7B68     		ldr	r3, [r7, #4]
+ 180 001e 002B     		cmp	r3, #0
+ 181 0020 0FDD     		ble	.L6
+  75:src/usart2.c  ****     {
+  76:src/usart2.c  **** 	if(ReceivedMsg.size == 0)
+ 182              		.loc 1 76 16
+ 183 0022 0E4B     		ldr	r3, .L7+16
+ 184 0024 B3F80232 		ldrh	r3, [r3, #514]
+ 185              		.loc 1 76 4
+ 186 0028 002B     		cmp	r3, #0
+ 187 002a 0AD1     		bne	.L6
+  77:src/usart2.c  ****         {
+  78:src/usart2.c  **** 		ReceivedMsg.flag = true;
+ 188              		.loc 1 78 20
+ 189 002c 0B4B     		ldr	r3, .L7+16
+ 190 002e 0122     		movs	r2, #1
+ 191 0030 1A70     		strb	r2, [r3]
+  79:src/usart2.c  **** 		ReceivedMsg.Readflag = false;
+ 192              		.loc 1 79 24
+ 193 0032 0A4B     		ldr	r3, .L7+16
+ 194 0034 0022     		movs	r2, #0
+ 195 0036 5A70     		strb	r2, [r3, #1]
+  80:src/usart2.c  **** 		ReceivedMsg.size = asize;
+ 196              		.loc 1 80 20
+ 197 0038 7B68     		ldr	r3, [r7, #4]
+ 198 003a 9AB2     		uxth	r2, r3
+ 199 003c 074B     		ldr	r3, .L7+16
+ 200 003e A3F80222 		strh	r2, [r3, #514]	@ movhi
+ 201              	.L6:
+  81:src/usart2.c  **** 		}
+  82:src/usart2.c  **** 		//TIM_Cmd(TIM5, DISABLE);//
+  83:src/usart2.c  **** 	}
+  84:src/usart2.c  **** }
+ 202              		.loc 1 84 1
+ 203 0042 00BF     		nop
+ 204 0044 0837     		adds	r7, r7, #8
+ 205              	.LCFI8:
+ 206              		.cfi_def_cfa_offset 8
+ 207 0046 BD46     		mov	sp, r7
+ 208              	.LCFI9:
+ 209              		.cfi_def_cfa_register 13
+ 210              		@ sp needed
+ 211 0048 80BD     		pop	{r7, pc}
+ 212              	.L8:
+ 213 004a 00BF     		.align	2
+ 214              	.L7:
+ 215 004c 000C0040 		.word	1073744896
+ 216 0050 00000000 		.word	TIM_ClearITPendingBit
+ 217 0054 02000000 		.word	ReceivedMsg+2
+ 218 0058 00000000 		.word	uart2Read
+ 219 005c 00000000 		.word	ReceivedMsg
+ 220              		.cfi_endproc
+ 221              	.LFE28:
+ 223              		.section	.text.GPIOforUSART3cfg,"ax",%progbits
+ 224              		.align	1
+ 225              		.global	GPIOforUSART3cfg
+ 226              		.syntax unified
+ 227              		.thumb
+ 228              		.thumb_func
+ 230              	GPIOforUSART3cfg:
+ 231              	.LFB29:
+  85:src/usart2.c  **** 
+  86:src/usart2.c  **** //
+  87:src/usart2.c  **** //void uart2Init(uint32_t boudrate)
+  88:src/usart2.c  **** //{
+  89:src/usart2.c  **** //	GPIOforUSART3cfg();
+  90:src/usart2.c  **** //	GPIO_InitTypeDef GPIO_InitStructure;
+  91:src/usart2.c  **** //
+  92:src/usart2.c  **** //	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1,ENABLE);
+  93:src/usart2.c  **** //	USART_DeInit(USART3);
+  94:src/usart2.c  **** //
+  95:src/usart2.c  **** //	USART_InitTypeDef USART_InitStructure;
+  96:src/usart2.c  **** //
+  97:src/usart2.c  **** //	/* Enable AFIO,  clocks */
+  98:src/usart2.c  **** //	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+  99:src/usart2.c  **** //	/* Enable GPIO clocks */
+ 100:src/usart2.c  **** //	RCC_APB2PeriphClockCmd(/*RCC_APB2Periph_GPIOC|RCC_APB2Periph_GPIOA|*/RCC_APB2Periph_GPIOB, ENABL
+ 101:src/usart2.c  **** //
+ 102:src/usart2.c  **** //
+ 103:src/usart2.c  **** //	/* Enable USART3,  clocks */
+ 104:src/usart2.c  **** //     RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
+ 105:src/usart2.c  **** //	//GPIO_PinRemapConfig(GPIO_PartialRemap_USART3,ENABLE);
+ 106:src/usart2.c  **** //
+ 107:src/usart2.c  **** //
+ 108:src/usart2.c  **** //
+ 109:src/usart2.c  **** //	USART_InitStructure.USART_BaudRate = boudrate;
+ 110:src/usart2.c  **** //	USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+ 111:src/usart2.c  **** //	USART_InitStructure.USART_StopBits = USART_StopBits_1;
+ 112:src/usart2.c  **** //	USART_InitStructure.USART_Parity = USART_Parity_No;
+ 113:src/usart2.c  **** //	USART_InitStructure.USART_HardwareFlowControl= USART_HardwareFlowControl_None;
+ 114:src/usart2.c  **** //	USART_InitStructure.USART_Mode =  USART_Mode_Tx | USART_Mode_Rx;
+ 115:src/usart2.c  **** //	/* Configure USART3 */
+ 116:src/usart2.c  **** //	USART_Init(USART3, &USART_InitStructure);
+ 117:src/usart2.c  **** //
+ 118:src/usart2.c  **** //	USART_ClearFlag(USART3, USART_FLAG_CTS | USART_FLAG_LBD  |
+ 119:src/usart2.c  **** //						USART_FLAG_TC  | USART_FLAG_RXNE );
+ 120:src/usart2.c  **** //
+ 121:src/usart2.c  **** //	uartRxDMAConfiguration(USART3, DMA1_Channel3, u2Fifo.rxBuf,UARTRX_FIFO_SIZE);
+ 122:src/usart2.c  **** //	uartTxDMAConfiguration(USART3, DMA1_Channel2, u2Fifo.txBuf, UARTTX_FIFO_SIZE);
+ 123:src/usart2.c  **** //
+ 124:src/usart2.c  **** //		//USART3TIMConfigure(50);
+ 125:src/usart2.c  **** //
+ 126:src/usart2.c  **** //	USART_DMACmd(USART3, USART_DMAReq_Tx, ENABLE);
+ 127:src/usart2.c  **** //	/* Enable USART_Rx DMA Receive request */
+ 128:src/usart2.c  **** //    USART_DMACmd(USART3, USART_DMAReq_Rx, ENABLE);
+ 129:src/usart2.c  **** //	//USART_ITConfig(USART3, USART_IT_RXNE, ENABLE);
+ 130:src/usart2.c  **** //
+ 131:src/usart2.c  **** //	  /* Enable USART_Rx Receive interrupt */
+ 132:src/usart2.c  **** //	  //USART_ITConfig(USART3, USART_IT_RXNE, ENABLE);
+ 133:src/usart2.c  **** //	    /* Configure USART3 interrupt */
+ 134:src/usart2.c  **** //   // NVIC_SetPriority(DMA1_Channel3_IRQn, 0x0);
+ 135:src/usart2.c  **** //  //	NVIC_EnableIRQ(DMA1_Channel3_IRQn);
+ 136:src/usart2.c  **** //
+ 137:src/usart2.c  **** //	USART_Cmd(USART3, ENABLE);
+ 138:src/usart2.c  **** //
+ 139:src/usart2.c  **** //}
+ 140:src/usart2.c  **** //-----------------------------------------------------------------------------------
+ 141:src/usart2.c  **** //unsigned int uart2FindEscapedPack()
+ 142:src/usart2.c  **** //{
+ 143:src/usart2.c  **** //	unsigned int i = u2Fifo.rxCurrent;
+ 144:src/usart2.c  **** //
+ 145:src/usart2.c  **** //	while (i != (UARTRX_FIFO_SIZE - DMA_GetCurrDataCounter(DMA1_Channel3)))
+ 146:src/usart2.c  **** //	{
+ 147:src/usart2.c  **** //		if (u2Fifo.rxBuf[i] == 0x55)
+ 148:src/usart2.c  **** //		{
+ 149:src/usart2.c  **** //			i++;
+ 150:src/usart2.c  **** //			i &= UARTRX_FIFO_SIZE_MASK;
+ 151:src/usart2.c  **** //			if (i == (DMA1_Channel3->CMAR - (uint32_t) &u2Fifo.rxBuf[0]))
+ 152:src/usart2.c  **** //				return 0;//return (isStart & isEnd);
+ 153:src/usart2.c  **** //
+ 154:src/usart2.c  **** //			if (u2Fifo.rxBuf[i] == 0x03)
+ 155:src/usart2.c  **** //			{
+ 156:src/usart2.c  **** //				return 1;
+ 157:src/usart2.c  **** //			}
+ 158:src/usart2.c  **** //		}
+ 159:src/usart2.c  **** //		i++;
+ 160:src/usart2.c  **** //		i &= UARTRX_FIFO_SIZE_MASK;
+ 161:src/usart2.c  **** //	}
+ 162:src/usart2.c  **** //	return 0;
+ 163:src/usart2.c  **** //
+ 164:src/usart2.c  **** //}
+ 165:src/usart2.c  **** //-----------------------------------------------------------------------------------
+ 166:src/usart2.c  **** 
+ 167:src/usart2.c  **** //int uart2GetChar(unsigned char *ch)
+ 168:src/usart2.c  **** //{
+ 169:src/usart2.c  **** //	if (u2Fifo.rxCurrent != (UARTRX_FIFO_SIZE - DMA_GetCurrDataCounter(DMA1_Channel3)))
+ 170:src/usart2.c  **** //	{
+ 171:src/usart2.c  **** //		*ch = u2Fifo.rxBuf[u2Fifo.rxCurrent];
+ 172:src/usart2.c  **** //		u2Fifo.rxCurrent++;
+ 173:src/usart2.c  **** //		u2Fifo.rxCurrent &= UARTRX_FIFO_SIZE_MASK;
+ 174:src/usart2.c  **** //		return 1;
+ 175:src/usart2.c  **** //	}
+ 176:src/usart2.c  **** //	return 0;
+ 177:src/usart2.c  **** //}
+ 178:src/usart2.c  **** ////-----------------------------------------------------------------------------------
+ 179:src/usart2.c  **** //int uart2PutChar(unsigned char ch)
+ 180:src/usart2.c  **** //{
+ 181:src/usart2.c  **** //
+ 182:src/usart2.c  **** //	//	IEC2bits.DMA4IE = 0;
+ 183:src/usart2.c  **** //	u2Fifo.txBufB[u2Fifo.txCurrentEnd] = ch;
+ 184:src/usart2.c  **** //	u2Fifo.txCurrentEnd++;
+ 185:src/usart2.c  **** //	u2Fifo.txCurrentEnd &= UARTTX_FIFOB_SIZE_MASK;
+ 186:src/usart2.c  **** //
+ 187:src/usart2.c  **** //	if (u2Fifo.txCurrentEnd == u2Fifo.txCurrentStart)
+ 188:src/usart2.c  **** //	{
+ 189:src/usart2.c  **** //		u2Fifo.txCurrentEnd--;
+ 190:src/usart2.c  **** //		u2Fifo.txCurrentEnd &= UARTTX_FIFOB_SIZE_MASK;
+ 191:src/usart2.c  **** //		//		IEC2bits.DMA4IE = 1;
+ 192:src/usart2.c  **** //		return 0;
+ 193:src/usart2.c  **** //	}
+ 194:src/usart2.c  **** //	//	IEC2bits.DMA4IE = 1;
+ 195:src/usart2.c  **** //	return 1;
+ 196:src/usart2.c  **** //}
+ 197:src/usart2.c  **** //-----------------------------------------------------------------------------------
+ 198:src/usart2.c  **** void GPIOforUSART3cfg(void)
+ 199:src/usart2.c  **** {
+ 232              		.loc 1 199 1
+ 233              		.cfi_startproc
+ 234              		@ args = 0, pretend = 0, frame = 8
+ 235              		@ frame_needed = 1, uses_anonymous_args = 0
+ 236 0000 80B5     		push	{r7, lr}
+ 237              	.LCFI10:
+ 238              		.cfi_def_cfa_offset 8
+ 239              		.cfi_offset 7, -8
+ 240              		.cfi_offset 14, -4
+ 241 0002 82B0     		sub	sp, sp, #8
+ 242              	.LCFI11:
+ 243              		.cfi_def_cfa_offset 16
+ 244 0004 00AF     		add	r7, sp, #0
+ 245              	.LCFI12:
+ 246              		.cfi_def_cfa_register 7
+ 200:src/usart2.c  ****     GPIO_InitTypeDef GPIO_InitStructure;
+ 201:src/usart2.c  **** 
+ 202:src/usart2.c  **** //    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB |
+ 203:src/usart2.c  **** //                           RCC_APB2Periph_GPIOC | RCC_APB2Periph_AFIO, ENABLE);
+ 204:src/usart2.c  **** 
+ 205:src/usart2.c  ****     RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+ 247              		.loc 1 205 5
+ 248 0006 0121     		movs	r1, #1
+ 249 0008 0120     		movs	r0, #1
+ 250 000a 1B4B     		ldr	r3, .L10
+ 251 000c 9847     		blx	r3
+ 252              	.LVL8:
+ 206:src/usart2.c  **** 
+ 207:src/usart2.c  ****     // Tx on PC10 as alternate function push-pull
+ 208:src/usart2.c  ****     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;
+ 253              		.loc 1 208 33
+ 254 000e 4FF48063 		mov	r3, #1024
+ 255 0012 BB80     		strh	r3, [r7, #4]	@ movhi
+ 209:src/usart2.c  ****     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
+ 256              		.loc 1 209 35
+ 257 0014 0223     		movs	r3, #2
+ 258 0016 BB71     		strb	r3, [r7, #6]
+ 210:src/usart2.c  ****     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;//GPIO_Mode_AF_PP;
+ 259              		.loc 1 210 34
+ 260 0018 1823     		movs	r3, #24
+ 261 001a FB71     		strb	r3, [r7, #7]
+ 211:src/usart2.c  ****     GPIO_Init(GPIOB, &GPIO_InitStructure);
+ 262              		.loc 1 211 5
+ 263 001c 3B1D     		adds	r3, r7, #4
+ 264 001e 1946     		mov	r1, r3
+ 265 0020 1648     		ldr	r0, .L10+4
+ 266 0022 174B     		ldr	r3, .L10+8
+ 267 0024 9847     		blx	r3
+ 268              	.LVL9:
+ 212:src/usart2.c  **** 
+ 213:src/usart2.c  ****   /* Rx on PC11 as input floating */
+ 214:src/usart2.c  ****     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11;
+ 269              		.loc 1 214 33
+ 270 0026 4FF40063 		mov	r3, #2048
+ 271 002a BB80     		strh	r3, [r7, #4]	@ movhi
+ 215:src/usart2.c  ****     GPIO_InitStructure.GPIO_Speed =GPIO_Speed_2MHz;
+ 272              		.loc 1 215 35
+ 273 002c 0223     		movs	r3, #2
+ 274 002e BB71     		strb	r3, [r7, #6]
+ 216:src/usart2.c  ****     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+ 275              		.loc 1 216 34
+ 276 0030 0423     		movs	r3, #4
+ 277 0032 FB71     		strb	r3, [r7, #7]
+ 217:src/usart2.c  ****     GPIO_Init(GPIOB, &GPIO_InitStructure);
+ 278              		.loc 1 217 5
+ 279 0034 3B1D     		adds	r3, r7, #4
+ 280 0036 1946     		mov	r1, r3
+ 281 0038 1048     		ldr	r0, .L10+4
+ 282 003a 114B     		ldr	r3, .L10+8
+ 283 003c 9847     		blx	r3
+ 284              	.LVL10:
+ 218:src/usart2.c  **** 
+ 219:src/usart2.c  **** 
+ 220:src/usart2.c  ****     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;
+ 285              		.loc 1 220 33
+ 286 003e 4FF40053 		mov	r3, #8192
+ 287 0042 BB80     		strh	r3, [r7, #4]	@ movhi
+ 221:src/usart2.c  ****         GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+ 288              		.loc 1 221 39
+ 289 0044 0323     		movs	r3, #3
+ 290 0046 BB71     		strb	r3, [r7, #6]
+ 222:src/usart2.c  ****         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD;
+ 291              		.loc 1 222 38
+ 292 0048 1423     		movs	r3, #20
+ 293 004a FB71     		strb	r3, [r7, #7]
+ 223:src/usart2.c  ****         GPIO_Init(GPIOB, &GPIO_InitStructure);
+ 294              		.loc 1 223 9
+ 295 004c 3B1D     		adds	r3, r7, #4
+ 296 004e 1946     		mov	r1, r3
+ 297 0050 0A48     		ldr	r0, .L10+4
+ 298 0052 0B4B     		ldr	r3, .L10+8
+ 299 0054 9847     		blx	r3
+ 300              	.LVL11:
+ 224:src/usart2.c  **** 
+ 225:src/usart2.c  ****         GPIO_InitStructure.GPIO_Pin = GPIO_Pin_14;
+ 301              		.loc 1 225 37
+ 302 0056 4FF48043 		mov	r3, #16384
+ 303 005a BB80     		strh	r3, [r7, #4]	@ movhi
+ 226:src/usart2.c  ****         GPIO_InitStructure.GPIO_Speed = 0;
+ 304              		.loc 1 226 39
+ 305 005c 0023     		movs	r3, #0
+ 306 005e BB71     		strb	r3, [r7, #6]
+ 227:src/usart2.c  ****            GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+ 307              		.loc 1 227 41
+ 308 0060 4823     		movs	r3, #72
+ 309 0062 FB71     		strb	r3, [r7, #7]
+ 228:src/usart2.c  ****            GPIO_Init(GPIOB, &GPIO_InitStructure);
+ 310              		.loc 1 228 12
+ 311 0064 3B1D     		adds	r3, r7, #4
+ 312 0066 1946     		mov	r1, r3
+ 313 0068 0448     		ldr	r0, .L10+4
+ 314 006a 054B     		ldr	r3, .L10+8
+ 315 006c 9847     		blx	r3
+ 316              	.LVL12:
+ 229:src/usart2.c  **** 
+ 230:src/usart2.c  **** }
+ 317              		.loc 1 230 1
+ 318 006e 00BF     		nop
+ 319 0070 0837     		adds	r7, r7, #8
+ 320              	.LCFI13:
+ 321              		.cfi_def_cfa_offset 8
+ 322 0072 BD46     		mov	sp, r7
+ 323              	.LCFI14:
+ 324              		.cfi_def_cfa_register 13
+ 325              		@ sp needed
+ 326 0074 80BD     		pop	{r7, pc}
+ 327              	.L11:
+ 328 0076 00BF     		.align	2
+ 329              	.L10:
+ 330 0078 00000000 		.word	RCC_APB2PeriphClockCmd
+ 331 007c 000C0140 		.word	1073810432
+ 332 0080 00000000 		.word	GPIO_Init
+ 333              		.cfi_endproc
+ 334              	.LFE29:
+ 336              		.text
+ 337              	.Letext0:
+ 338              		.file 2 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 339              		.file 3 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 340              		.file 4 "common/lib.stm32/CMSIS/Core/CM3/stm32f10x.h"
+ 341              		.file 5 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_gpio.h"
+ 342              		.file 6 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_tim.h"
+ 343              		.file 7 "src/usart2.h"
+ 344              		.file 8 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_rcc.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 usart2.c
+C:\Users\Admin\AppData\Local\Temp\ccvTyJZA.s:22     .bss.ReceivedMsg:00000000 ReceivedMsg
+C:\Users\Admin\AppData\Local\Temp\ccvTyJZA.s:19     .bss.ReceivedMsg:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\ccvTyJZA.s:25     .text.USART2TIMConfigure:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccvTyJZA.s:31     .text.USART2TIMConfigure:00000000 USART2TIMConfigure
+C:\Users\Admin\AppData\Local\Temp\ccvTyJZA.s:129    .text.USART2TIMConfigure:00000070 $d
+C:\Users\Admin\AppData\Local\Temp\ccvTyJZA.s:140    .text.TIM5_IRQHandler:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccvTyJZA.s:146    .text.TIM5_IRQHandler:00000000 TIM5_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\ccvTyJZA.s:215    .text.TIM5_IRQHandler:0000004c $d
+C:\Users\Admin\AppData\Local\Temp\ccvTyJZA.s:224    .text.GPIOforUSART3cfg:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccvTyJZA.s:230    .text.GPIOforUSART3cfg:00000000 GPIOforUSART3cfg
+C:\Users\Admin\AppData\Local\Temp\ccvTyJZA.s:330    .text.GPIOforUSART3cfg:00000078 $d
+
+UNDEFINED SYMBOLS
+RCC_APB1PeriphClockCmd
+TIM_TimeBaseInit
+TIM_ARRPreloadConfig
+TIM_ClearFlag
+TIM_ITConfig
+TIM_Cmd
+TIM_ClearITPendingBit
+uart2Read
+RCC_APB2PeriphClockCmd
+GPIO_Init

@@ -1,0 +1,314 @@
+   1              		.cpu cortex-m3
+   2              		.arch armv7-m
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"rvnettcp.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.section	.text.RVnetTcpSlaveProcess,"ax",%progbits
+  18              		.align	1
+  19              		.global	RVnetTcpSlaveProcess
+  20              		.syntax unified
+  21              		.thumb
+  22              		.thumb_func
+  24              	RVnetTcpSlaveProcess:
+  25              	.LFB27:
+  26              		.file 1 "common/rtos/common/utils/rvnettcp.c"
+   1:common/rtos/common/utils/rvnettcp.c **** #include"rvnettcp.h"
+   2:common/rtos/common/utils/rvnettcp.c **** #include "memman.h"
+   3:common/rtos/common/utils/rvnettcp.c **** #include "crc.h"
+   4:common/rtos/common/utils/rvnettcp.c **** 
+   5:common/rtos/common/utils/rvnettcp.c **** #define RVTCP_TID	0
+   6:common/rtos/common/utils/rvnettcp.c **** #define RVTCP_PID	2
+   7:common/rtos/common/utils/rvnettcp.c **** #define RVTCP_LEN	4
+   8:common/rtos/common/utils/rvnettcp.c **** #define RVTCP_UID	6
+   9:common/rtos/common/utils/rvnettcp.c **** #define RVTCP_FUNC	7
+  10:common/rtos/common/utils/rvnettcp.c **** #define RVTCP_DATA	8
+  11:common/rtos/common/utils/rvnettcp.c **** 
+  12:common/rtos/common/utils/rvnettcp.c **** #define MB_TCP_PROTOCOL_ID  0
+  13:common/rtos/common/utils/rvnettcp.c **** 
+  14:common/rtos/common/utils/rvnettcp.c **** RVNET_DATATYPE RVnetTcpSlaveProcess(uint8 *buf, RVNET_DATATYPE pkSize,
+  15:common/rtos/common/utils/rvnettcp.c **** 		uint8 device_address) {
+  27              		.loc 1 15 25
+  28              		.cfi_startproc
+  29              		@ args = 0, pretend = 0, frame = 16
+  30              		@ frame_needed = 1, uses_anonymous_args = 0
+  31 0000 80B5     		push	{r7, lr}
+  32              	.LCFI0:
+  33              		.cfi_def_cfa_offset 8
+  34              		.cfi_offset 7, -8
+  35              		.cfi_offset 14, -4
+  36 0002 84B0     		sub	sp, sp, #16
+  37              	.LCFI1:
+  38              		.cfi_def_cfa_offset 24
+  39 0004 00AF     		add	r7, sp, #0
+  40              	.LCFI2:
+  41              		.cfi_def_cfa_register 7
+  42 0006 7860     		str	r0, [r7, #4]
+  43 0008 0B46     		mov	r3, r1
+  44 000a FB70     		strb	r3, [r7, #3]
+  45 000c 1346     		mov	r3, r2
+  46 000e BB70     		strb	r3, [r7, #2]
+  16:common/rtos/common/utils/rvnettcp.c **** 	uint16 len, pid;
+  17:common/rtos/common/utils/rvnettcp.c **** 
+  18:common/rtos/common/utils/rvnettcp.c **** 	len = buf[RVTCP_LEN] << 8U;
+  47              		.loc 1 18 11
+  48 0010 7B68     		ldr	r3, [r7, #4]
+  49 0012 0433     		adds	r3, r3, #4
+  50 0014 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+  51 0016 9BB2     		uxth	r3, r3
+  52              		.loc 1 18 6
+  53 0018 1B02     		lsls	r3, r3, #8
+  54 001a FB81     		strh	r3, [r7, #14]	@ movhi
+  19:common/rtos/common/utils/rvnettcp.c **** 	len |= buf[RVTCP_LEN + 1];
+  55              		.loc 1 19 12
+  56 001c 7B68     		ldr	r3, [r7, #4]
+  57 001e 0533     		adds	r3, r3, #5
+  58 0020 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+  59 0022 9AB2     		uxth	r2, r3
+  60              		.loc 1 19 6
+  61 0024 FB89     		ldrh	r3, [r7, #14]	@ movhi
+  62 0026 1343     		orrs	r3, r3, r2
+  63 0028 FB81     		strh	r3, [r7, #14]	@ movhi
+  20:common/rtos/common/utils/rvnettcp.c **** 
+  21:common/rtos/common/utils/rvnettcp.c **** 	pid = buf[RVTCP_PID] << 8U;
+  64              		.loc 1 21 11
+  65 002a 7B68     		ldr	r3, [r7, #4]
+  66 002c 0233     		adds	r3, r3, #2
+  67 002e 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+  68 0030 9BB2     		uxth	r3, r3
+  69              		.loc 1 21 6
+  70 0032 1B02     		lsls	r3, r3, #8
+  71 0034 BB81     		strh	r3, [r7, #12]	@ movhi
+  22:common/rtos/common/utils/rvnettcp.c **** 	pid |= buf[RVTCP_PID + 1];
+  72              		.loc 1 22 12
+  73 0036 7B68     		ldr	r3, [r7, #4]
+  74 0038 0333     		adds	r3, r3, #3
+  75 003a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+  76 003c 9AB2     		uxth	r2, r3
+  77              		.loc 1 22 6
+  78 003e BB89     		ldrh	r3, [r7, #12]	@ movhi
+  79 0040 1343     		orrs	r3, r3, r2
+  80 0042 BB81     		strh	r3, [r7, #12]	@ movhi
+  23:common/rtos/common/utils/rvnettcp.c **** 
+  24:common/rtos/common/utils/rvnettcp.c **** 	switch (buf[RVTCP_FUNC]) {
+  81              		.loc 1 24 13
+  82 0044 7B68     		ldr	r3, [r7, #4]
+  83 0046 0733     		adds	r3, r3, #7
+  84 0048 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+  85              		.loc 1 24 2
+  86 004a 102B     		cmp	r3, #16
+  87 004c 4CD8     		bhi	.L2
+  88 004e 01A2     		adr	r2, .L4
+  89 0050 52F823F0 		ldr	pc, [r2, r3, lsl #2]
+  90              		.p2align 2
+  91              	.L4:
+  92 0054 99000000 		.word	.L8+1
+  93 0058 A9000000 		.word	.L7+1
+  94 005c A9000000 		.word	.L7+1
+  95 0060 B9000000 		.word	.L6+1
+  96 0064 B9000000 		.word	.L6+1
+  97 0068 C9000000 		.word	.L5+1
+  98 006c E9000000 		.word	.L2+1
+  99 0070 E9000000 		.word	.L2+1
+ 100 0074 E9000000 		.word	.L2+1
+ 101 0078 E9000000 		.word	.L2+1
+ 102 007c E9000000 		.word	.L2+1
+ 103 0080 E9000000 		.word	.L2+1
+ 104 0084 E9000000 		.word	.L2+1
+ 105 0088 E9000000 		.word	.L2+1
+ 106 008c E9000000 		.word	.L2+1
+ 107 0090 E9000000 		.word	.L2+1
+ 108 0094 D9000000 		.word	.L3+1
+ 109              		.p2align 1
+ 110              	.L8:
+  25:common/rtos/common/utils/rvnettcp.c **** 	case 0x00:
+  26:common/rtos/common/utils/rvnettcp.c **** 		len = ReadDeviceID(&buf[RVTCP_DATA]);
+ 111              		.loc 1 26 22
+ 112 0098 7B68     		ldr	r3, [r7, #4]
+ 113 009a 0833     		adds	r3, r3, #8
+ 114              		.loc 1 26 9
+ 115 009c 1846     		mov	r0, r3
+ 116 009e 234B     		ldr	r3, .L11
+ 117 00a0 9847     		blx	r3
+ 118              	.LVL0:
+ 119 00a2 0346     		mov	r3, r0
+ 120              		.loc 1 26 7
+ 121 00a4 FB81     		strh	r3, [r7, #14]	@ movhi
+  27:common/rtos/common/utils/rvnettcp.c **** 		break;
+ 122              		.loc 1 27 3
+ 123 00a6 27E0     		b	.L9
+ 124              	.L7:
+  28:common/rtos/common/utils/rvnettcp.c **** 	case 0x01:
+  29:common/rtos/common/utils/rvnettcp.c **** 	case 0x02:
+  30:common/rtos/common/utils/rvnettcp.c **** 		len = ReadNBits(&buf[RVTCP_DATA]);
+ 125              		.loc 1 30 19
+ 126 00a8 7B68     		ldr	r3, [r7, #4]
+ 127 00aa 0833     		adds	r3, r3, #8
+ 128              		.loc 1 30 9
+ 129 00ac 1846     		mov	r0, r3
+ 130 00ae 204B     		ldr	r3, .L11+4
+ 131 00b0 9847     		blx	r3
+ 132              	.LVL1:
+ 133 00b2 0346     		mov	r3, r0
+ 134              		.loc 1 30 7
+ 135 00b4 FB81     		strh	r3, [r7, #14]	@ movhi
+  31:common/rtos/common/utils/rvnettcp.c **** 		break;
+ 136              		.loc 1 31 3
+ 137 00b6 1FE0     		b	.L9
+ 138              	.L6:
+  32:common/rtos/common/utils/rvnettcp.c **** 	case 0x03:
+  33:common/rtos/common/utils/rvnettcp.c **** 	case 0x04:
+  34:common/rtos/common/utils/rvnettcp.c **** 		len = ReadNWords(&buf[RVTCP_DATA]);
+ 139              		.loc 1 34 9
+ 140 00b8 7B68     		ldr	r3, [r7, #4]
+ 141 00ba 0833     		adds	r3, r3, #8
+ 142 00bc 1846     		mov	r0, r3
+ 143 00be 1D4B     		ldr	r3, .L11+8
+ 144 00c0 9847     		blx	r3
+ 145              	.LVL2:
+ 146 00c2 0346     		mov	r3, r0
+ 147              		.loc 1 34 7
+ 148 00c4 FB81     		strh	r3, [r7, #14]	@ movhi
+  35:common/rtos/common/utils/rvnettcp.c **** 		break;
+ 149              		.loc 1 35 3
+ 150 00c6 17E0     		b	.L9
+ 151              	.L5:
+  36:common/rtos/common/utils/rvnettcp.c **** 	case 0x05:
+  37:common/rtos/common/utils/rvnettcp.c **** 		len = WriteBit(&buf[RVTCP_DATA]);
+ 152              		.loc 1 37 18
+ 153 00c8 7B68     		ldr	r3, [r7, #4]
+ 154 00ca 0833     		adds	r3, r3, #8
+ 155              		.loc 1 37 9
+ 156 00cc 1846     		mov	r0, r3
+ 157 00ce 1A4B     		ldr	r3, .L11+12
+ 158 00d0 9847     		blx	r3
+ 159              	.LVL3:
+ 160 00d2 0346     		mov	r3, r0
+ 161              		.loc 1 37 7
+ 162 00d4 FB81     		strh	r3, [r7, #14]	@ movhi
+  38:common/rtos/common/utils/rvnettcp.c **** 		break;
+ 163              		.loc 1 38 3
+ 164 00d6 0FE0     		b	.L9
+ 165              	.L3:
+  39:common/rtos/common/utils/rvnettcp.c **** 	case 0x10:
+  40:common/rtos/common/utils/rvnettcp.c **** 		//pkSize = WriteNWords(&buf[RVTCP_DATA]);
+  41:common/rtos/common/utils/rvnettcp.c **** 		len = WriteNWords(&buf[RVTCP_DATA]);
+ 166              		.loc 1 41 21
+ 167 00d8 7B68     		ldr	r3, [r7, #4]
+ 168 00da 0833     		adds	r3, r3, #8
+ 169              		.loc 1 41 9
+ 170 00dc 1846     		mov	r0, r3
+ 171 00de 174B     		ldr	r3, .L11+16
+ 172 00e0 9847     		blx	r3
+ 173              	.LVL4:
+ 174 00e2 0346     		mov	r3, r0
+ 175              		.loc 1 41 7
+ 176 00e4 FB81     		strh	r3, [r7, #14]	@ movhi
+  42:common/rtos/common/utils/rvnettcp.c **** 		break;
+ 177              		.loc 1 42 3
+ 178 00e6 07E0     		b	.L9
+ 179              	.L2:
+  43:common/rtos/common/utils/rvnettcp.c **** 	default:
+  44:common/rtos/common/utils/rvnettcp.c **** 		len = ErrorAddress(&buf[RVTCP_DATA]);
+ 180              		.loc 1 44 22
+ 181 00e8 7B68     		ldr	r3, [r7, #4]
+ 182 00ea 0833     		adds	r3, r3, #8
+ 183              		.loc 1 44 9
+ 184 00ec 1846     		mov	r0, r3
+ 185 00ee 144B     		ldr	r3, .L11+20
+ 186 00f0 9847     		blx	r3
+ 187              	.LVL5:
+ 188 00f2 0346     		mov	r3, r0
+ 189              		.loc 1 44 7
+ 190 00f4 FB81     		strh	r3, [r7, #14]	@ movhi
+  45:common/rtos/common/utils/rvnettcp.c **** 		break;
+ 191              		.loc 1 45 3
+ 192 00f6 00BF     		nop
+ 193              	.L9:
+  46:common/rtos/common/utils/rvnettcp.c **** 	}
+  47:common/rtos/common/utils/rvnettcp.c **** 	len += 1;
+ 194              		.loc 1 47 6
+ 195 00f8 FB89     		ldrh	r3, [r7, #14]	@ movhi
+ 196 00fa 0133     		adds	r3, r3, #1
+ 197 00fc FB81     		strh	r3, [r7, #14]	@ movhi
+  48:common/rtos/common/utils/rvnettcp.c **** 	buf[RVTCP_LEN] = (len + 1) >> 8U;
+ 198              		.loc 1 48 24
+ 199 00fe FB89     		ldrh	r3, [r7, #14]
+ 200 0100 0133     		adds	r3, r3, #1
+ 201              		.loc 1 48 29
+ 202 0102 1A12     		asrs	r2, r3, #8
+ 203              		.loc 1 48 5
+ 204 0104 7B68     		ldr	r3, [r7, #4]
+ 205 0106 0433     		adds	r3, r3, #4
+ 206              		.loc 1 48 17
+ 207 0108 D2B2     		uxtb	r2, r2
+ 208 010a 1A70     		strb	r2, [r3]
+  49:common/rtos/common/utils/rvnettcp.c **** 	buf[RVTCP_LEN + 1] = (len + 1) & 0xFF;
+ 209              		.loc 1 49 28
+ 210 010c FB89     		ldrh	r3, [r7, #14]	@ movhi
+ 211 010e DAB2     		uxtb	r2, r3
+ 212              		.loc 1 49 5
+ 213 0110 7B68     		ldr	r3, [r7, #4]
+ 214 0112 0533     		adds	r3, r3, #5
+ 215              		.loc 1 49 28
+ 216 0114 0132     		adds	r2, r2, #1
+ 217 0116 D2B2     		uxtb	r2, r2
+ 218              		.loc 1 49 21
+ 219 0118 1A70     		strb	r2, [r3]
+  50:common/rtos/common/utils/rvnettcp.c **** 	return (len + RVTCP_FUNC);
+ 220              		.loc 1 50 14
+ 221 011a FB89     		ldrh	r3, [r7, #14]	@ movhi
+ 222 011c DBB2     		uxtb	r3, r3
+ 223 011e 0733     		adds	r3, r3, #7
+ 224 0120 DBB2     		uxtb	r3, r3
+  51:common/rtos/common/utils/rvnettcp.c **** }
+ 225              		.loc 1 51 1
+ 226 0122 1846     		mov	r0, r3
+ 227 0124 1037     		adds	r7, r7, #16
+ 228              	.LCFI3:
+ 229              		.cfi_def_cfa_offset 8
+ 230 0126 BD46     		mov	sp, r7
+ 231              	.LCFI4:
+ 232              		.cfi_def_cfa_register 13
+ 233              		@ sp needed
+ 234 0128 80BD     		pop	{r7, pc}
+ 235              	.L12:
+ 236 012a 00BF     		.align	2
+ 237              	.L11:
+ 238 012c 00000000 		.word	ReadDeviceID
+ 239 0130 00000000 		.word	ReadNBits
+ 240 0134 00000000 		.word	ReadNWords
+ 241 0138 00000000 		.word	WriteBit
+ 242 013c 00000000 		.word	WriteNWords
+ 243 0140 00000000 		.word	ErrorAddress
+ 244              		.cfi_endproc
+ 245              	.LFE27:
+ 247              		.text
+ 248              	.Letext0:
+ 249              		.file 2 "common/rtos/common/utils/typedef.h"
+ 250              		.file 3 "common/rtos/common/utils/rvnet.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 rvnettcp.c
+C:\Users\Admin\AppData\Local\Temp\ccGt6pyO.s:18     .text.RVnetTcpSlaveProcess:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccGt6pyO.s:24     .text.RVnetTcpSlaveProcess:00000000 RVnetTcpSlaveProcess
+C:\Users\Admin\AppData\Local\Temp\ccGt6pyO.s:92     .text.RVnetTcpSlaveProcess:00000054 $d
+C:\Users\Admin\AppData\Local\Temp\ccGt6pyO.s:109    .text.RVnetTcpSlaveProcess:00000098 $t
+C:\Users\Admin\AppData\Local\Temp\ccGt6pyO.s:238    .text.RVnetTcpSlaveProcess:0000012c $d
+
+UNDEFINED SYMBOLS
+ReadDeviceID
+ReadNBits
+ReadNWords
+WriteBit
+WriteNWords
+ErrorAddress

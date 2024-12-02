@@ -1,0 +1,601 @@
+   1              		.cpu cortex-m3
+   2              		.arch armv7-m
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"led.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.global	LedReg
+  18              		.section	.bss.LedReg,"aw",%nobits
+  21              	LedReg:
+  22 0000 00       		.space	1
+  23              		.global	LedConnect
+  24              		.section	.bss.LedConnect,"aw",%nobits
+  27              	LedConnect:
+  28 0000 00       		.space	1
+  29              		.global	LedReceive
+  30              		.section	.bss.LedReceive,"aw",%nobits
+  33              	LedReceive:
+  34 0000 00       		.space	1
+  35              		.global	LedSend
+  36              		.section	.bss.LedSend,"aw",%nobits
+  39              	LedSend:
+  40 0000 00       		.space	1
+  41              		.global	LedNoModem
+  42              		.section	.bss.LedNoModem,"aw",%nobits
+  45              	LedNoModem:
+  46 0000 00       		.space	1
+  47              		.global	LedSIM
+  48              		.section	.bss.LedSIM,"aw",%nobits
+  51              	LedSIM:
+  52 0000 00       		.space	1
+  53              		.global	LedAPN
+  54              		.section	.bss.LedAPN,"aw",%nobits
+  57              	LedAPN:
+  58 0000 00       		.space	1
+  59              		.section	.text.vLedTask,"ax",%progbits
+  60              		.align	1
+  61              		.global	vLedTask
+  62              		.syntax unified
+  63              		.thumb
+  64              		.thumb_func
+  66              	vLedTask:
+  67              	.LFB27:
+  68              		.file 1 "tasks/led.c"
+   1:tasks/led.c   **** #include <stdlib.h>
+   2:tasks/led.c   **** #include <stdlib.h>
+   3:tasks/led.c   **** #include <stdarg.h>
+   4:tasks/led.c   **** 
+   5:tasks/led.c   **** #include "typedef.h"
+   6:tasks/led.c   **** #include "FreeRTOS.h"
+   7:tasks/led.c   **** #include "task.h"
+   8:tasks/led.c   **** #include "usart2.h"
+   9:tasks/led.c   **** #include "gprscon.h"
+  10:tasks/led.c   **** #include "rvnettcp.h"
+  11:tasks/led.c   **** #include "rtclock.h"
+  12:tasks/led.c   **** #include "board.h"
+  13:tasks/led.c   **** bool LedReg, LedConnect, LedReceive, LedSend;
+  14:tasks/led.c   **** bool LedNoModem, LedSIM, LedAPN;
+  15:tasks/led.c   **** 
+  16:tasks/led.c   **** void vLedTask(void *pvParameters) {
+  69              		.loc 1 16 35
+  70              		.cfi_startproc
+  71              		@ args = 0, pretend = 0, frame = 16
+  72              		@ frame_needed = 1, uses_anonymous_args = 0
+  73 0000 80B5     		push	{r7, lr}
+  74              	.LCFI0:
+  75              		.cfi_def_cfa_offset 8
+  76              		.cfi_offset 7, -8
+  77              		.cfi_offset 14, -4
+  78 0002 84B0     		sub	sp, sp, #16
+  79              	.LCFI1:
+  80              		.cfi_def_cfa_offset 24
+  81 0004 00AF     		add	r7, sp, #0
+  82              	.LCFI2:
+  83              		.cfi_def_cfa_register 7
+  84 0006 7860     		str	r0, [r7, #4]
+  17:tasks/led.c   **** 	volatile int heapSize = 0;
+  85              		.loc 1 17 15
+  86 0008 0023     		movs	r3, #0
+  87 000a FB60     		str	r3, [r7, #12]
+  88              	.L13:
+  18:tasks/led.c   **** 	while (1) {
+  19:tasks/led.c   **** 		//IWDG_SetReload(10000); ру
+  20:tasks/led.c   **** 		IWDG_ReloadCounter();
+  89              		.loc 1 20 3
+  90 000c 764B     		ldr	r3, .L14
+  91 000e 9847     		blx	r3
+  92              	.LVL0:
+  21:tasks/led.c   **** 
+  22:tasks/led.c   **** 		heapSize = xPortGetFreeHeapSize();
+  93              		.loc 1 22 14
+  94 0010 764B     		ldr	r3, .L14+4
+  95 0012 9847     		blx	r3
+  96              	.LVL1:
+  97 0014 0346     		mov	r3, r0
+  98              		.loc 1 22 12
+  99 0016 FB60     		str	r3, [r7, #12]
+  23:tasks/led.c   **** 		heapSize += 0;
+ 100              		.loc 1 23 12
+ 101 0018 FB68     		ldr	r3, [r7, #12]
+ 102 001a FB60     		str	r3, [r7, #12]
+  24:tasks/led.c   **** 		GPIO_SetBits(GPIO_LEDWORK, LEDWORK);
+ 103              		.loc 1 24 3
+ 104 001c 8021     		movs	r1, #128
+ 105 001e 7448     		ldr	r0, .L14+8
+ 106 0020 744B     		ldr	r3, .L14+12
+ 107 0022 9847     		blx	r3
+ 108              	.LVL2:
+  25:tasks/led.c   **** 
+  26:tasks/led.c   **** 		if ((ResetTime)/*&&(!LedConnect)*/) {
+ 109              		.loc 1 26 7
+ 110 0024 744B     		ldr	r3, .L14+16
+ 111 0026 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 112              		.loc 1 26 6
+ 113 0028 002B     		cmp	r3, #0
+ 114 002a 27D0     		beq	.L2
+  27:tasks/led.c   **** 			if (manualwork == 1) {
+ 115              		.loc 1 27 19
+ 116 002c 734B     		ldr	r3, .L14+20
+ 117 002e 1B68     		ldr	r3, [r3]
+ 118              		.loc 1 27 7
+ 119 0030 012B     		cmp	r3, #1
+ 120 0032 0ED1     		bne	.L3
+  28:tasks/led.c   **** 				GPIO_SetBits(GPIO_LEDWORK, LEDWORK);
+ 121              		.loc 1 28 5
+ 122 0034 8021     		movs	r1, #128
+ 123 0036 6E48     		ldr	r0, .L14+8
+ 124 0038 6E4B     		ldr	r3, .L14+12
+ 125 003a 9847     		blx	r3
+ 126              	.LVL3:
+  29:tasks/led.c   **** 				vTaskDelay(100);
+ 127              		.loc 1 29 5
+ 128 003c 6420     		movs	r0, #100
+ 129 003e 704B     		ldr	r3, .L14+24
+ 130 0040 9847     		blx	r3
+ 131              	.LVL4:
+  30:tasks/led.c   **** 				GPIO_ResetBits(GPIO_LEDWORK, LEDWORK);
+ 132              		.loc 1 30 5
+ 133 0042 8021     		movs	r1, #128
+ 134 0044 6A48     		ldr	r0, .L14+8
+ 135 0046 6F4B     		ldr	r3, .L14+28
+ 136 0048 9847     		blx	r3
+ 137              	.LVL5:
+  31:tasks/led.c   **** 				vTaskDelay(300);
+ 138              		.loc 1 31 5
+ 139 004a 4FF49670 		mov	r0, #300
+ 140 004e 6C4B     		ldr	r3, .L14+24
+ 141 0050 9847     		blx	r3
+ 142              	.LVL6:
+ 143              	.L3:
+  32:tasks/led.c   **** 			}
+  33:tasks/led.c   **** 			if (manualwork == 0) {
+ 144              		.loc 1 33 19
+ 145 0052 6A4B     		ldr	r3, .L14+20
+ 146 0054 1B68     		ldr	r3, [r3]
+ 147              		.loc 1 33 7
+ 148 0056 002B     		cmp	r3, #0
+ 149 0058 1CD1     		bne	.L4
+  34:tasks/led.c   **** 				GPIO_SetBits(GPIO_LEDWORK, LEDWORK);
+ 150              		.loc 1 34 5
+ 151 005a 8021     		movs	r1, #128
+ 152 005c 6448     		ldr	r0, .L14+8
+ 153 005e 654B     		ldr	r3, .L14+12
+ 154 0060 9847     		blx	r3
+ 155              	.LVL7:
+  35:tasks/led.c   **** 				vTaskDelay(2000);
+ 156              		.loc 1 35 5
+ 157 0062 4FF4FA60 		mov	r0, #2000
+ 158 0066 664B     		ldr	r3, .L14+24
+ 159 0068 9847     		blx	r3
+ 160              	.LVL8:
+  36:tasks/led.c   **** 				GPIO_ResetBits(GPIO_LEDWORK, LEDWORK);
+ 161              		.loc 1 36 5
+ 162 006a 8021     		movs	r1, #128
+ 163 006c 6048     		ldr	r0, .L14+8
+ 164 006e 654B     		ldr	r3, .L14+28
+ 165 0070 9847     		blx	r3
+ 166              	.LVL9:
+  37:tasks/led.c   **** 				vTaskDelay(2000);
+ 167              		.loc 1 37 5
+ 168 0072 4FF4FA60 		mov	r0, #2000
+ 169 0076 624B     		ldr	r3, .L14+24
+ 170 0078 9847     		blx	r3
+ 171              	.LVL10:
+ 172 007a 0BE0     		b	.L4
+ 173              	.L2:
+  38:tasks/led.c   **** 			}
+  39:tasks/led.c   **** 
+  40:tasks/led.c   **** 		} else /*if (!LedConnect)*/
+  41:tasks/led.c   **** 		{
+  42:tasks/led.c   **** 			vTaskDelay(1000);
+ 174              		.loc 1 42 4
+ 175 007c 4FF47A70 		mov	r0, #1000
+ 176 0080 5F4B     		ldr	r3, .L14+24
+ 177 0082 9847     		blx	r3
+ 178              	.LVL11:
+  43:tasks/led.c   **** 			GPIO_ResetBits(GPIO_LEDWORK, LEDWORK);
+ 179              		.loc 1 43 4
+ 180 0084 8021     		movs	r1, #128
+ 181 0086 5A48     		ldr	r0, .L14+8
+ 182 0088 5E4B     		ldr	r3, .L14+28
+ 183 008a 9847     		blx	r3
+ 184              	.LVL12:
+  44:tasks/led.c   **** 			vTaskDelay(3000);
+ 185              		.loc 1 44 4
+ 186 008c 40F6B830 		movw	r0, #3000
+ 187 0090 5B4B     		ldr	r3, .L14+24
+ 188 0092 9847     		blx	r3
+ 189              	.LVL13:
+ 190              	.L4:
+  45:tasks/led.c   **** 
+  46:tasks/led.c   **** 		}
+  47:tasks/led.c   **** 		if (LedReg) {
+ 191              		.loc 1 47 7
+ 192 0094 5C4B     		ldr	r3, .L14+32
+ 193 0096 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 194              		.loc 1 47 6
+ 195 0098 002B     		cmp	r3, #0
+ 196 009a 19D0     		beq	.L5
+  48:tasks/led.c   **** 			GPIO_SetBits(GPIO_LED, LEDRED);
+ 197              		.loc 1 48 4
+ 198 009c 0821     		movs	r1, #8
+ 199 009e 5B48     		ldr	r0, .L14+36
+ 200 00a0 544B     		ldr	r3, .L14+12
+ 201 00a2 9847     		blx	r3
+ 202              	.LVL14:
+  49:tasks/led.c   **** 			GPIO_ResetBits(GPIO_LED, LEDGREEN);
+ 203              		.loc 1 49 4
+ 204 00a4 0421     		movs	r1, #4
+ 205 00a6 5948     		ldr	r0, .L14+36
+ 206 00a8 564B     		ldr	r3, .L14+28
+ 207 00aa 9847     		blx	r3
+ 208              	.LVL15:
+  50:tasks/led.c   **** 			GPIO_ResetBits(GPIO_LEDWORK, LEDWORK); // для версии 4.49.0
+ 209              		.loc 1 50 4
+ 210 00ac 8021     		movs	r1, #128
+ 211 00ae 5048     		ldr	r0, .L14+8
+ 212 00b0 544B     		ldr	r3, .L14+28
+ 213 00b2 9847     		blx	r3
+ 214              	.LVL16:
+  51:tasks/led.c   **** 			vTaskDelay(100);
+ 215              		.loc 1 51 4
+ 216 00b4 6420     		movs	r0, #100
+ 217 00b6 524B     		ldr	r3, .L14+24
+ 218 00b8 9847     		blx	r3
+ 219              	.LVL17:
+  52:tasks/led.c   **** 			GPIO_SetBits(GPIO_LED, LEDGREEN);
+ 220              		.loc 1 52 4
+ 221 00ba 0421     		movs	r1, #4
+ 222 00bc 5348     		ldr	r0, .L14+36
+ 223 00be 4D4B     		ldr	r3, .L14+12
+ 224 00c0 9847     		blx	r3
+ 225              	.LVL18:
+  53:tasks/led.c   **** 			GPIO_SetBits(GPIO_LEDWORK, LEDWORK); // для версии 4.49.0
+ 226              		.loc 1 53 4
+ 227 00c2 8021     		movs	r1, #128
+ 228 00c4 4A48     		ldr	r0, .L14+8
+ 229 00c6 4B4B     		ldr	r3, .L14+12
+ 230 00c8 9847     		blx	r3
+ 231              	.LVL19:
+  54:tasks/led.c   **** 			vTaskDelay(100);
+ 232              		.loc 1 54 4
+ 233 00ca 6420     		movs	r0, #100
+ 234 00cc 4C4B     		ldr	r3, .L14+24
+ 235 00ce 9847     		blx	r3
+ 236              	.LVL20:
+ 237              	.L5:
+  55:tasks/led.c   **** 		}
+  56:tasks/led.c   **** 
+  57:tasks/led.c   **** 		if (LedConnect) {
+ 238              		.loc 1 57 7
+ 239 00d0 4F4B     		ldr	r3, .L14+40
+ 240 00d2 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 241              		.loc 1 57 6
+ 242 00d4 002B     		cmp	r3, #0
+ 243 00d6 42D0     		beq	.L6
+  58:tasks/led.c   **** 			if (LedSend) {
+ 244              		.loc 1 58 8
+ 245 00d8 4E4B     		ldr	r3, .L14+44
+ 246 00da 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 247              		.loc 1 58 7
+ 248 00dc 002B     		cmp	r3, #0
+ 249 00de 1AD0     		beq	.L7
+  59:tasks/led.c   **** 
+  60:tasks/led.c   **** 				GPIO_ResetBits(GPIO_LED, LEDRED);
+ 250              		.loc 1 60 5
+ 251 00e0 0821     		movs	r1, #8
+ 252 00e2 4A48     		ldr	r0, .L14+36
+ 253 00e4 474B     		ldr	r3, .L14+28
+ 254 00e6 9847     		blx	r3
+ 255              	.LVL21:
+  61:tasks/led.c   **** 				GPIO_SetBits(GPIO_LED, LEDGREEN);
+ 256              		.loc 1 61 5
+ 257 00e8 0421     		movs	r1, #4
+ 258 00ea 4848     		ldr	r0, .L14+36
+ 259 00ec 414B     		ldr	r3, .L14+12
+ 260 00ee 9847     		blx	r3
+ 261              	.LVL22:
+  62:tasks/led.c   **** 				vTaskDelay(150);
+ 262              		.loc 1 62 5
+ 263 00f0 9620     		movs	r0, #150
+ 264 00f2 434B     		ldr	r3, .L14+24
+ 265 00f4 9847     		blx	r3
+ 266              	.LVL23:
+  63:tasks/led.c   **** 				GPIO_ResetBits(GPIO_LED, LEDGREEN);
+ 267              		.loc 1 63 5
+ 268 00f6 0421     		movs	r1, #4
+ 269 00f8 4448     		ldr	r0, .L14+36
+ 270 00fa 424B     		ldr	r3, .L14+28
+ 271 00fc 9847     		blx	r3
+ 272              	.LVL24:
+  64:tasks/led.c   **** 				GPIO_SetBits(GPIO_LED, LEDRED);
+ 273              		.loc 1 64 5
+ 274 00fe 0821     		movs	r1, #8
+ 275 0100 4248     		ldr	r0, .L14+36
+ 276 0102 3C4B     		ldr	r3, .L14+12
+ 277 0104 9847     		blx	r3
+ 278              	.LVL25:
+  65:tasks/led.c   **** 				GPIO_ResetBits(GPIO_LEDWORK, LEDWORK);
+ 279              		.loc 1 65 5
+ 280 0106 8021     		movs	r1, #128
+ 281 0108 3948     		ldr	r0, .L14+8
+ 282 010a 3E4B     		ldr	r3, .L14+28
+ 283 010c 9847     		blx	r3
+ 284              	.LVL26:
+  66:tasks/led.c   **** 				LedSend = 0;
+ 285              		.loc 1 66 13
+ 286 010e 414B     		ldr	r3, .L14+44
+ 287 0110 0022     		movs	r2, #0
+ 288 0112 1A70     		strb	r2, [r3]
+ 289 0114 7AE7     		b	.L13
+ 290              	.L7:
+  67:tasks/led.c   **** 			} else if (LedReceive) {
+ 291              		.loc 1 67 15
+ 292 0116 404B     		ldr	r3, .L14+48
+ 293 0118 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 294              		.loc 1 67 14
+ 295 011a 002B     		cmp	r3, #0
+ 296 011c 16D0     		beq	.L9
+  68:tasks/led.c   **** 				GPIO_ResetBits(GPIO_LED, LEDGREEN);
+ 297              		.loc 1 68 5
+ 298 011e 0421     		movs	r1, #4
+ 299 0120 3A48     		ldr	r0, .L14+36
+ 300 0122 384B     		ldr	r3, .L14+28
+ 301 0124 9847     		blx	r3
+ 302              	.LVL27:
+  69:tasks/led.c   **** 				GPIO_SetBits(GPIO_LED, LEDRED);
+ 303              		.loc 1 69 5
+ 304 0126 0821     		movs	r1, #8
+ 305 0128 3848     		ldr	r0, .L14+36
+ 306 012a 324B     		ldr	r3, .L14+12
+ 307 012c 9847     		blx	r3
+ 308              	.LVL28:
+  70:tasks/led.c   **** 				vTaskDelay(150);
+ 309              		.loc 1 70 5
+ 310 012e 9620     		movs	r0, #150
+ 311 0130 334B     		ldr	r3, .L14+24
+ 312 0132 9847     		blx	r3
+ 313              	.LVL29:
+  71:tasks/led.c   **** 				GPIO_ResetBits(GPIO_LED, LEDGREEN);
+ 314              		.loc 1 71 5
+ 315 0134 0421     		movs	r1, #4
+ 316 0136 3548     		ldr	r0, .L14+36
+ 317 0138 324B     		ldr	r3, .L14+28
+ 318 013a 9847     		blx	r3
+ 319              	.LVL30:
+  72:tasks/led.c   **** 				GPIO_SetBits(GPIO_LED, LEDRED);
+ 320              		.loc 1 72 5
+ 321 013c 0821     		movs	r1, #8
+ 322 013e 3348     		ldr	r0, .L14+36
+ 323 0140 2C4B     		ldr	r3, .L14+12
+ 324 0142 9847     		blx	r3
+ 325              	.LVL31:
+  73:tasks/led.c   **** 				LedReceive = 0;
+ 326              		.loc 1 73 16
+ 327 0144 344B     		ldr	r3, .L14+48
+ 328 0146 0022     		movs	r2, #0
+ 329 0148 1A70     		strb	r2, [r3]
+ 330 014a 5FE7     		b	.L13
+ 331              	.L9:
+  74:tasks/led.c   **** 
+  75:tasks/led.c   **** 			} else {
+  76:tasks/led.c   **** 				GPIO_ResetBits(GPIO_LED, LEDGREEN);
+ 332              		.loc 1 76 5
+ 333 014c 0421     		movs	r1, #4
+ 334 014e 2F48     		ldr	r0, .L14+36
+ 335 0150 2C4B     		ldr	r3, .L14+28
+ 336 0152 9847     		blx	r3
+ 337              	.LVL32:
+  77:tasks/led.c   **** 				GPIO_SetBits(GPIO_LED, LEDRED);
+ 338              		.loc 1 77 5
+ 339 0154 0821     		movs	r1, #8
+ 340 0156 2D48     		ldr	r0, .L14+36
+ 341 0158 264B     		ldr	r3, .L14+12
+ 342 015a 9847     		blx	r3
+ 343              	.LVL33:
+ 344 015c 56E7     		b	.L13
+ 345              	.L6:
+  78:tasks/led.c   **** 			}
+  79:tasks/led.c   **** 			/*GPIO_ResetBits(GPIO_LEDWORK, LEDWORK);
+  80:tasks/led.c   **** 			 vTaskDelay(50);
+  81:tasks/led.c   **** 			 GPIO_SetBits(GPIO_LEDWORK, LEDWORK);
+  82:tasks/led.c   **** 			 vTaskDelay(50); // для версии 4.49.0*/
+  83:tasks/led.c   **** 
+  84:tasks/led.c   **** 		}
+  85:tasks/led.c   **** 
+  86:tasks/led.c   **** 		else {
+  87:tasks/led.c   **** 
+  88:tasks/led.c   **** 			if (LedNoModem) {
+ 346              		.loc 1 88 8
+ 347 015e 2F4B     		ldr	r3, .L14+52
+ 348 0160 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 349              		.loc 1 88 7
+ 350 0162 002B     		cmp	r3, #0
+ 351 0164 0FD0     		beq	.L10
+  89:tasks/led.c   **** 				GPIO_SetBits(GPIO_LED, LEDRED);
+ 352              		.loc 1 89 5
+ 353 0166 0821     		movs	r1, #8
+ 354 0168 2848     		ldr	r0, .L14+36
+ 355 016a 224B     		ldr	r3, .L14+12
+ 356 016c 9847     		blx	r3
+ 357              	.LVL34:
+  90:tasks/led.c   **** 				vTaskDelay(1000);
+ 358              		.loc 1 90 5
+ 359 016e 4FF47A70 		mov	r0, #1000
+ 360 0172 234B     		ldr	r3, .L14+24
+ 361 0174 9847     		blx	r3
+ 362              	.LVL35:
+  91:tasks/led.c   **** 				GPIO_ResetBits(GPIO_LED, LEDRED);
+ 363              		.loc 1 91 5
+ 364 0176 0821     		movs	r1, #8
+ 365 0178 2448     		ldr	r0, .L14+36
+ 366 017a 224B     		ldr	r3, .L14+28
+ 367 017c 9847     		blx	r3
+ 368              	.LVL36:
+  92:tasks/led.c   **** 				vTaskDelay(250);
+ 369              		.loc 1 92 5
+ 370 017e FA20     		movs	r0, #250
+ 371 0180 1F4B     		ldr	r3, .L14+24
+ 372 0182 9847     		blx	r3
+ 373              	.LVL37:
+ 374 0184 42E7     		b	.L13
+ 375              	.L10:
+  93:tasks/led.c   **** 			} else if (LedSIM) {
+ 376              		.loc 1 93 15
+ 377 0186 264B     		ldr	r3, .L14+56
+ 378 0188 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 379              		.loc 1 93 14
+ 380 018a 002B     		cmp	r3, #0
+ 381 018c 0FD0     		beq	.L11
+  94:tasks/led.c   **** 				GPIO_SetBits(GPIO_LED, LEDRED);
+ 382              		.loc 1 94 5
+ 383 018e 0821     		movs	r1, #8
+ 384 0190 1E48     		ldr	r0, .L14+36
+ 385 0192 184B     		ldr	r3, .L14+12
+ 386 0194 9847     		blx	r3
+ 387              	.LVL38:
+  95:tasks/led.c   **** 				vTaskDelay(250);
+ 388              		.loc 1 95 5
+ 389 0196 FA20     		movs	r0, #250
+ 390 0198 194B     		ldr	r3, .L14+24
+ 391 019a 9847     		blx	r3
+ 392              	.LVL39:
+  96:tasks/led.c   **** 				GPIO_ResetBits(GPIO_LED, LEDRED);
+ 393              		.loc 1 96 5
+ 394 019c 0821     		movs	r1, #8
+ 395 019e 1B48     		ldr	r0, .L14+36
+ 396 01a0 184B     		ldr	r3, .L14+28
+ 397 01a2 9847     		blx	r3
+ 398              	.LVL40:
+  97:tasks/led.c   **** 				vTaskDelay(1000);
+ 399              		.loc 1 97 5
+ 400 01a4 4FF47A70 		mov	r0, #1000
+ 401 01a8 154B     		ldr	r3, .L14+24
+ 402 01aa 9847     		blx	r3
+ 403              	.LVL41:
+ 404 01ac 2EE7     		b	.L13
+ 405              	.L11:
+  98:tasks/led.c   **** 			} else if (LedAPN) {
+ 406              		.loc 1 98 15
+ 407 01ae 1D4B     		ldr	r3, .L14+60
+ 408 01b0 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 409              		.loc 1 98 14
+ 410 01b2 002B     		cmp	r3, #0
+ 411 01b4 0ED0     		beq	.L12
+  99:tasks/led.c   **** 				GPIO_SetBits(GPIO_LED, LEDRED);
+ 412              		.loc 1 99 5
+ 413 01b6 0821     		movs	r1, #8
+ 414 01b8 1448     		ldr	r0, .L14+36
+ 415 01ba 0E4B     		ldr	r3, .L14+12
+ 416 01bc 9847     		blx	r3
+ 417              	.LVL42:
+ 100:tasks/led.c   **** 				vTaskDelay(250);
+ 418              		.loc 1 100 5
+ 419 01be FA20     		movs	r0, #250
+ 420 01c0 0F4B     		ldr	r3, .L14+24
+ 421 01c2 9847     		blx	r3
+ 422              	.LVL43:
+ 101:tasks/led.c   **** 				GPIO_ResetBits(GPIO_LED, LEDRED);
+ 423              		.loc 1 101 5
+ 424 01c4 0821     		movs	r1, #8
+ 425 01c6 1148     		ldr	r0, .L14+36
+ 426 01c8 0E4B     		ldr	r3, .L14+28
+ 427 01ca 9847     		blx	r3
+ 428              	.LVL44:
+ 102:tasks/led.c   **** 				vTaskDelay(250);
+ 429              		.loc 1 102 5
+ 430 01cc FA20     		movs	r0, #250
+ 431 01ce 0C4B     		ldr	r3, .L14+24
+ 432 01d0 9847     		blx	r3
+ 433              	.LVL45:
+ 434 01d2 1BE7     		b	.L13
+ 435              	.L12:
+ 103:tasks/led.c   **** 
+ 104:tasks/led.c   **** 			} else {
+ 105:tasks/led.c   **** 				GPIO_SetBits(GPIO_LED, LEDRED);
+ 436              		.loc 1 105 5
+ 437 01d4 0821     		movs	r1, #8
+ 438 01d6 0D48     		ldr	r0, .L14+36
+ 439 01d8 064B     		ldr	r3, .L14+12
+ 440 01da 9847     		blx	r3
+ 441              	.LVL46:
+ 106:tasks/led.c   **** 				GPIO_SetBits(GPIO_LED, LEDGREEN);
+ 442              		.loc 1 106 5
+ 443 01dc 0421     		movs	r1, #4
+ 444 01de 0B48     		ldr	r0, .L14+36
+ 445 01e0 044B     		ldr	r3, .L14+12
+ 446 01e2 9847     		blx	r3
+ 447              	.LVL47:
+  20:tasks/led.c   **** 
+ 448              		.loc 1 20 3
+ 449 01e4 12E7     		b	.L13
+ 450              	.L15:
+ 451 01e6 00BF     		.align	2
+ 452              	.L14:
+ 453 01e8 00000000 		.word	IWDG_ReloadCounter
+ 454 01ec 00000000 		.word	xPortGetFreeHeapSize
+ 455 01f0 00080140 		.word	1073809408
+ 456 01f4 00000000 		.word	GPIO_SetBits
+ 457 01f8 00000000 		.word	ResetTime
+ 458 01fc 00000000 		.word	manualwork
+ 459 0200 00000000 		.word	vTaskDelay
+ 460 0204 00000000 		.word	GPIO_ResetBits
+ 461 0208 00000000 		.word	LedReg
+ 462 020c 00100140 		.word	1073811456
+ 463 0210 00000000 		.word	LedConnect
+ 464 0214 00000000 		.word	LedSend
+ 465 0218 00000000 		.word	LedReceive
+ 466 021c 00000000 		.word	LedNoModem
+ 467 0220 00000000 		.word	LedSIM
+ 468 0224 00000000 		.word	LedAPN
+ 469              		.cfi_endproc
+ 470              	.LFE27:
+ 472              		.text
+ 473              	.Letext0:
+ 474              		.file 2 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 475              		.file 3 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 476              		.file 4 "common/lib.stm32/CMSIS/Core/CM3/stm32f10x.h"
+ 477              		.file 5 "./board.h"
+ 478              		.file 6 "common/rtos/common/driver/rtclock.h"
+ 479              		.file 7 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_iwdg.h"
+ 480              		.file 8 "common/rtos/include/portable.h"
+ 481              		.file 9 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_gpio.h"
+ 482              		.file 10 "common/rtos/include/task.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 led.c
+C:\Users\Admin\AppData\Local\Temp\ccx9Oioh.s:21     .bss.LedReg:00000000 LedReg
+C:\Users\Admin\AppData\Local\Temp\ccx9Oioh.s:22     .bss.LedReg:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\ccx9Oioh.s:27     .bss.LedConnect:00000000 LedConnect
+C:\Users\Admin\AppData\Local\Temp\ccx9Oioh.s:28     .bss.LedConnect:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\ccx9Oioh.s:33     .bss.LedReceive:00000000 LedReceive
+C:\Users\Admin\AppData\Local\Temp\ccx9Oioh.s:34     .bss.LedReceive:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\ccx9Oioh.s:39     .bss.LedSend:00000000 LedSend
+C:\Users\Admin\AppData\Local\Temp\ccx9Oioh.s:40     .bss.LedSend:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\ccx9Oioh.s:45     .bss.LedNoModem:00000000 LedNoModem
+C:\Users\Admin\AppData\Local\Temp\ccx9Oioh.s:46     .bss.LedNoModem:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\ccx9Oioh.s:51     .bss.LedSIM:00000000 LedSIM
+C:\Users\Admin\AppData\Local\Temp\ccx9Oioh.s:52     .bss.LedSIM:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\ccx9Oioh.s:57     .bss.LedAPN:00000000 LedAPN
+C:\Users\Admin\AppData\Local\Temp\ccx9Oioh.s:58     .bss.LedAPN:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\ccx9Oioh.s:60     .text.vLedTask:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccx9Oioh.s:66     .text.vLedTask:00000000 vLedTask
+C:\Users\Admin\AppData\Local\Temp\ccx9Oioh.s:453    .text.vLedTask:000001e8 $d
+
+UNDEFINED SYMBOLS
+IWDG_ReloadCounter
+xPortGetFreeHeapSize
+GPIO_SetBits
+ResetTime
+manualwork
+vTaskDelay
+GPIO_ResetBits

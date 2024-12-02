@@ -1,0 +1,2721 @@
+   1              		.cpu cortex-m3
+   2              		.arch armv7-m
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"mios32_iic.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.global	MIOS32_IIC_unexpected_event
+  18              		.section	.bss.MIOS32_IIC_unexpected_event,"aw",%nobits
+  19              		.align	2
+  22              	MIOS32_IIC_unexpected_event:
+  23 0000 00000000 		.space	4
+  24              		.section	.bss.iic_rec,"aw",%nobits
+  25              		.align	2
+  28              	iic_rec:
+  29 0000 00000000 		.space	36
+  29      00000000 
+  29      00000000 
+  29      00000000 
+  29      00000000 
+  30              		.section	.text.MIOS32_IIC_Init,"ax",%progbits
+  31              		.align	1
+  32              		.global	MIOS32_IIC_Init
+  33              		.syntax unified
+  34              		.thumb
+  35              		.thumb_func
+  37              	MIOS32_IIC_Init:
+  38              	.LFB27:
+  39              		.file 1 "src/mios32_iic.c"
+   1:src/mios32_iic.c **** // $Id: mios32_iic.c 1243 2011-07-06 18:19:24Z tk $
+   2:src/mios32_iic.c **** //! \defgroup MIOS32_IIC
+   3:src/mios32_iic.c **** //!
+   4:src/mios32_iic.c **** //! IIC driver for MIOS32
+   5:src/mios32_iic.c **** //!
+   6:src/mios32_iic.c **** //! Interrupt driven approach, inspired by STM32 AN15021, enriched by
+   7:src/mios32_iic.c **** //! more generic buffer send/receive routines and a proper error/failsave handling
+   8:src/mios32_iic.c **** //!
+   9:src/mios32_iic.c **** //! Some remarks:
+  10:src/mios32_iic.c **** //! A common polling method would work unstable on receive transactions if the
+  11:src/mios32_iic.c **** //! sending rouine is interrupted, so that NAK + STOP cannot be requested
+  12:src/mios32_iic.c **** //! early enough before the last byte should be received
+  13:src/mios32_iic.c **** //! See also this enlightening forum thread http://www.st.com/mcu/forums-cat-6701-23.html
+  14:src/mios32_iic.c **** //!
+  15:src/mios32_iic.c **** //! DMA transfers are no solution for MIOS32, as it should stay compatible
+  16:src/mios32_iic.c **** //! to mid-range devices (-> no DMA2), and the available DMA channels which
+  17:src/mios32_iic.c **** //! could be used for I2C2 are already allocated by SPI1 and SPI2
+  18:src/mios32_iic.c **** //!
+  19:src/mios32_iic.c **** //! The interrupt has to run with higher priority - it has to be ensured that
+  20:src/mios32_iic.c **** //! the received data is read from DR register before the ACK of the previous
+  21:src/mios32_iic.c **** //! byte is sent, otherwise the I2C peripheral can get busy permanently, waiting
+  22:src/mios32_iic.c **** //! for a NAK which it will never transmit as it will never request a byte in
+  23:src/mios32_iic.c **** //! master mode -> lifelock -> design flaw
+  24:src/mios32_iic.c **** //!
+  25:src/mios32_iic.c **** //! I must highlight that I don't really like the I2C concept of STM32. It's
+  26:src/mios32_iic.c **** //! unbelievable that the guys specified a pipeline based approach, but
+  27:src/mios32_iic.c **** //! haven't put the NAK/Stop condition into the transaction pipeline
+  28:src/mios32_iic.c **** //! \{
+  29:src/mios32_iic.c **** /* ==========================================================================
+  30:src/mios32_iic.c ****  *
+  31:src/mios32_iic.c ****  *  Copyright (C) 2008 Thorsten Klose (tk@midibox.org)
+  32:src/mios32_iic.c ****  *  Licensed for personal non-commercial use only.
+  33:src/mios32_iic.c ****  *  All other rights reserved.
+  34:src/mios32_iic.c ****  *
+  35:src/mios32_iic.c ****  *  IRQ handlers reworked by Matthias Mächler (juli 2009)
+  36:src/mios32_iic.c ****  *
+  37:src/mios32_iic.c ****  * ==========================================================================
+  38:src/mios32_iic.c ****  */
+  39:src/mios32_iic.c **** 
+  40:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+  41:src/mios32_iic.c **** // Include files
+  42:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+  43:src/mios32_iic.c **** 
+  44:src/mios32_iic.c **** #include "mios32_iic.h"
+  45:src/mios32_iic.c **** #include "mios32_irq.h"
+  46:src/mios32_iic.c **** 
+  47:src/mios32_iic.c **** 
+  48:src/mios32_iic.c **** // this module can be optionally disabled in a local mios32_config.h file (included from mios32.h)
+  49:src/mios32_iic.c **** #if !defined(MIOS32_DONT_USE_IIC)
+  50:src/mios32_iic.c **** 
+  51:src/mios32_iic.c **** 
+  52:src/mios32_iic.c **** 
+  53:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+  54:src/mios32_iic.c **** // Pin definitions
+  55:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+  56:src/mios32_iic.c **** 
+  57:src/mios32_iic.c **** #define MIOS32_IIC0_SCL_PORT    GPIOB
+  58:src/mios32_iic.c **** #define MIOS32_IIC0_SCL_PIN     GPIO_Pin_6
+  59:src/mios32_iic.c **** #define MIOS32_IIC0_SDA_PORT    GPIOB
+  60:src/mios32_iic.c **** #define MIOS32_IIC0_SDA_PIN     GPIO_Pin_7
+  61:src/mios32_iic.c **** 
+  62:src/mios32_iic.c **** #define MIOS32_IIC1_SCL_PORT    GPIOB
+  63:src/mios32_iic.c **** #define MIOS32_IIC1_SCL_PIN     GPIO_Pin_10
+  64:src/mios32_iic.c **** #define MIOS32_IIC1_SDA_PORT    GPIOB
+  65:src/mios32_iic.c **** #define MIOS32_IIC1_SDA_PIN     GPIO_Pin_11
+  66:src/mios32_iic.c **** 
+  67:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+  68:src/mios32_iic.c **** // Duty cycle definitions
+  69:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+  70:src/mios32_iic.c **** 
+  71:src/mios32_iic.c **** #ifndef MIOS32_IIC0_DUTYCYCLE
+  72:src/mios32_iic.c **** #define MIOS32_IIC0_DUTYCYCLE I2C_DutyCycle_2
+  73:src/mios32_iic.c **** #endif
+  74:src/mios32_iic.c **** 
+  75:src/mios32_iic.c **** #ifndef MIOS32_IIC1_DUTYCYCLE
+  76:src/mios32_iic.c **** #define MIOS32_IIC1_DUTYCYCLE I2C_DutyCycle_2
+  77:src/mios32_iic.c **** #endif
+  78:src/mios32_iic.c **** 
+  79:src/mios32_iic.c **** 
+  80:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+  81:src/mios32_iic.c **** // Local definitions
+  82:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+  83:src/mios32_iic.c **** 
+  84:src/mios32_iic.c **** 
+  85:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+  86:src/mios32_iic.c **** // Global variables
+  87:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+  88:src/mios32_iic.c **** 
+  89:src/mios32_iic.c **** volatile u32 MIOS32_IIC_unexpected_event;
+  90:src/mios32_iic.c **** 
+  91:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+  92:src/mios32_iic.c **** // Local types
+  93:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+  94:src/mios32_iic.c **** 
+  95:src/mios32_iic.c **** typedef union {
+  96:src/mios32_iic.c ****   struct {
+  97:src/mios32_iic.c ****     unsigned ALL:8;
+  98:src/mios32_iic.c ****   };
+  99:src/mios32_iic.c ****   struct {
+ 100:src/mios32_iic.c ****     unsigned BUSY:1;
+ 101:src/mios32_iic.c ****     unsigned STOP_REQUESTED:1;
+ 102:src/mios32_iic.c ****     unsigned ABORT_IF_FIRST_BYTE_0:1;
+ 103:src/mios32_iic.c ****     unsigned WRITE_WITHOUT_STOP:1;
+ 104:src/mios32_iic.c ****   };
+ 105:src/mios32_iic.c **** } transfer_state_t;
+ 106:src/mios32_iic.c **** 
+ 107:src/mios32_iic.c **** 
+ 108:src/mios32_iic.c **** typedef struct {
+ 109:src/mios32_iic.c ****   I2C_TypeDef *base;
+ 110:src/mios32_iic.c **** 
+ 111:src/mios32_iic.c ****   u8 iic_address;
+ 112:src/mios32_iic.c ****   u8 *tx_buffer_ptr;
+ 113:src/mios32_iic.c ****   u8 *rx_buffer_ptr;
+ 114:src/mios32_iic.c ****   volatile u16 buffer_len;
+ 115:src/mios32_iic.c ****   volatile u16 buffer_ix;
+ 116:src/mios32_iic.c **** 
+ 117:src/mios32_iic.c ****   volatile transfer_state_t transfer_state;
+ 118:src/mios32_iic.c ****   volatile s32 transfer_error;
+ 119:src/mios32_iic.c ****   volatile s32 last_transfer_error;
+ 120:src/mios32_iic.c **** 
+ 121:src/mios32_iic.c ****   volatile u8 iic_semaphore;
+ 122:src/mios32_iic.c **** } iic_rec_t;
+ 123:src/mios32_iic.c **** 
+ 124:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+ 125:src/mios32_iic.c **** // Local Prototypes
+ 126:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+ 127:src/mios32_iic.c **** 
+ 128:src/mios32_iic.c **** static void MIOS32_IIC_InitPeripheral();
+ 129:src/mios32_iic.c **** static void EV_IRQHandler(iic_rec_t *iicx);
+ 130:src/mios32_iic.c **** static void ER_IRQHandler(iic_rec_t *iicx);
+ 131:src/mios32_iic.c **** 
+ 132:src/mios32_iic.c **** 
+ 133:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+ 134:src/mios32_iic.c **** // Local variables
+ 135:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+ 136:src/mios32_iic.c **** 
+ 137:src/mios32_iic.c **** 
+ 138:src/mios32_iic.c **** static iic_rec_t iic_rec[MIOS32_IIC_NUM];
+ 139:src/mios32_iic.c **** 
+ 140:src/mios32_iic.c **** 
+ 141:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+ 142:src/mios32_iic.c **** //! Initializes IIC driver
+ 143:src/mios32_iic.c **** //! \param[in] mode currently only mode 0 supported
+ 144:src/mios32_iic.c **** //! \return < 0 if initialisation failed
+ 145:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+ 146:src/mios32_iic.c **** s32 MIOS32_IIC_Init(u32 mode)
+ 147:src/mios32_iic.c **** {
+  40              		.loc 1 147 1
+  41              		.cfi_startproc
+  42              		@ args = 0, pretend = 0, frame = 16
+  43              		@ frame_needed = 1, uses_anonymous_args = 0
+  44 0000 80B5     		push	{r7, lr}
+  45              	.LCFI0:
+  46              		.cfi_def_cfa_offset 8
+  47              		.cfi_offset 7, -8
+  48              		.cfi_offset 14, -4
+  49 0002 84B0     		sub	sp, sp, #16
+  50              	.LCFI1:
+  51              		.cfi_def_cfa_offset 24
+  52 0004 00AF     		add	r7, sp, #0
+  53              	.LCFI2:
+  54              		.cfi_def_cfa_register 7
+  55 0006 7860     		str	r0, [r7, #4]
+ 148:src/mios32_iic.c ****   int i;
+ 149:src/mios32_iic.c **** 
+ 150:src/mios32_iic.c ****   // currently only mode 0 supported
+ 151:src/mios32_iic.c ****   if( mode != 0 )
+  56              		.loc 1 151 5
+  57 0008 7B68     		ldr	r3, [r7, #4]
+  58 000a 002B     		cmp	r3, #0
+  59 000c 02D0     		beq	.L2
+ 152:src/mios32_iic.c ****     return -1; // unsupported mode
+  60              		.loc 1 152 12
+  61 000e 4FF0FF33 		mov	r3, #-1
+  62 0012 41E0     		b	.L6
+  63              	.L2:
+ 153:src/mios32_iic.c **** 
+ 154:src/mios32_iic.c ****   // configure IIC pins in open drain mode
+ 155:src/mios32_iic.c ****   GPIO_InitTypeDef GPIO_InitStructure;
+ 156:src/mios32_iic.c ****   GPIO_StructInit(&GPIO_InitStructure);
+  64              		.loc 1 156 3
+  65 0014 07F10803 		add	r3, r7, #8
+  66 0018 1846     		mov	r0, r3
+  67 001a 214B     		ldr	r3, .L7
+  68 001c 9847     		blx	r3
+  69              	.LVL0:
+ 157:src/mios32_iic.c ****   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+  70              		.loc 1 157 33
+  71 001e 0323     		movs	r3, #3
+  72 0020 BB72     		strb	r3, [r7, #10]
+ 158:src/mios32_iic.c ****   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_OD;
+  73              		.loc 1 158 32
+  74 0022 1C23     		movs	r3, #28
+  75 0024 FB72     		strb	r3, [r7, #11]
+ 159:src/mios32_iic.c **** 
+ 160:src/mios32_iic.c ****   GPIO_InitStructure.GPIO_Pin = MIOS32_IIC0_SCL_PIN;
+  76              		.loc 1 160 31
+  77 0026 4023     		movs	r3, #64
+  78 0028 3B81     		strh	r3, [r7, #8]	@ movhi
+ 161:src/mios32_iic.c ****   GPIO_Init(MIOS32_IIC0_SCL_PORT, &GPIO_InitStructure);
+  79              		.loc 1 161 3
+  80 002a 07F10803 		add	r3, r7, #8
+  81 002e 1946     		mov	r1, r3
+  82 0030 1C48     		ldr	r0, .L7+4
+  83 0032 1D4B     		ldr	r3, .L7+8
+  84 0034 9847     		blx	r3
+  85              	.LVL1:
+ 162:src/mios32_iic.c ****   GPIO_InitStructure.GPIO_Pin = MIOS32_IIC0_SDA_PIN;
+  86              		.loc 1 162 31
+  87 0036 8023     		movs	r3, #128
+  88 0038 3B81     		strh	r3, [r7, #8]	@ movhi
+ 163:src/mios32_iic.c ****   GPIO_Init(MIOS32_IIC0_SDA_PORT, &GPIO_InitStructure);
+  89              		.loc 1 163 3
+  90 003a 07F10803 		add	r3, r7, #8
+  91 003e 1946     		mov	r1, r3
+  92 0040 1848     		ldr	r0, .L7+4
+  93 0042 194B     		ldr	r3, .L7+8
+  94 0044 9847     		blx	r3
+  95              	.LVL2:
+ 164:src/mios32_iic.c **** 
+ 165:src/mios32_iic.c **** #if MIOS32_IIC_NUM >= 2
+ 166:src/mios32_iic.c ****   GPIO_InitStructure.GPIO_Pin = MIOS32_IIC1_SCL_PIN;
+ 167:src/mios32_iic.c ****   GPIO_Init(MIOS32_IIC1_SCL_PORT, &GPIO_InitStructure);
+ 168:src/mios32_iic.c ****   GPIO_InitStructure.GPIO_Pin = MIOS32_IIC1_SDA_PIN;
+ 169:src/mios32_iic.c ****   GPIO_Init(MIOS32_IIC1_SDA_PORT, &GPIO_InitStructure);
+ 170:src/mios32_iic.c **** #endif
+ 171:src/mios32_iic.c **** 
+ 172:src/mios32_iic.c ****   for(i=0; i<MIOS32_IIC_NUM; ++i) {
+  96              		.loc 1 172 8
+  97 0046 0023     		movs	r3, #0
+  98 0048 FB60     		str	r3, [r7, #12]
+  99              		.loc 1 172 3
+ 100 004a 19E0     		b	.L4
+ 101              	.L5:
+ 173:src/mios32_iic.c ****     // configure I2C peripheral
+ 174:src/mios32_iic.c ****     MIOS32_IIC_InitPeripheral(i);
+ 102              		.loc 1 174 5 discriminator 3
+ 103 004c F868     		ldr	r0, [r7, #12]
+ 104 004e 174B     		ldr	r3, .L7+12
+ 105 0050 9847     		blx	r3
+ 106              	.LVL3:
+ 175:src/mios32_iic.c **** 
+ 176:src/mios32_iic.c ****     // now accessible for other tasks
+ 177:src/mios32_iic.c ****     iic_rec[i].iic_semaphore = 0;
+ 107              		.loc 1 177 30 discriminator 3
+ 108 0052 1749     		ldr	r1, .L7+16
+ 109 0054 FA68     		ldr	r2, [r7, #12]
+ 110 0056 1346     		mov	r3, r2
+ 111 0058 DB00     		lsls	r3, r3, #3
+ 112 005a 1344     		add	r3, r3, r2
+ 113 005c 9B00     		lsls	r3, r3, #2
+ 114 005e 0B44     		add	r3, r3, r1
+ 115 0060 2033     		adds	r3, r3, #32
+ 116 0062 0022     		movs	r2, #0
+ 117 0064 1A70     		strb	r2, [r3]
+ 178:src/mios32_iic.c ****     iic_rec[i].last_transfer_error = 0;
+ 118              		.loc 1 178 36 discriminator 3
+ 119 0066 1249     		ldr	r1, .L7+16
+ 120 0068 FA68     		ldr	r2, [r7, #12]
+ 121 006a 1346     		mov	r3, r2
+ 122 006c DB00     		lsls	r3, r3, #3
+ 123 006e 1344     		add	r3, r3, r2
+ 124 0070 9B00     		lsls	r3, r3, #2
+ 125 0072 0B44     		add	r3, r3, r1
+ 126 0074 1C33     		adds	r3, r3, #28
+ 127 0076 0022     		movs	r2, #0
+ 128 0078 1A60     		str	r2, [r3]
+ 172:src/mios32_iic.c ****     // configure I2C peripheral
+ 129              		.loc 1 172 30 discriminator 3
+ 130 007a FB68     		ldr	r3, [r7, #12]
+ 131 007c 0133     		adds	r3, r3, #1
+ 132 007e FB60     		str	r3, [r7, #12]
+ 133              	.L4:
+ 172:src/mios32_iic.c ****     // configure I2C peripheral
+ 134              		.loc 1 172 3 discriminator 1
+ 135 0080 FB68     		ldr	r3, [r7, #12]
+ 136 0082 002B     		cmp	r3, #0
+ 137 0084 E2DD     		ble	.L5
+ 179:src/mios32_iic.c ****   }
+ 180:src/mios32_iic.c **** 
+ 181:src/mios32_iic.c ****   // configure and enable I2C2 interrupts
+ 182:src/mios32_iic.c **** 
+ 183:src/mios32_iic.c ****   MIOS32_IRQ_Install(I2C1_EV_IRQn, MIOS32_IRQ_IIC_EV_PRIORITY);
+ 138              		.loc 1 183 3
+ 139 0086 0221     		movs	r1, #2
+ 140 0088 1F20     		movs	r0, #31
+ 141 008a 0A4B     		ldr	r3, .L7+20
+ 142 008c 9847     		blx	r3
+ 143              	.LVL4:
+ 184:src/mios32_iic.c **** #if MIOS32_IIC_NUM >= 2
+ 185:src/mios32_iic.c ****   MIOS32_IRQ_Install(I2C2_EV_IRQn, MIOS32_IRQ_IIC_EV_PRIORITY);
+ 186:src/mios32_iic.c **** #endif
+ 187:src/mios32_iic.c **** 
+ 188:src/mios32_iic.c ****   MIOS32_IRQ_Install(I2C1_ER_IRQn, MIOS32_IRQ_IIC_ER_PRIORITY);
+ 144              		.loc 1 188 3
+ 145 008e 0221     		movs	r1, #2
+ 146 0090 2020     		movs	r0, #32
+ 147 0092 084B     		ldr	r3, .L7+20
+ 148 0094 9847     		blx	r3
+ 149              	.LVL5:
+ 189:src/mios32_iic.c **** #if MIOS32_IIC_NUM >= 2
+ 190:src/mios32_iic.c ****   MIOS32_IRQ_Install(I2C2_ER_IRQn, MIOS32_IRQ_IIC_ER_PRIORITY);
+ 191:src/mios32_iic.c **** #endif
+ 192:src/mios32_iic.c **** 
+ 193:src/mios32_iic.c ****   return 0; // no error
+ 150              		.loc 1 193 10
+ 151 0096 0023     		movs	r3, #0
+ 152              	.L6:
+ 194:src/mios32_iic.c **** }
+ 153              		.loc 1 194 1 discriminator 1
+ 154 0098 1846     		mov	r0, r3
+ 155 009a 1037     		adds	r7, r7, #16
+ 156              	.LCFI3:
+ 157              		.cfi_def_cfa_offset 8
+ 158 009c BD46     		mov	sp, r7
+ 159              	.LCFI4:
+ 160              		.cfi_def_cfa_register 13
+ 161              		@ sp needed
+ 162 009e 80BD     		pop	{r7, pc}
+ 163              	.L8:
+ 164              		.align	2
+ 165              	.L7:
+ 166 00a0 00000000 		.word	GPIO_StructInit
+ 167 00a4 000C0140 		.word	1073810432
+ 168 00a8 00000000 		.word	GPIO_Init
+ 169 00ac 00000000 		.word	MIOS32_IIC_InitPeripheral
+ 170 00b0 00000000 		.word	iic_rec
+ 171 00b4 00000000 		.word	MIOS32_IRQ_Install
+ 172              		.cfi_endproc
+ 173              	.LFE27:
+ 175              		.section	.text.MIOS32_IIC_InitPeripheral,"ax",%progbits
+ 176              		.align	1
+ 177              		.syntax unified
+ 178              		.thumb
+ 179              		.thumb_func
+ 181              	MIOS32_IIC_InitPeripheral:
+ 182              	.LFB28:
+ 195:src/mios32_iic.c **** 
+ 196:src/mios32_iic.c **** 
+ 197:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+ 198:src/mios32_iic.c **** // internal function to (re-)initialize the I2C peripheral
+ 199:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+ 200:src/mios32_iic.c **** static void MIOS32_IIC_InitPeripheral()
+ 201:src/mios32_iic.c **** {
+ 183              		.loc 1 201 1
+ 184              		.cfi_startproc
+ 185              		@ args = 0, pretend = 0, frame = 24
+ 186              		@ frame_needed = 1, uses_anonymous_args = 0
+ 187 0000 80B5     		push	{r7, lr}
+ 188              	.LCFI5:
+ 189              		.cfi_def_cfa_offset 8
+ 190              		.cfi_offset 7, -8
+ 191              		.cfi_offset 14, -4
+ 192 0002 86B0     		sub	sp, sp, #24
+ 193              	.LCFI6:
+ 194              		.cfi_def_cfa_offset 32
+ 195 0004 00AF     		add	r7, sp, #0
+ 196              	.LCFI7:
+ 197              		.cfi_def_cfa_register 7
+ 202:src/mios32_iic.c ****   u8 iic_port = 0;
+ 198              		.loc 1 202 6
+ 199 0006 0023     		movs	r3, #0
+ 200 0008 FB75     		strb	r3, [r7, #23]
+ 203:src/mios32_iic.c ****   I2C_InitTypeDef  I2C_InitStructure;
+ 204:src/mios32_iic.c ****   iic_rec_t *iicx = &iic_rec[iic_port];// simplify addressing of record
+ 201              		.loc 1 204 29
+ 202 000a FA7D     		ldrb	r2, [r7, #23]	@ zero_extendqisi2
+ 203              		.loc 1 204 14
+ 204 000c 1346     		mov	r3, r2
+ 205 000e DB00     		lsls	r3, r3, #3
+ 206 0010 1344     		add	r3, r3, r2
+ 207 0012 9B00     		lsls	r3, r3, #2
+ 208 0014 1D4A     		ldr	r2, .L14
+ 209 0016 1344     		add	r3, r3, r2
+ 210 0018 3B61     		str	r3, [r7, #16]
+ 205:src/mios32_iic.c **** 
+ 206:src/mios32_iic.c ****   // prepare I2C init-struct
+ 207:src/mios32_iic.c ****   I2C_StructInit(&I2C_InitStructure);
+ 211              		.loc 1 207 3
+ 212 001a 3B46     		mov	r3, r7
+ 213 001c 1846     		mov	r0, r3
+ 214 001e 1C4B     		ldr	r3, .L14+4
+ 215 0020 9847     		blx	r3
+ 216              	.LVL6:
+ 208:src/mios32_iic.c ****   I2C_InitStructure.I2C_Mode = I2C_Mode_I2C;
+ 217              		.loc 1 208 30
+ 218 0022 0023     		movs	r3, #0
+ 219 0024 BB80     		strh	r3, [r7, #4]	@ movhi
+ 209:src/mios32_iic.c ****   I2C_InitStructure.I2C_OwnAddress1 = 0;
+ 220              		.loc 1 209 37
+ 221 0026 0023     		movs	r3, #0
+ 222 0028 3B81     		strh	r3, [r7, #8]	@ movhi
+ 210:src/mios32_iic.c ****   I2C_InitStructure.I2C_Ack = I2C_Ack_Enable;
+ 223              		.loc 1 210 29
+ 224 002a 4FF48063 		mov	r3, #1024
+ 225 002e 7B81     		strh	r3, [r7, #10]	@ movhi
+ 211:src/mios32_iic.c ****   I2C_InitStructure.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
+ 226              		.loc 1 211 45
+ 227 0030 4FF48043 		mov	r3, #16384
+ 228 0034 BB81     		strh	r3, [r7, #12]	@ movhi
+ 212:src/mios32_iic.c **** 
+ 213:src/mios32_iic.c ****   switch( iic_port ) {
+ 229              		.loc 1 213 3
+ 230 0036 FB7D     		ldrb	r3, [r7, #23]	@ zero_extendqisi2
+ 231 0038 002B     		cmp	r3, #0
+ 232 003a 22D1     		bne	.L13
+ 214:src/mios32_iic.c ****     case 0:
+ 215:src/mios32_iic.c ****       // define base address
+ 216:src/mios32_iic.c ****       iicx->base = I2C1;
+ 233              		.loc 1 216 18
+ 234 003c 3B69     		ldr	r3, [r7, #16]
+ 235 003e 154A     		ldr	r2, .L14+8
+ 236 0040 1A60     		str	r2, [r3]
+ 217:src/mios32_iic.c **** 
+ 218:src/mios32_iic.c ****       // enable peripheral clock of I2C
+ 219:src/mios32_iic.c ****       RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1, ENABLE);
+ 237              		.loc 1 219 7
+ 238 0042 0121     		movs	r1, #1
+ 239 0044 4FF40010 		mov	r0, #2097152
+ 240 0048 134B     		ldr	r3, .L14+12
+ 241 004a 9847     		blx	r3
+ 242              	.LVL7:
+ 220:src/mios32_iic.c **** 
+ 221:src/mios32_iic.c ****       // set I2C clock bus clock params
+ 222:src/mios32_iic.c ****       // note that the STM32 driver handles value <= 100kHz differently! (duty cycle always 1:1)
+ 223:src/mios32_iic.c ****       // important: bus frequencies > 400kHz don't work stable
+ 224:src/mios32_iic.c ****       I2C_InitStructure.I2C_DutyCycle = MIOS32_IIC0_DUTYCYCLE;
+ 243              		.loc 1 224 39
+ 244 004c 4BF6FF73 		movw	r3, #49151
+ 245 0050 FB80     		strh	r3, [r7, #6]	@ movhi
+ 225:src/mios32_iic.c ****       I2C_InitStructure.I2C_ClockSpeed = MIOS32_IIC0_BUS_FREQUENCY;
+ 246              		.loc 1 225 40
+ 247 0052 124B     		ldr	r3, .L14+16
+ 248 0054 3B60     		str	r3, [r7]
+ 226:src/mios32_iic.c **** 
+ 227:src/mios32_iic.c ****       break;
+ 249              		.loc 1 227 7
+ 250 0056 00BF     		nop
+ 228:src/mios32_iic.c **** 
+ 229:src/mios32_iic.c **** #if MIOS32_IIC_NUM >= 2
+ 230:src/mios32_iic.c ****     case 1:
+ 231:src/mios32_iic.c ****       // define base address
+ 232:src/mios32_iic.c ****       iicx->base = I2C1;
+ 233:src/mios32_iic.c **** 
+ 234:src/mios32_iic.c ****       // enable peripheral clock of I2C
+ 235:src/mios32_iic.c ****       RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1, ENABLE);
+ 236:src/mios32_iic.c **** 
+ 237:src/mios32_iic.c ****       // set I2C clock bus clock params
+ 238:src/mios32_iic.c ****       // note that the STM32 driver handles value <= 100kHz differently! (duty cycle always 1:1)
+ 239:src/mios32_iic.c ****       // important: bus frequencies > 400kHz don't work stable
+ 240:src/mios32_iic.c ****       I2C_InitStructure.I2C_DutyCycle = MIOS32_IIC1_DUTYCYCLE;
+ 241:src/mios32_iic.c ****       I2C_InitStructure.I2C_ClockSpeed = MIOS32_IIC1_BUS_FREQUENCY;
+ 242:src/mios32_iic.c **** 
+ 243:src/mios32_iic.c ****       break;
+ 244:src/mios32_iic.c **** #endif
+ 245:src/mios32_iic.c **** 
+ 246:src/mios32_iic.c ****     default:
+ 247:src/mios32_iic.c ****       return;
+ 248:src/mios32_iic.c ****   }
+ 249:src/mios32_iic.c **** 
+ 250:src/mios32_iic.c ****   // trigger software reset via I2C_DeInit
+ 251:src/mios32_iic.c ****   I2C_DeInit(iicx->base);
+ 251              		.loc 1 251 3
+ 252 0058 3B69     		ldr	r3, [r7, #16]
+ 253 005a 1B68     		ldr	r3, [r3]
+ 254 005c 1846     		mov	r0, r3
+ 255 005e 104B     		ldr	r3, .L14+20
+ 256 0060 9847     		blx	r3
+ 257              	.LVL8:
+ 252:src/mios32_iic.c **** 
+ 253:src/mios32_iic.c ****   // clear transfer state and error value
+ 254:src/mios32_iic.c ****   iicx->transfer_state.ALL = 0;
+ 258              		.loc 1 254 28
+ 259 0062 3A69     		ldr	r2, [r7, #16]
+ 260 0064 137D     		ldrb	r3, [r2, #20]
+ 261 0066 6FF30703 		bfc	r3, #0, #8
+ 262 006a 1375     		strb	r3, [r2, #20]
+ 255:src/mios32_iic.c ****   iicx->transfer_error = 0;
+ 263              		.loc 1 255 24
+ 264 006c 3B69     		ldr	r3, [r7, #16]
+ 265 006e 0022     		movs	r2, #0
+ 266 0070 9A61     		str	r2, [r3, #24]
+ 256:src/mios32_iic.c **** 
+ 257:src/mios32_iic.c **** 
+ 258:src/mios32_iic.c ****   // configure I2C peripheral
+ 259:src/mios32_iic.c ****   I2C_Init(iicx->base, &I2C_InitStructure);
+ 267              		.loc 1 259 3
+ 268 0072 3B69     		ldr	r3, [r7, #16]
+ 269 0074 1B68     		ldr	r3, [r3]
+ 270 0076 3A46     		mov	r2, r7
+ 271 0078 1146     		mov	r1, r2
+ 272 007a 1846     		mov	r0, r3
+ 273 007c 094B     		ldr	r3, .L14+24
+ 274 007e 9847     		blx	r3
+ 275              	.LVL9:
+ 276 0080 00E0     		b	.L9
+ 277              	.L13:
+ 247:src/mios32_iic.c ****   }
+ 278              		.loc 1 247 7
+ 279 0082 00BF     		nop
+ 280              	.L9:
+ 260:src/mios32_iic.c **** }
+ 281              		.loc 1 260 1
+ 282 0084 1837     		adds	r7, r7, #24
+ 283              	.LCFI8:
+ 284              		.cfi_def_cfa_offset 8
+ 285 0086 BD46     		mov	sp, r7
+ 286              	.LCFI9:
+ 287              		.cfi_def_cfa_register 13
+ 288              		@ sp needed
+ 289 0088 80BD     		pop	{r7, pc}
+ 290              	.L15:
+ 291 008a 00BF     		.align	2
+ 292              	.L14:
+ 293 008c 00000000 		.word	iic_rec
+ 294 0090 00000000 		.word	I2C_StructInit
+ 295 0094 00540040 		.word	1073763328
+ 296 0098 00000000 		.word	RCC_APB1PeriphClockCmd
+ 297 009c A0860100 		.word	100000
+ 298 00a0 00000000 		.word	I2C_DeInit
+ 299 00a4 00000000 		.word	I2C_Init
+ 300              		.cfi_endproc
+ 301              	.LFE28:
+ 303              		.section	.text.MIOS32_IIC_TransferBegin,"ax",%progbits
+ 304              		.align	1
+ 305              		.global	MIOS32_IIC_TransferBegin
+ 306              		.syntax unified
+ 307              		.thumb
+ 308              		.thumb_func
+ 310              	MIOS32_IIC_TransferBegin:
+ 311              	.LFB29:
+ 261:src/mios32_iic.c **** 
+ 262:src/mios32_iic.c **** 
+ 263:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+ 264:src/mios32_iic.c **** //! Semaphore handling: requests the IIC interface
+ 265:src/mios32_iic.c **** //! \param[in] iic_port the IIC port (0..MIOS32_IIC_NUM-1)
+ 266:src/mios32_iic.c **** //! \param[in] semaphore_type is either IIC_Blocking or IIC_Non_Blocking
+ 267:src/mios32_iic.c **** //! \return Non_Blocking: returns -1 to request a retry
+ 268:src/mios32_iic.c **** //! \return 0 if IIC interface free
+ 269:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+ 270:src/mios32_iic.c **** s32 MIOS32_IIC_TransferBegin(mios32_iic_semaphore_t semaphore_type)
+ 271:src/mios32_iic.c **** {
+ 312              		.loc 1 271 1
+ 313              		.cfi_startproc
+ 314              		@ args = 0, pretend = 0, frame = 24
+ 315              		@ frame_needed = 1, uses_anonymous_args = 0
+ 316 0000 80B5     		push	{r7, lr}
+ 317              	.LCFI10:
+ 318              		.cfi_def_cfa_offset 8
+ 319              		.cfi_offset 7, -8
+ 320              		.cfi_offset 14, -4
+ 321 0002 86B0     		sub	sp, sp, #24
+ 322              	.LCFI11:
+ 323              		.cfi_def_cfa_offset 32
+ 324 0004 00AF     		add	r7, sp, #0
+ 325              	.LCFI12:
+ 326              		.cfi_def_cfa_register 7
+ 327 0006 0346     		mov	r3, r0
+ 328 0008 FB71     		strb	r3, [r7, #7]
+ 272:src/mios32_iic.c ****   u8 iic_port = 0;
+ 329              		.loc 1 272 6
+ 330 000a 0023     		movs	r3, #0
+ 331 000c FB74     		strb	r3, [r7, #19]
+ 273:src/mios32_iic.c ****   iic_rec_t *iicx = &iic_rec[iic_port];// simplify addressing of record
+ 332              		.loc 1 273 29
+ 333 000e FA7C     		ldrb	r2, [r7, #19]	@ zero_extendqisi2
+ 334              		.loc 1 273 14
+ 335 0010 1346     		mov	r3, r2
+ 336 0012 DB00     		lsls	r3, r3, #3
+ 337 0014 1344     		add	r3, r3, r2
+ 338 0016 9B00     		lsls	r3, r3, #2
+ 339 0018 164A     		ldr	r2, .L21
+ 340 001a 1344     		add	r3, r3, r2
+ 341 001c FB60     		str	r3, [r7, #12]
+ 274:src/mios32_iic.c ****   s32 status = -1;
+ 342              		.loc 1 274 7
+ 343 001e 4FF0FF33 		mov	r3, #-1
+ 344 0022 7B61     		str	r3, [r7, #20]
+ 275:src/mios32_iic.c **** 
+ 276:src/mios32_iic.c ****   if( iic_port >= MIOS32_IIC_NUM )
+ 345              		.loc 1 276 5
+ 346 0024 FB7C     		ldrb	r3, [r7, #19]	@ zero_extendqisi2
+ 347 0026 002B     		cmp	r3, #0
+ 348 0028 02D0     		beq	.L17
+ 277:src/mios32_iic.c ****     return MIOS32_IIC_ERROR_INVALID_PORT;
+ 349              		.loc 1 277 12
+ 350 002a 4FF0FF33 		mov	r3, #-1
+ 351 002e 1CE0     		b	.L18
+ 352              	.L17:
+ 278:src/mios32_iic.c **** 
+ 279:src/mios32_iic.c ****   do {
+ 280:src/mios32_iic.c ****     MIOS32_IRQ_Disable();
+ 353              		.loc 1 280 5
+ 354 0030 114B     		ldr	r3, .L21+4
+ 355 0032 9847     		blx	r3
+ 356              	.LVL10:
+ 281:src/mios32_iic.c ****     if( !iicx->iic_semaphore ) {
+ 357              		.loc 1 281 14
+ 358 0034 FB68     		ldr	r3, [r7, #12]
+ 359 0036 93F82030 		ldrb	r3, [r3, #32]
+ 360 003a DBB2     		uxtb	r3, r3
+ 361              		.loc 1 281 7
+ 362 003c 002B     		cmp	r3, #0
+ 363 003e 05D1     		bne	.L19
+ 282:src/mios32_iic.c ****       iicx->iic_semaphore = 1;
+ 364              		.loc 1 282 27
+ 365 0040 FB68     		ldr	r3, [r7, #12]
+ 366 0042 0122     		movs	r2, #1
+ 367 0044 83F82020 		strb	r2, [r3, #32]
+ 283:src/mios32_iic.c ****       status = 0;
+ 368              		.loc 1 283 14
+ 369 0048 0023     		movs	r3, #0
+ 370 004a 7B61     		str	r3, [r7, #20]
+ 371              	.L19:
+ 284:src/mios32_iic.c ****     }
+ 285:src/mios32_iic.c ****     MIOS32_IRQ_Enable();
+ 372              		.loc 1 285 5
+ 373 004c 0B4B     		ldr	r3, .L21+8
+ 374 004e 9847     		blx	r3
+ 375              	.LVL11:
+ 286:src/mios32_iic.c ****   } while( semaphore_type == IIC_Blocking && status != 0 );
+ 376              		.loc 1 286 3
+ 377 0050 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 378 0052 002B     		cmp	r3, #0
+ 379 0054 02D1     		bne	.L20
+ 380              		.loc 1 286 43 discriminator 1
+ 381 0056 7B69     		ldr	r3, [r7, #20]
+ 382 0058 002B     		cmp	r3, #0
+ 383 005a E9D1     		bne	.L17
+ 384              	.L20:
+ 287:src/mios32_iic.c **** 
+ 288:src/mios32_iic.c ****   // clear transfer errors of last transmission
+ 289:src/mios32_iic.c ****   iicx->last_transfer_error = 0;
+ 385              		.loc 1 289 29
+ 386 005c FB68     		ldr	r3, [r7, #12]
+ 387 005e 0022     		movs	r2, #0
+ 388 0060 DA61     		str	r2, [r3, #28]
+ 290:src/mios32_iic.c ****   iicx->transfer_error = 0;
+ 389              		.loc 1 290 24
+ 390 0062 FB68     		ldr	r3, [r7, #12]
+ 391 0064 0022     		movs	r2, #0
+ 392 0066 9A61     		str	r2, [r3, #24]
+ 291:src/mios32_iic.c **** 
+ 292:src/mios32_iic.c ****   return status;
+ 393              		.loc 1 292 10
+ 394 0068 7B69     		ldr	r3, [r7, #20]
+ 395              	.L18:
+ 293:src/mios32_iic.c **** }
+ 396              		.loc 1 293 1
+ 397 006a 1846     		mov	r0, r3
+ 398 006c 1837     		adds	r7, r7, #24
+ 399              	.LCFI13:
+ 400              		.cfi_def_cfa_offset 8
+ 401 006e BD46     		mov	sp, r7
+ 402              	.LCFI14:
+ 403              		.cfi_def_cfa_register 13
+ 404              		@ sp needed
+ 405 0070 80BD     		pop	{r7, pc}
+ 406              	.L22:
+ 407 0072 00BF     		.align	2
+ 408              	.L21:
+ 409 0074 00000000 		.word	iic_rec
+ 410 0078 00000000 		.word	MIOS32_IRQ_Disable
+ 411 007c 00000000 		.word	MIOS32_IRQ_Enable
+ 412              		.cfi_endproc
+ 413              	.LFE29:
+ 415              		.section	.text.MIOS32_IIC_TransferFinished,"ax",%progbits
+ 416              		.align	1
+ 417              		.global	MIOS32_IIC_TransferFinished
+ 418              		.syntax unified
+ 419              		.thumb
+ 420              		.thumb_func
+ 422              	MIOS32_IIC_TransferFinished:
+ 423              	.LFB30:
+ 294:src/mios32_iic.c **** 
+ 295:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+ 296:src/mios32_iic.c **** //! Semaphore handling: releases the IIC interface for other tasks
+ 297:src/mios32_iic.c **** //! \param[in] iic_port the IIC port (0..MIOS32_IIC_NUM-1)
+ 298:src/mios32_iic.c **** //! \return < 0 on errors
+ 299:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+ 300:src/mios32_iic.c **** s32 MIOS32_IIC_TransferFinished()
+ 301:src/mios32_iic.c **** {
+ 424              		.loc 1 301 1
+ 425              		.cfi_startproc
+ 426              		@ args = 0, pretend = 0, frame = 8
+ 427              		@ frame_needed = 1, uses_anonymous_args = 0
+ 428              		@ link register save eliminated.
+ 429 0000 80B4     		push	{r7}
+ 430              	.LCFI15:
+ 431              		.cfi_def_cfa_offset 4
+ 432              		.cfi_offset 7, -4
+ 433 0002 83B0     		sub	sp, sp, #12
+ 434              	.LCFI16:
+ 435              		.cfi_def_cfa_offset 16
+ 436 0004 00AF     		add	r7, sp, #0
+ 437              	.LCFI17:
+ 438              		.cfi_def_cfa_register 7
+ 302:src/mios32_iic.c ****   u8 iic_port = 0;
+ 439              		.loc 1 302 6
+ 440 0006 0023     		movs	r3, #0
+ 441 0008 FB71     		strb	r3, [r7, #7]
+ 303:src/mios32_iic.c ****   if( iic_port >= MIOS32_IIC_NUM )
+ 442              		.loc 1 303 5
+ 443 000a FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 444 000c 002B     		cmp	r3, #0
+ 445 000e 02D0     		beq	.L24
+ 304:src/mios32_iic.c ****     return MIOS32_IIC_ERROR_INVALID_PORT;
+ 446              		.loc 1 304 12
+ 447 0010 4FF0FF33 		mov	r3, #-1
+ 448 0014 0AE0     		b	.L25
+ 449              	.L24:
+ 305:src/mios32_iic.c **** 
+ 306:src/mios32_iic.c ****   iic_rec[iic_port].iic_semaphore = 0;
+ 450              		.loc 1 306 20
+ 451 0016 FA79     		ldrb	r2, [r7, #7]	@ zero_extendqisi2
+ 452              		.loc 1 306 35
+ 453 0018 0749     		ldr	r1, .L26
+ 454 001a 1346     		mov	r3, r2
+ 455 001c DB00     		lsls	r3, r3, #3
+ 456 001e 1344     		add	r3, r3, r2
+ 457 0020 9B00     		lsls	r3, r3, #2
+ 458 0022 0B44     		add	r3, r3, r1
+ 459 0024 2033     		adds	r3, r3, #32
+ 460 0026 0022     		movs	r2, #0
+ 461 0028 1A70     		strb	r2, [r3]
+ 307:src/mios32_iic.c **** 
+ 308:src/mios32_iic.c ****   return 0; // no error
+ 462              		.loc 1 308 10
+ 463 002a 0023     		movs	r3, #0
+ 464              	.L25:
+ 309:src/mios32_iic.c **** }
+ 465              		.loc 1 309 1
+ 466 002c 1846     		mov	r0, r3
+ 467 002e 0C37     		adds	r7, r7, #12
+ 468              	.LCFI18:
+ 469              		.cfi_def_cfa_offset 4
+ 470 0030 BD46     		mov	sp, r7
+ 471              	.LCFI19:
+ 472              		.cfi_def_cfa_register 13
+ 473              		@ sp needed
+ 474 0032 80BC     		pop	{r7}
+ 475              	.LCFI20:
+ 476              		.cfi_restore 7
+ 477              		.cfi_def_cfa_offset 0
+ 478 0034 7047     		bx	lr
+ 479              	.L27:
+ 480 0036 00BF     		.align	2
+ 481              	.L26:
+ 482 0038 00000000 		.word	iic_rec
+ 483              		.cfi_endproc
+ 484              	.LFE30:
+ 486              		.section	.text.MIOS32_IIC_LastErrorGet,"ax",%progbits
+ 487              		.align	1
+ 488              		.global	MIOS32_IIC_LastErrorGet
+ 489              		.syntax unified
+ 490              		.thumb
+ 491              		.thumb_func
+ 493              	MIOS32_IIC_LastErrorGet:
+ 494              	.LFB31:
+ 310:src/mios32_iic.c **** 
+ 311:src/mios32_iic.c **** 
+ 312:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+ 313:src/mios32_iic.c **** //! Returns the last transfer error<BR>
+ 314:src/mios32_iic.c **** //! Will be updated by MIOS32_IIC_TransferCheck(), so that the error status
+ 315:src/mios32_iic.c **** //! doesn't get lost (the check function will return 0 when called again)<BR>
+ 316:src/mios32_iic.c **** //! Will be cleared when a new transfer has been started successfully
+ 317:src/mios32_iic.c **** //! \param[in] iic_port the IIC port (0..MIOS32_IIC_NUM-1)
+ 318:src/mios32_iic.c **** //! \return last error status
+ 319:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+ 320:src/mios32_iic.c **** s32 MIOS32_IIC_LastErrorGet()
+ 321:src/mios32_iic.c **** {
+ 495              		.loc 1 321 1
+ 496              		.cfi_startproc
+ 497              		@ args = 0, pretend = 0, frame = 8
+ 498              		@ frame_needed = 1, uses_anonymous_args = 0
+ 499              		@ link register save eliminated.
+ 500 0000 80B4     		push	{r7}
+ 501              	.LCFI21:
+ 502              		.cfi_def_cfa_offset 4
+ 503              		.cfi_offset 7, -4
+ 504 0002 83B0     		sub	sp, sp, #12
+ 505              	.LCFI22:
+ 506              		.cfi_def_cfa_offset 16
+ 507 0004 00AF     		add	r7, sp, #0
+ 508              	.LCFI23:
+ 509              		.cfi_def_cfa_register 7
+ 322:src/mios32_iic.c ****   u8 iic_port = 0;
+ 510              		.loc 1 322 6
+ 511 0006 0023     		movs	r3, #0
+ 512 0008 FB71     		strb	r3, [r7, #7]
+ 323:src/mios32_iic.c ****   if( iic_port >= MIOS32_IIC_NUM )
+ 513              		.loc 1 323 5
+ 514 000a FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 515 000c 002B     		cmp	r3, #0
+ 516 000e 02D0     		beq	.L29
+ 324:src/mios32_iic.c ****     return MIOS32_IIC_ERROR_INVALID_PORT;
+ 517              		.loc 1 324 12
+ 518 0010 4FF0FF33 		mov	r3, #-1
+ 519 0014 08E0     		b	.L30
+ 520              	.L29:
+ 325:src/mios32_iic.c **** 
+ 326:src/mios32_iic.c ****   return iic_rec[iic_port].last_transfer_error;
+ 521              		.loc 1 326 27
+ 522 0016 FA79     		ldrb	r2, [r7, #7]	@ zero_extendqisi2
+ 523 0018 0649     		ldr	r1, .L31
+ 524 001a 1346     		mov	r3, r2
+ 525 001c DB00     		lsls	r3, r3, #3
+ 526 001e 1344     		add	r3, r3, r2
+ 527 0020 9B00     		lsls	r3, r3, #2
+ 528 0022 0B44     		add	r3, r3, r1
+ 529 0024 1C33     		adds	r3, r3, #28
+ 530 0026 1B68     		ldr	r3, [r3]
+ 531              	.L30:
+ 327:src/mios32_iic.c **** }
+ 532              		.loc 1 327 1
+ 533 0028 1846     		mov	r0, r3
+ 534 002a 0C37     		adds	r7, r7, #12
+ 535              	.LCFI24:
+ 536              		.cfi_def_cfa_offset 4
+ 537 002c BD46     		mov	sp, r7
+ 538              	.LCFI25:
+ 539              		.cfi_def_cfa_register 13
+ 540              		@ sp needed
+ 541 002e 80BC     		pop	{r7}
+ 542              	.LCFI26:
+ 543              		.cfi_restore 7
+ 544              		.cfi_def_cfa_offset 0
+ 545 0030 7047     		bx	lr
+ 546              	.L32:
+ 547 0032 00BF     		.align	2
+ 548              	.L31:
+ 549 0034 00000000 		.word	iic_rec
+ 550              		.cfi_endproc
+ 551              	.LFE31:
+ 553              		.section	.text.MIOS32_IIC_TransferCheck,"ax",%progbits
+ 554              		.align	1
+ 555              		.global	MIOS32_IIC_TransferCheck
+ 556              		.syntax unified
+ 557              		.thumb
+ 558              		.thumb_func
+ 560              	MIOS32_IIC_TransferCheck:
+ 561              	.LFB32:
+ 328:src/mios32_iic.c **** 
+ 329:src/mios32_iic.c **** 
+ 330:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+ 331:src/mios32_iic.c **** //! Checks if transfer is finished
+ 332:src/mios32_iic.c **** //! \param[in] iic_port the IIC port (0..MIOS32_IIC_NUM-1)
+ 333:src/mios32_iic.c **** //! \return 0 if no ongoing transfer
+ 334:src/mios32_iic.c **** //! \return 1 if ongoing transfer
+ 335:src/mios32_iic.c **** //! \return < 0 if error during transfer
+ 336:src/mios32_iic.c **** //! \note Note that the semaphore will be released automatically after an error
+ 337:src/mios32_iic.c **** //! (MIOS32_IIC_TransferBegin() has to be called again)
+ 338:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+ 339:src/mios32_iic.c **** s32 MIOS32_IIC_TransferCheck()
+ 340:src/mios32_iic.c **** {
+ 562              		.loc 1 340 1
+ 563              		.cfi_startproc
+ 564              		@ args = 0, pretend = 0, frame = 8
+ 565              		@ frame_needed = 1, uses_anonymous_args = 0
+ 566              		@ link register save eliminated.
+ 567 0000 80B4     		push	{r7}
+ 568              	.LCFI27:
+ 569              		.cfi_def_cfa_offset 4
+ 570              		.cfi_offset 7, -4
+ 571 0002 83B0     		sub	sp, sp, #12
+ 572              	.LCFI28:
+ 573              		.cfi_def_cfa_offset 16
+ 574 0004 00AF     		add	r7, sp, #0
+ 575              	.LCFI29:
+ 576              		.cfi_def_cfa_register 7
+ 341:src/mios32_iic.c ****   u8 iic_port = 0;
+ 577              		.loc 1 341 6
+ 578 0006 0023     		movs	r3, #0
+ 579 0008 FB71     		strb	r3, [r7, #7]
+ 342:src/mios32_iic.c ****   iic_rec_t *iicx = &iic_rec[iic_port];// simplify addressing of record
+ 580              		.loc 1 342 29
+ 581 000a FA79     		ldrb	r2, [r7, #7]	@ zero_extendqisi2
+ 582              		.loc 1 342 14
+ 583 000c 1346     		mov	r3, r2
+ 584 000e DB00     		lsls	r3, r3, #3
+ 585 0010 1344     		add	r3, r3, r2
+ 586 0012 9B00     		lsls	r3, r3, #2
+ 587 0014 144A     		ldr	r2, .L38
+ 588 0016 1344     		add	r3, r3, r2
+ 589 0018 3B60     		str	r3, [r7]
+ 343:src/mios32_iic.c **** 
+ 344:src/mios32_iic.c ****   if( iic_port >= MIOS32_IIC_NUM )
+ 590              		.loc 1 344 5
+ 591 001a FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 592 001c 002B     		cmp	r3, #0
+ 593 001e 02D0     		beq	.L34
+ 345:src/mios32_iic.c ****     return MIOS32_IIC_ERROR_INVALID_PORT;
+ 594              		.loc 1 345 12
+ 595 0020 4FF0FF33 		mov	r3, #-1
+ 596 0024 1BE0     		b	.L35
+ 597              	.L34:
+ 346:src/mios32_iic.c **** 
+ 347:src/mios32_iic.c ****   // ongoing transfer?
+ 348:src/mios32_iic.c ****   if( iicx->transfer_state.BUSY )
+ 598              		.loc 1 348 27
+ 599 0026 3B68     		ldr	r3, [r7]
+ 600 0028 5B69     		ldr	r3, [r3, #20]
+ 601 002a C3F30003 		ubfx	r3, r3, #0, #1
+ 602 002e DBB2     		uxtb	r3, r3
+ 603              		.loc 1 348 5
+ 604 0030 002B     		cmp	r3, #0
+ 605 0032 01D0     		beq	.L36
+ 349:src/mios32_iic.c ****     return 1;
+ 606              		.loc 1 349 12
+ 607 0034 0123     		movs	r3, #1
+ 608 0036 12E0     		b	.L35
+ 609              	.L36:
+ 350:src/mios32_iic.c **** 
+ 351:src/mios32_iic.c ****   // error during transfer?
+ 352:src/mios32_iic.c ****   // (must be done *after* BUSY check to avoid race conditon!)
+ 353:src/mios32_iic.c ****   if( iicx->transfer_error ) {
+ 610              		.loc 1 353 11
+ 611 0038 3B68     		ldr	r3, [r7]
+ 612 003a 9B69     		ldr	r3, [r3, #24]
+ 613              		.loc 1 353 5
+ 614 003c 002B     		cmp	r3, #0
+ 615 003e 0DD0     		beq	.L37
+ 354:src/mios32_iic.c ****     // store error status for MIOS32_IIC_LastErrorGet() function
+ 355:src/mios32_iic.c ****     iicx->last_transfer_error = iicx->transfer_error;
+ 616              		.loc 1 355 37
+ 617 0040 3B68     		ldr	r3, [r7]
+ 618 0042 9A69     		ldr	r2, [r3, #24]
+ 619              		.loc 1 355 31
+ 620 0044 3B68     		ldr	r3, [r7]
+ 621 0046 DA61     		str	r2, [r3, #28]
+ 356:src/mios32_iic.c ****     // clear current error status
+ 357:src/mios32_iic.c ****     iicx->transfer_error = 0;
+ 622              		.loc 1 357 26
+ 623 0048 3B68     		ldr	r3, [r7]
+ 624 004a 0022     		movs	r2, #0
+ 625 004c 9A61     		str	r2, [r3, #24]
+ 358:src/mios32_iic.c ****     // release semaphore for easier programming at user level
+ 359:src/mios32_iic.c ****     iicx->iic_semaphore = 0;
+ 626              		.loc 1 359 25
+ 627 004e 3B68     		ldr	r3, [r7]
+ 628 0050 0022     		movs	r2, #0
+ 629 0052 83F82020 		strb	r2, [r3, #32]
+ 360:src/mios32_iic.c ****     // and exit
+ 361:src/mios32_iic.c ****     return iicx->last_transfer_error;
+ 630              		.loc 1 361 16
+ 631 0056 3B68     		ldr	r3, [r7]
+ 632 0058 DB69     		ldr	r3, [r3, #28]
+ 633 005a 00E0     		b	.L35
+ 634              	.L37:
+ 362:src/mios32_iic.c ****   }
+ 363:src/mios32_iic.c **** 
+ 364:src/mios32_iic.c ****   // no transfer
+ 365:src/mios32_iic.c ****   return 0;
+ 635              		.loc 1 365 10
+ 636 005c 0023     		movs	r3, #0
+ 637              	.L35:
+ 366:src/mios32_iic.c **** }
+ 638              		.loc 1 366 1
+ 639 005e 1846     		mov	r0, r3
+ 640 0060 0C37     		adds	r7, r7, #12
+ 641              	.LCFI30:
+ 642              		.cfi_def_cfa_offset 4
+ 643 0062 BD46     		mov	sp, r7
+ 644              	.LCFI31:
+ 645              		.cfi_def_cfa_register 13
+ 646              		@ sp needed
+ 647 0064 80BC     		pop	{r7}
+ 648              	.LCFI32:
+ 649              		.cfi_restore 7
+ 650              		.cfi_def_cfa_offset 0
+ 651 0066 7047     		bx	lr
+ 652              	.L39:
+ 653              		.align	2
+ 654              	.L38:
+ 655 0068 00000000 		.word	iic_rec
+ 656              		.cfi_endproc
+ 657              	.LFE32:
+ 659              		.section	.text.MIOS32_IIC_TransferWait,"ax",%progbits
+ 660              		.align	1
+ 661              		.global	MIOS32_IIC_TransferWait
+ 662              		.syntax unified
+ 663              		.thumb
+ 664              		.thumb_func
+ 666              	MIOS32_IIC_TransferWait:
+ 667              	.LFB33:
+ 367:src/mios32_iic.c **** 
+ 368:src/mios32_iic.c **** 
+ 369:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+ 370:src/mios32_iic.c **** //! Waits until transfer is finished
+ 371:src/mios32_iic.c **** //! \param[in] iic_port the IIC port (0..MIOS32_IIC_NUM-1)
+ 372:src/mios32_iic.c **** //! \return 0 if no ongoing transfer
+ 373:src/mios32_iic.c **** //! \return < 0 if error during transfer
+ 374:src/mios32_iic.c **** //! \note Note that the semaphore will be released automatically after an error
+ 375:src/mios32_iic.c **** //! (MIOS32_IIC_TransferBegin() has to be called again)
+ 376:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+ 377:src/mios32_iic.c **** s32 MIOS32_IIC_TransferWait()
+ 378:src/mios32_iic.c **** {
+ 668              		.loc 1 378 1
+ 669              		.cfi_startproc
+ 670              		@ args = 0, pretend = 0, frame = 32
+ 671              		@ frame_needed = 1, uses_anonymous_args = 0
+ 672 0000 80B5     		push	{r7, lr}
+ 673              	.LCFI33:
+ 674              		.cfi_def_cfa_offset 8
+ 675              		.cfi_offset 7, -8
+ 676              		.cfi_offset 14, -4
+ 677 0002 88B0     		sub	sp, sp, #32
+ 678              	.LCFI34:
+ 679              		.cfi_def_cfa_offset 40
+ 680 0004 00AF     		add	r7, sp, #0
+ 681              	.LCFI35:
+ 682              		.cfi_def_cfa_register 7
+ 379:src/mios32_iic.c ****   u8 iic_port = 0;
+ 683              		.loc 1 379 6
+ 684 0006 0023     		movs	r3, #0
+ 685 0008 FB74     		strb	r3, [r7, #19]
+ 380:src/mios32_iic.c ****   iic_rec_t *iicx = &iic_rec[iic_port];// simplify addressing of record
+ 686              		.loc 1 380 29
+ 687 000a FA7C     		ldrb	r2, [r7, #19]	@ zero_extendqisi2
+ 688              		.loc 1 380 14
+ 689 000c 1346     		mov	r3, r2
+ 690 000e DB00     		lsls	r3, r3, #3
+ 691 0010 1344     		add	r3, r3, r2
+ 692 0012 9B00     		lsls	r3, r3, #2
+ 693 0014 524A     		ldr	r2, .L50
+ 694 0016 1344     		add	r3, r3, r2
+ 695 0018 FB60     		str	r3, [r7, #12]
+ 381:src/mios32_iic.c ****   u32 repeat_ctr = MIOS32_IIC_TIMEOUT_VALUE;
+ 696              		.loc 1 381 7
+ 697 001a 41F28833 		movw	r3, #5000
+ 698 001e FB61     		str	r3, [r7, #28]
+ 382:src/mios32_iic.c ****   u16 last_buffer_ix = iicx->buffer_ix;
+ 699              		.loc 1 382 7
+ 700 0020 FB68     		ldr	r3, [r7, #12]
+ 701 0022 5B8A     		ldrh	r3, [r3, #18]	@ movhi
+ 702 0024 7B83     		strh	r3, [r7, #26]	@ movhi
+ 383:src/mios32_iic.c **** 
+ 384:src/mios32_iic.c ****   if( iic_port >= MIOS32_IIC_NUM )
+ 703              		.loc 1 384 5
+ 704 0026 FB7C     		ldrb	r3, [r7, #19]	@ zero_extendqisi2
+ 705 0028 002B     		cmp	r3, #0
+ 706 002a 1FD0     		beq	.L43
+ 385:src/mios32_iic.c ****     return MIOS32_IIC_ERROR_INVALID_PORT;
+ 707              		.loc 1 385 12
+ 708 002c 4FF0FF33 		mov	r3, #-1
+ 709 0030 91E0     		b	.L49
+ 710              	.L46:
+ 711              	.LBB2:
+ 386:src/mios32_iic.c **** 
+ 387:src/mios32_iic.c ****   while( --repeat_ctr > 0 ) {
+ 388:src/mios32_iic.c ****     // check if buffer index has changed - if so, reload repeat counter
+ 389:src/mios32_iic.c ****     if( iicx->buffer_ix != last_buffer_ix ) {
+ 712              		.loc 1 389 13
+ 713 0032 FB68     		ldr	r3, [r7, #12]
+ 714 0034 5B8A     		ldrh	r3, [r3, #18]	@ movhi
+ 715 0036 9BB2     		uxth	r3, r3
+ 716              		.loc 1 389 7
+ 717 0038 7A8B     		ldrh	r2, [r7, #26]
+ 718 003a 9A42     		cmp	r2, r3
+ 719 003c 05D0     		beq	.L44
+ 390:src/mios32_iic.c ****       repeat_ctr = MIOS32_IIC_TIMEOUT_VALUE;
+ 720              		.loc 1 390 18
+ 721 003e 41F28833 		movw	r3, #5000
+ 722 0042 FB61     		str	r3, [r7, #28]
+ 391:src/mios32_iic.c ****       last_buffer_ix = iicx->buffer_ix;
+ 723              		.loc 1 391 22
+ 724 0044 FB68     		ldr	r3, [r7, #12]
+ 725 0046 5B8A     		ldrh	r3, [r3, #18]	@ movhi
+ 726 0048 7B83     		strh	r3, [r7, #26]	@ movhi
+ 727              	.L44:
+ 392:src/mios32_iic.c ****     }
+ 393:src/mios32_iic.c **** 
+ 394:src/mios32_iic.c ****     // get transfer state
+ 395:src/mios32_iic.c ****     s32 check_state = MIOS32_IIC_TransferCheck(iic_port);
+ 728              		.loc 1 395 23
+ 729 004a FB7C     		ldrb	r3, [r7, #19]	@ zero_extendqisi2
+ 730 004c 1846     		mov	r0, r3
+ 731 004e 454B     		ldr	r3, .L50+4
+ 732 0050 9847     		blx	r3
+ 733              	.LVL12:
+ 734 0052 B860     		str	r0, [r7, #8]
+ 396:src/mios32_iic.c **** 
+ 397:src/mios32_iic.c ****     // exit if transfer finished or error detected
+ 398:src/mios32_iic.c ****     if( check_state <= 0 ) {
+ 735              		.loc 1 398 7
+ 736 0054 BB68     		ldr	r3, [r7, #8]
+ 737 0056 002B     		cmp	r3, #0
+ 738 0058 08DC     		bgt	.L43
+ 399:src/mios32_iic.c ****       if( check_state < 0 )
+ 739              		.loc 1 399 9
+ 740 005a BB68     		ldr	r3, [r7, #8]
+ 741 005c 002B     		cmp	r3, #0
+ 742 005e 03DA     		bge	.L45
+ 400:src/mios32_iic.c ****     iicx->iic_semaphore = 0; // release semaphore for easier programming at user level
+ 743              		.loc 1 400 25
+ 744 0060 FB68     		ldr	r3, [r7, #12]
+ 745 0062 0022     		movs	r2, #0
+ 746 0064 83F82020 		strb	r2, [r3, #32]
+ 747              	.L45:
+ 401:src/mios32_iic.c ****       return check_state;
+ 748              		.loc 1 401 14
+ 749 0068 BB68     		ldr	r3, [r7, #8]
+ 750 006a 74E0     		b	.L49
+ 751              	.L43:
+ 752              	.LBE2:
+ 387:src/mios32_iic.c ****     // check if buffer index has changed - if so, reload repeat counter
+ 753              		.loc 1 387 8
+ 754 006c FB69     		ldr	r3, [r7, #28]
+ 755 006e 013B     		subs	r3, r3, #1
+ 756 0070 FB61     		str	r3, [r7, #28]
+ 757 0072 FB69     		ldr	r3, [r7, #28]
+ 758 0074 002B     		cmp	r3, #0
+ 759 0076 DCD1     		bne	.L46
+ 402:src/mios32_iic.c ****     }
+ 403:src/mios32_iic.c ****   }
+ 404:src/mios32_iic.c **** 
+ 405:src/mios32_iic.c ****   // timeout error - something is stalling...
+ 406:src/mios32_iic.c **** 
+ 407:src/mios32_iic.c **** #if 0
+ 408:src/mios32_iic.c ****   // send stop condition
+ 409:src/mios32_iic.c ****   I2C_GenerateSTOP(iicx->base, ENABLE);
+ 410:src/mios32_iic.c **** #else
+ 411:src/mios32_iic.c ****   // added by wackazong
+ 412:src/mios32_iic.c ****   // see also http://midibox.org/forums/topic/15770-sda-stuck-low-on-i2c-transfer/
+ 413:src/mios32_iic.c ****   // try to deblock a SDA line that is stuck low by bit-banging out a clock signal
+ 414:src/mios32_iic.c ****   // and waiting until the send buffer of any slave is empty
+ 415:src/mios32_iic.c **** 
+ 416:src/mios32_iic.c ****   // disable interrupts
+ 417:src/mios32_iic.c ****   I2C_ITConfig(iicx->base, I2C_IT_EVT | I2C_IT_BUF | I2C_IT_ERR, DISABLE);
+ 760              		.loc 1 417 3
+ 761 0078 FB68     		ldr	r3, [r7, #12]
+ 762 007a 1B68     		ldr	r3, [r3]
+ 763 007c 0022     		movs	r2, #0
+ 764 007e 4FF4E061 		mov	r1, #1792
+ 765 0082 1846     		mov	r0, r3
+ 766 0084 384B     		ldr	r3, .L50+8
+ 767 0086 9847     		blx	r3
+ 768              	.LVL13:
+ 418:src/mios32_iic.c **** 
+ 419:src/mios32_iic.c ****   I2C_Cmd(I2C1, DISABLE);
+ 769              		.loc 1 419 3
+ 770 0088 0021     		movs	r1, #0
+ 771 008a 3848     		ldr	r0, .L50+12
+ 772 008c 384B     		ldr	r3, .L50+16
+ 773 008e 9847     		blx	r3
+ 774              	.LVL14:
+ 420:src/mios32_iic.c ****   GPIO_InitTypeDef GPIO_InitStructure;
+ 421:src/mios32_iic.c **** 
+ 422:src/mios32_iic.c ****   // reconfigure IIC pins to push pull
+ 423:src/mios32_iic.c ****   GPIO_StructInit(&GPIO_InitStructure);
+ 775              		.loc 1 423 3
+ 776 0090 3B1D     		adds	r3, r7, #4
+ 777 0092 1846     		mov	r0, r3
+ 778 0094 374B     		ldr	r3, .L50+20
+ 779 0096 9847     		blx	r3
+ 780              	.LVL15:
+ 424:src/mios32_iic.c ****   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+ 781              		.loc 1 424 33
+ 782 0098 0323     		movs	r3, #3
+ 783 009a BB71     		strb	r3, [r7, #6]
+ 425:src/mios32_iic.c ****   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+ 784              		.loc 1 425 32
+ 785 009c 1023     		movs	r3, #16
+ 786 009e FB71     		strb	r3, [r7, #7]
+ 426:src/mios32_iic.c **** 
+ 427:src/mios32_iic.c ****   GPIO_InitStructure.GPIO_Pin = MIOS32_IIC0_SCL_PIN;
+ 787              		.loc 1 427 31
+ 788 00a0 4023     		movs	r3, #64
+ 789 00a2 BB80     		strh	r3, [r7, #4]	@ movhi
+ 428:src/mios32_iic.c ****   GPIO_Init(MIOS32_IIC0_SCL_PORT, &GPIO_InitStructure);
+ 790              		.loc 1 428 3
+ 791 00a4 3B1D     		adds	r3, r7, #4
+ 792 00a6 1946     		mov	r1, r3
+ 793 00a8 3348     		ldr	r0, .L50+24
+ 794 00aa 344B     		ldr	r3, .L50+28
+ 795 00ac 9847     		blx	r3
+ 796              	.LVL16:
+ 429:src/mios32_iic.c ****   GPIO_InitStructure.GPIO_Pin = MIOS32_IIC0_SDA_PIN;
+ 797              		.loc 1 429 31
+ 798 00ae 8023     		movs	r3, #128
+ 799 00b0 BB80     		strh	r3, [r7, #4]	@ movhi
+ 430:src/mios32_iic.c ****   GPIO_Init(MIOS32_IIC0_SDA_PORT, &GPIO_InitStructure);
+ 800              		.loc 1 430 3
+ 801 00b2 3B1D     		adds	r3, r7, #4
+ 802 00b4 1946     		mov	r1, r3
+ 803 00b6 3048     		ldr	r0, .L50+24
+ 804 00b8 304B     		ldr	r3, .L50+28
+ 805 00ba 9847     		blx	r3
+ 806              	.LVL17:
+ 431:src/mios32_iic.c **** 
+ 432:src/mios32_iic.c ****   u32 i;
+ 433:src/mios32_iic.c ****   for (i=0; i<16; i++) {
+ 807              		.loc 1 433 9
+ 808 00bc 0023     		movs	r3, #0
+ 809 00be 7B61     		str	r3, [r7, #20]
+ 810              		.loc 1 433 3
+ 811 00c0 1EE0     		b	.L47
+ 812              	.L48:
+ 813              	.LBB3:
+ 434:src/mios32_iic.c ****     /*Reset the SDA Pin*/
+ 435:src/mios32_iic.c ****     GPIO_ResetBits(GPIOB, MIOS32_IIC0_SDA_PIN);
+ 814              		.loc 1 435 5 discriminator 3
+ 815 00c2 8021     		movs	r1, #128
+ 816 00c4 2C48     		ldr	r0, .L50+24
+ 817 00c6 2E4B     		ldr	r3, .L50+32
+ 818 00c8 9847     		blx	r3
+ 819              	.LVL18:
+ 436:src/mios32_iic.c ****     vTaskDelay(20);
+ 820              		.loc 1 436 5 discriminator 3
+ 821 00ca 1420     		movs	r0, #20
+ 822 00cc 2D4B     		ldr	r3, .L50+36
+ 823 00ce 9847     		blx	r3
+ 824              	.LVL19:
+ 437:src/mios32_iic.c ****     /*Reset the SCL Pin*/
+ 438:src/mios32_iic.c ****     GPIO_ResetBits(GPIOB, MIOS32_IIC0_SCL_PIN);
+ 825              		.loc 1 438 5 discriminator 3
+ 826 00d0 4021     		movs	r1, #64
+ 827 00d2 2948     		ldr	r0, .L50+24
+ 828 00d4 2A4B     		ldr	r3, .L50+32
+ 829 00d6 9847     		blx	r3
+ 830              	.LVL20:
+ 439:src/mios32_iic.c ****     vTaskDelay(20);
+ 831              		.loc 1 439 5 discriminator 3
+ 832 00d8 1420     		movs	r0, #20
+ 833 00da 2A4B     		ldr	r3, .L50+36
+ 834 00dc 9847     		blx	r3
+ 835              	.LVL21:
+ 440:src/mios32_iic.c ****     /*Set the SCL Pin*/
+ 441:src/mios32_iic.c ****     GPIO_SetBits(GPIOB, MIOS32_IIC0_SCL_PIN);
+ 836              		.loc 1 441 5 discriminator 3
+ 837 00de 4021     		movs	r1, #64
+ 838 00e0 2548     		ldr	r0, .L50+24
+ 839 00e2 294B     		ldr	r3, .L50+40
+ 840 00e4 9847     		blx	r3
+ 841              	.LVL22:
+ 442:src/mios32_iic.c ****     vTaskDelay(20);
+ 842              		.loc 1 442 5 discriminator 3
+ 843 00e6 1420     		movs	r0, #20
+ 844 00e8 264B     		ldr	r3, .L50+36
+ 845 00ea 9847     		blx	r3
+ 846              	.LVL23:
+ 443:src/mios32_iic.c ****     /*Set the SDA Pin*/
+ 444:src/mios32_iic.c ****     GPIO_SetBits(GPIOB, MIOS32_IIC0_SDA_PIN);
+ 847              		.loc 1 444 5 discriminator 3
+ 848 00ec 8021     		movs	r1, #128
+ 849 00ee 2248     		ldr	r0, .L50+24
+ 850 00f0 254B     		ldr	r3, .L50+40
+ 851 00f2 9847     		blx	r3
+ 852              	.LVL24:
+ 445:src/mios32_iic.c ****     vTaskDelay(20);
+ 853              		.loc 1 445 5 discriminator 3
+ 854 00f4 1420     		movs	r0, #20
+ 855 00f6 234B     		ldr	r3, .L50+36
+ 856 00f8 9847     		blx	r3
+ 857              	.LVL25:
+ 858              	.LBE3:
+ 433:src/mios32_iic.c ****     /*Reset the SDA Pin*/
+ 859              		.loc 1 433 20 discriminator 3
+ 860 00fa 7B69     		ldr	r3, [r7, #20]
+ 861 00fc 0133     		adds	r3, r3, #1
+ 862 00fe 7B61     		str	r3, [r7, #20]
+ 863              	.L47:
+ 433:src/mios32_iic.c ****     /*Reset the SDA Pin*/
+ 864              		.loc 1 433 3 discriminator 1
+ 865 0100 7B69     		ldr	r3, [r7, #20]
+ 866 0102 0F2B     		cmp	r3, #15
+ 867 0104 DDD9     		bls	.L48
+ 446:src/mios32_iic.c ****   }
+ 447:src/mios32_iic.c **** 
+ 448:src/mios32_iic.c ****   GPIO_StructInit(&GPIO_InitStructure);
+ 868              		.loc 1 448 3
+ 869 0106 3B1D     		adds	r3, r7, #4
+ 870 0108 1846     		mov	r0, r3
+ 871 010a 1A4B     		ldr	r3, .L50+20
+ 872 010c 9847     		blx	r3
+ 873              	.LVL26:
+ 449:src/mios32_iic.c ****   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
+ 874              		.loc 1 449 33
+ 875 010e 0123     		movs	r3, #1
+ 876 0110 BB71     		strb	r3, [r7, #6]
+ 450:src/mios32_iic.c ****   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_OD;
+ 877              		.loc 1 450 32
+ 878 0112 1C23     		movs	r3, #28
+ 879 0114 FB71     		strb	r3, [r7, #7]
+ 451:src/mios32_iic.c **** 
+ 452:src/mios32_iic.c ****   GPIO_InitStructure.GPIO_Pin = MIOS32_IIC0_SCL_PIN;
+ 880              		.loc 1 452 31
+ 881 0116 4023     		movs	r3, #64
+ 882 0118 BB80     		strh	r3, [r7, #4]	@ movhi
+ 453:src/mios32_iic.c ****   GPIO_Init(MIOS32_IIC0_SCL_PORT, &GPIO_InitStructure);
+ 883              		.loc 1 453 3
+ 884 011a 3B1D     		adds	r3, r7, #4
+ 885 011c 1946     		mov	r1, r3
+ 886 011e 1648     		ldr	r0, .L50+24
+ 887 0120 164B     		ldr	r3, .L50+28
+ 888 0122 9847     		blx	r3
+ 889              	.LVL27:
+ 454:src/mios32_iic.c ****   GPIO_InitStructure.GPIO_Pin = MIOS32_IIC0_SDA_PIN;
+ 890              		.loc 1 454 31
+ 891 0124 8023     		movs	r3, #128
+ 892 0126 BB80     		strh	r3, [r7, #4]	@ movhi
+ 455:src/mios32_iic.c ****   GPIO_Init(MIOS32_IIC0_SDA_PORT, &GPIO_InitStructure);
+ 893              		.loc 1 455 3
+ 894 0128 3B1D     		adds	r3, r7, #4
+ 895 012a 1946     		mov	r1, r3
+ 896 012c 1248     		ldr	r0, .L50+24
+ 897 012e 134B     		ldr	r3, .L50+28
+ 898 0130 9847     		blx	r3
+ 899              	.LVL28:
+ 456:src/mios32_iic.c **** 
+ 457:src/mios32_iic.c ****   I2C_Cmd(I2C1, ENABLE);
+ 900              		.loc 1 457 3
+ 901 0132 0121     		movs	r1, #1
+ 902 0134 0D48     		ldr	r0, .L50+12
+ 903 0136 0E4B     		ldr	r3, .L50+16
+ 904 0138 9847     		blx	r3
+ 905              	.LVL29:
+ 458:src/mios32_iic.c **** #endif
+ 459:src/mios32_iic.c **** 
+ 460:src/mios32_iic.c ****   // re-initialize peripheral
+ 461:src/mios32_iic.c ****   MIOS32_IIC_InitPeripheral(iic_port);
+ 906              		.loc 1 461 3
+ 907 013a FB7C     		ldrb	r3, [r7, #19]	@ zero_extendqisi2
+ 908 013c 1846     		mov	r0, r3
+ 909 013e 134B     		ldr	r3, .L50+44
+ 910 0140 9847     		blx	r3
+ 911              	.LVL30:
+ 462:src/mios32_iic.c **** 
+ 463:src/mios32_iic.c ****   // release semaphore (!)
+ 464:src/mios32_iic.c ****   iicx->iic_semaphore = 0;
+ 912              		.loc 1 464 23
+ 913 0142 FB68     		ldr	r3, [r7, #12]
+ 914 0144 0022     		movs	r2, #0
+ 915 0146 83F82020 		strb	r2, [r3, #32]
+ 465:src/mios32_iic.c **** 
+ 466:src/mios32_iic.c ****   return (iicx->last_transfer_error=MIOS32_IIC_ERROR_TIMEOUT);
+ 916              		.loc 1 466 36
+ 917 014a FB68     		ldr	r3, [r7, #12]
+ 918 014c 6FF00302 		mvn	r2, #3
+ 919 0150 DA61     		str	r2, [r3, #28]
+ 920 0152 6FF00303 		mvn	r3, #3
+ 921              	.L49:
+ 467:src/mios32_iic.c **** }
+ 922              		.loc 1 467 1 discriminator 1
+ 923 0156 1846     		mov	r0, r3
+ 924 0158 2037     		adds	r7, r7, #32
+ 925              	.LCFI36:
+ 926              		.cfi_def_cfa_offset 8
+ 927 015a BD46     		mov	sp, r7
+ 928              	.LCFI37:
+ 929              		.cfi_def_cfa_register 13
+ 930              		@ sp needed
+ 931 015c 80BD     		pop	{r7, pc}
+ 932              	.L51:
+ 933 015e 00BF     		.align	2
+ 934              	.L50:
+ 935 0160 00000000 		.word	iic_rec
+ 936 0164 00000000 		.word	MIOS32_IIC_TransferCheck
+ 937 0168 00000000 		.word	I2C_ITConfig
+ 938 016c 00540040 		.word	1073763328
+ 939 0170 00000000 		.word	I2C_Cmd
+ 940 0174 00000000 		.word	GPIO_StructInit
+ 941 0178 000C0140 		.word	1073810432
+ 942 017c 00000000 		.word	GPIO_Init
+ 943 0180 00000000 		.word	GPIO_ResetBits
+ 944 0184 00000000 		.word	vTaskDelay
+ 945 0188 00000000 		.word	GPIO_SetBits
+ 946 018c 00000000 		.word	MIOS32_IIC_InitPeripheral
+ 947              		.cfi_endproc
+ 948              	.LFE33:
+ 950              		.section	.text.MIOS32_IIC_Transfer,"ax",%progbits
+ 951              		.align	1
+ 952              		.global	MIOS32_IIC_Transfer
+ 953              		.syntax unified
+ 954              		.thumb
+ 955              		.thumb_func
+ 957              	MIOS32_IIC_Transfer:
+ 958              	.LFB34:
+ 468:src/mios32_iic.c **** 
+ 469:src/mios32_iic.c **** 
+ 470:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+ 471:src/mios32_iic.c **** //! Starts a new transfer. If this function is called during an ongoing
+ 472:src/mios32_iic.c **** //! transfer, we wait until it has been finished and setup the new transfer
+ 473:src/mios32_iic.c **** //! \param[in] transfer type:<BR>
+ 474:src/mios32_iic.c **** //! <UL>
+ 475:src/mios32_iic.c **** //!   <LI>IIC_Read: a common Read transfer
+ 476:src/mios32_iic.c **** //!   <LI>IIC_Write: a common Write transfer
+ 477:src/mios32_iic.c **** //!   <LI>IIC_Read_AbortIfFirstByteIs0: used to poll MBHP_IIC_MIDI: aborts transfer
+ 478:src/mios32_iic.c **** //!         if the first received byte is 0
+ 479:src/mios32_iic.c **** //!   <LI>IIC_Write_WithoutStop: don't send stop condition after transfer to allow
+ 480:src/mios32_iic.c **** //!         a restart condition (e.g. used to access EEPROMs)
+ 481:src/mios32_iic.c **** //! \param[in] iic_port the IIC port (0..MIOS32_IIC_NUM-1)
+ 482:src/mios32_iic.c **** //! \param[in] address of IIC device (bit 0 always cleared)
+ 483:src/mios32_iic.c **** //! \param[in] *buffer pointer to transmit/receive buffer
+ 484:src/mios32_iic.c **** //! \param[in] len number of bytes which should be transmitted/received
+ 485:src/mios32_iic.c **** //! \return 0 no error
+ 486:src/mios32_iic.c **** //! \return < 0 on errors, if MIOS32_IIC_ERROR_PREV_OFFSET is added, the previous
+ 487:src/mios32_iic.c **** //!      transfer got an error (the previous task didn't use \ref MIOS32_IIC_TransferWait
+ 488:src/mios32_iic.c **** //!      to poll the transfer state)
+ 489:src/mios32_iic.c **** //! \note Note that the semaphore will be released automatically after an error
+ 490:src/mios32_iic.c **** //! (MIOS32_IIC_TransferBegin() has to be called again)
+ 491:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+ 492:src/mios32_iic.c **** s32 MIOS32_IIC_Transfer(mios32_iic_transfer_t transfer, u8 address, u8 *buffer, u16 len)
+ 493:src/mios32_iic.c **** {
+ 959              		.loc 1 493 1
+ 960              		.cfi_startproc
+ 961              		@ args = 0, pretend = 0, frame = 24
+ 962              		@ frame_needed = 1, uses_anonymous_args = 0
+ 963 0000 80B5     		push	{r7, lr}
+ 964              	.LCFI38:
+ 965              		.cfi_def_cfa_offset 8
+ 966              		.cfi_offset 7, -8
+ 967              		.cfi_offset 14, -4
+ 968 0002 86B0     		sub	sp, sp, #24
+ 969              	.LCFI39:
+ 970              		.cfi_def_cfa_offset 32
+ 971 0004 00AF     		add	r7, sp, #0
+ 972              	.LCFI40:
+ 973              		.cfi_def_cfa_register 7
+ 974 0006 3A60     		str	r2, [r7]
+ 975 0008 1A46     		mov	r2, r3
+ 976 000a 0346     		mov	r3, r0
+ 977 000c FB71     		strb	r3, [r7, #7]
+ 978 000e 0B46     		mov	r3, r1
+ 979 0010 BB71     		strb	r3, [r7, #6]
+ 980 0012 1346     		mov	r3, r2	@ movhi
+ 981 0014 BB80     		strh	r3, [r7, #4]	@ movhi
+ 494:src/mios32_iic.c ****   u8 iic_port = 0;
+ 982              		.loc 1 494 6
+ 983 0016 0023     		movs	r3, #0
+ 984 0018 FB75     		strb	r3, [r7, #23]
+ 495:src/mios32_iic.c ****   iic_rec_t *iicx = &iic_rec[iic_port];// simplify addressing of record
+ 985              		.loc 1 495 29
+ 986 001a FA7D     		ldrb	r2, [r7, #23]	@ zero_extendqisi2
+ 987              		.loc 1 495 14
+ 988 001c 1346     		mov	r3, r2
+ 989 001e DB00     		lsls	r3, r3, #3
+ 990 0020 1344     		add	r3, r3, r2
+ 991 0022 9B00     		lsls	r3, r3, #2
+ 992 0024 4A4A     		ldr	r2, .L61
+ 993 0026 1344     		add	r3, r3, r2
+ 994 0028 3B61     		str	r3, [r7, #16]
+ 496:src/mios32_iic.c ****   s32 error;
+ 497:src/mios32_iic.c **** 
+ 498:src/mios32_iic.c **** 
+ 499:src/mios32_iic.c ****   if( iic_port >= MIOS32_IIC_NUM )
+ 995              		.loc 1 499 5
+ 996 002a FB7D     		ldrb	r3, [r7, #23]	@ zero_extendqisi2
+ 997 002c 002B     		cmp	r3, #0
+ 998 002e 02D0     		beq	.L53
+ 500:src/mios32_iic.c ****     return MIOS32_IIC_ERROR_INVALID_PORT;
+ 999              		.loc 1 500 12
+ 1000 0030 4FF0FF33 		mov	r3, #-1
+ 1001 0034 88E0     		b	.L54
+ 1002              	.L53:
+ 501:src/mios32_iic.c **** 
+ 502:src/mios32_iic.c ****   // wait until previous transfer finished
+ 503:src/mios32_iic.c ****   if( (error = MIOS32_IIC_TransferWait(iic_port)) ) { // transmission error during previous transfe
+ 1003              		.loc 1 503 16
+ 1004 0036 FB7D     		ldrb	r3, [r7, #23]	@ zero_extendqisi2
+ 1005 0038 1846     		mov	r0, r3
+ 1006 003a 464B     		ldr	r3, .L61+4
+ 1007 003c 9847     		blx	r3
+ 1008              	.LVL31:
+ 1009 003e F860     		str	r0, [r7, #12]
+ 1010              		.loc 1 503 5
+ 1011 0040 FB68     		ldr	r3, [r7, #12]
+ 1012 0042 002B     		cmp	r3, #0
+ 1013 0044 06D0     		beq	.L55
+ 504:src/mios32_iic.c ****     iicx->iic_semaphore = 0; // release semaphore for easier programming at user level
+ 1014              		.loc 1 504 25
+ 1015 0046 3B69     		ldr	r3, [r7, #16]
+ 1016 0048 0022     		movs	r2, #0
+ 1017 004a 83F82020 		strb	r2, [r3, #32]
+ 505:src/mios32_iic.c ****     return error + MIOS32_IIC_ERROR_PREV_OFFSET;
+ 1018              		.loc 1 505 18
+ 1019 004e FB68     		ldr	r3, [r7, #12]
+ 1020 0050 803B     		subs	r3, r3, #128
+ 1021 0052 79E0     		b	.L54
+ 1022              	.L55:
+ 506:src/mios32_iic.c ****   }
+ 507:src/mios32_iic.c **** 
+ 508:src/mios32_iic.c ****   // disable interrupts
+ 509:src/mios32_iic.c ****   I2C_ITConfig(iicx->base, I2C_IT_EVT | I2C_IT_BUF | I2C_IT_ERR, DISABLE);
+ 1023              		.loc 1 509 3
+ 1024 0054 3B69     		ldr	r3, [r7, #16]
+ 1025 0056 1B68     		ldr	r3, [r3]
+ 1026 0058 0022     		movs	r2, #0
+ 1027 005a 4FF4E061 		mov	r1, #1792
+ 1028 005e 1846     		mov	r0, r3
+ 1029 0060 3D4B     		ldr	r3, .L61+8
+ 1030 0062 9847     		blx	r3
+ 1031              	.LVL32:
+ 510:src/mios32_iic.c **** 
+ 511:src/mios32_iic.c ****   // clear transfer state and error value
+ 512:src/mios32_iic.c ****   iicx->transfer_state.ALL = 0;
+ 1032              		.loc 1 512 28
+ 1033 0064 3A69     		ldr	r2, [r7, #16]
+ 1034 0066 137D     		ldrb	r3, [r2, #20]
+ 1035 0068 6FF30703 		bfc	r3, #0, #8
+ 1036 006c 1375     		strb	r3, [r2, #20]
+ 513:src/mios32_iic.c ****   iicx->transfer_error = 0;
+ 1037              		.loc 1 513 24
+ 1038 006e 3B69     		ldr	r3, [r7, #16]
+ 1039 0070 0022     		movs	r2, #0
+ 1040 0072 9A61     		str	r2, [r3, #24]
+ 514:src/mios32_iic.c **** 
+ 515:src/mios32_iic.c ****   // set buffer length and start index
+ 516:src/mios32_iic.c ****   iicx->buffer_len = len;
+ 1041              		.loc 1 516 20
+ 1042 0074 3B69     		ldr	r3, [r7, #16]
+ 1043 0076 BA88     		ldrh	r2, [r7, #4]	@ movhi
+ 1044 0078 1A82     		strh	r2, [r3, #16]	@ movhi
+ 517:src/mios32_iic.c ****   iicx->buffer_ix = 0;
+ 1045              		.loc 1 517 19
+ 1046 007a 3B69     		ldr	r3, [r7, #16]
+ 1047 007c 0022     		movs	r2, #0
+ 1048 007e 5A82     		strh	r2, [r3, #18]	@ movhi
+ 518:src/mios32_iic.c **** 
+ 519:src/mios32_iic.c ****   // branch depending on read/write
+ 520:src/mios32_iic.c ****   if( transfer == IIC_Read || transfer == IIC_Read_AbortIfFirstByteIs0 ) {
+ 1049              		.loc 1 520 5
+ 1050 0080 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 1051 0082 002B     		cmp	r3, #0
+ 1052 0084 02D0     		beq	.L56
+ 1053              		.loc 1 520 28 discriminator 1
+ 1054 0086 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 1055 0088 022B     		cmp	r3, #2
+ 1056 008a 17D1     		bne	.L57
+ 1057              	.L56:
+ 521:src/mios32_iic.c ****     // take new address/buffer/len
+ 522:src/mios32_iic.c ****     iicx->iic_address = address | 1; // set bit 0 for read operation
+ 1058              		.loc 1 522 23
+ 1059 008c BB79     		ldrb	r3, [r7, #6]
+ 1060 008e 43F00103 		orr	r3, r3, #1
+ 1061 0092 DAB2     		uxtb	r2, r3
+ 1062 0094 3B69     		ldr	r3, [r7, #16]
+ 1063 0096 1A71     		strb	r2, [r3, #4]
+ 523:src/mios32_iic.c ****     iicx->tx_buffer_ptr = null; // ensure that previous TX buffer won't be accessed
+ 1064              		.loc 1 523 25
+ 1065 0098 3B69     		ldr	r3, [r7, #16]
+ 1066 009a 0022     		movs	r2, #0
+ 1067 009c 9A60     		str	r2, [r3, #8]
+ 524:src/mios32_iic.c ****     iicx->rx_buffer_ptr = buffer;
+ 1068              		.loc 1 524 25
+ 1069 009e 3B69     		ldr	r3, [r7, #16]
+ 1070 00a0 3A68     		ldr	r2, [r7]
+ 1071 00a2 DA60     		str	r2, [r3, #12]
+ 525:src/mios32_iic.c ****     // special option for optimized MBHP_IIC_MIDI
+ 526:src/mios32_iic.c ****     iicx->transfer_state.ABORT_IF_FIRST_BYTE_0 = transfer == IIC_Read_AbortIfFirstByteIs0 ? 1 : 0;
+ 1072              		.loc 1 526 95
+ 1073 00a4 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 1074 00a6 022B     		cmp	r3, #2
+ 1075 00a8 0CBF     		ite	eq
+ 1076 00aa 0123     		moveq	r3, #1
+ 1077 00ac 0023     		movne	r3, #0
+ 1078 00ae D9B2     		uxtb	r1, r3
+ 1079              		.loc 1 526 48
+ 1080 00b0 3A69     		ldr	r2, [r7, #16]
+ 1081 00b2 137D     		ldrb	r3, [r2, #20]
+ 1082 00b4 61F38203 		bfi	r3, r1, #2, #1
+ 1083 00b8 1375     		strb	r3, [r2, #20]
+ 1084 00ba 28E0     		b	.L58
+ 1085              	.L57:
+ 527:src/mios32_iic.c ****   } else if( transfer == IIC_Write || transfer == IIC_Write_WithoutStop ) {
+ 1086              		.loc 1 527 12
+ 1087 00bc FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 1088 00be 012B     		cmp	r3, #1
+ 1089 00c0 02D0     		beq	.L59
+ 1090              		.loc 1 527 36 discriminator 1
+ 1091 00c2 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 1092 00c4 032B     		cmp	r3, #3
+ 1093 00c6 17D1     		bne	.L60
+ 1094              	.L59:
+ 528:src/mios32_iic.c ****     // take new address/buffer/len
+ 529:src/mios32_iic.c ****     iicx->iic_address = address & 0xfe; // clear bit 0 for write operation
+ 1095              		.loc 1 529 33
+ 1096 00c8 BB79     		ldrb	r3, [r7, #6]
+ 1097 00ca 23F00103 		bic	r3, r3, #1
+ 1098 00ce DAB2     		uxtb	r2, r3
+ 1099              		.loc 1 529 23
+ 1100 00d0 3B69     		ldr	r3, [r7, #16]
+ 1101 00d2 1A71     		strb	r2, [r3, #4]
+ 530:src/mios32_iic.c ****     iicx->tx_buffer_ptr = buffer;
+ 1102              		.loc 1 530 25
+ 1103 00d4 3B69     		ldr	r3, [r7, #16]
+ 1104 00d6 3A68     		ldr	r2, [r7]
+ 1105 00d8 9A60     		str	r2, [r3, #8]
+ 531:src/mios32_iic.c ****     iicx->rx_buffer_ptr = null; // ensure that nothing will be received
+ 1106              		.loc 1 531 25
+ 1107 00da 3B69     		ldr	r3, [r7, #16]
+ 1108 00dc 0022     		movs	r2, #0
+ 1109 00de DA60     		str	r2, [r3, #12]
+ 532:src/mios32_iic.c ****     // option to skip stop-condition generation after successful write
+ 533:src/mios32_iic.c ****     iicx->transfer_state.WRITE_WITHOUT_STOP = transfer == IIC_Write_WithoutStop ? 1 : 0;
+ 1110              		.loc 1 533 85
+ 1111 00e0 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 1112 00e2 032B     		cmp	r3, #3
+ 1113 00e4 0CBF     		ite	eq
+ 1114 00e6 0123     		moveq	r3, #1
+ 1115 00e8 0023     		movne	r3, #0
+ 1116 00ea D9B2     		uxtb	r1, r3
+ 1117              		.loc 1 533 45
+ 1118 00ec 3A69     		ldr	r2, [r7, #16]
+ 1119 00ee 137D     		ldrb	r3, [r2, #20]
+ 1120 00f0 61F3C303 		bfi	r3, r1, #3, #1
+ 1121 00f4 1375     		strb	r3, [r2, #20]
+ 1122 00f6 0AE0     		b	.L58
+ 1123              	.L60:
+ 534:src/mios32_iic.c ****   } else {
+ 535:src/mios32_iic.c ****     iicx->iic_semaphore = 0; // release semaphore for easier programming at user level
+ 1124              		.loc 1 535 25
+ 1125 00f8 3B69     		ldr	r3, [r7, #16]
+ 1126 00fa 0022     		movs	r2, #0
+ 1127 00fc 83F82020 		strb	r2, [r3, #32]
+ 536:src/mios32_iic.c ****     return (iicx->last_transfer_error=MIOS32_IIC_ERROR_UNSUPPORTED_TRANSFER_TYPE);
+ 1128              		.loc 1 536 38
+ 1129 0100 3B69     		ldr	r3, [r7, #16]
+ 1130 0102 6FF00202 		mvn	r2, #2
+ 1131 0106 DA61     		str	r2, [r3, #28]
+ 1132 0108 6FF00203 		mvn	r3, #2
+ 1133 010c 1CE0     		b	.L54
+ 1134              	.L58:
+ 537:src/mios32_iic.c ****   }
+ 538:src/mios32_iic.c **** 
+ 539:src/mios32_iic.c ****   // start with ACK
+ 540:src/mios32_iic.c ****   I2C_AcknowledgeConfig(iicx->base, ENABLE);
+ 1135              		.loc 1 540 3
+ 1136 010e 3B69     		ldr	r3, [r7, #16]
+ 1137 0110 1B68     		ldr	r3, [r3]
+ 1138 0112 0121     		movs	r1, #1
+ 1139 0114 1846     		mov	r0, r3
+ 1140 0116 114B     		ldr	r3, .L61+12
+ 1141 0118 9847     		blx	r3
+ 1142              	.LVL33:
+ 541:src/mios32_iic.c **** 
+ 542:src/mios32_iic.c ****   // clear last error status
+ 543:src/mios32_iic.c ****   iicx->last_transfer_error = 0;
+ 1143              		.loc 1 543 29
+ 1144 011a 3B69     		ldr	r3, [r7, #16]
+ 1145 011c 0022     		movs	r2, #0
+ 1146 011e DA61     		str	r2, [r3, #28]
+ 544:src/mios32_iic.c **** 
+ 545:src/mios32_iic.c ****   // notify that transfer has started
+ 546:src/mios32_iic.c ****   iicx->transfer_state.BUSY = 1;
+ 1147              		.loc 1 546 29
+ 1148 0120 3A69     		ldr	r2, [r7, #16]
+ 1149 0122 137D     		ldrb	r3, [r2, #20]
+ 1150 0124 43F00103 		orr	r3, r3, #1
+ 1151 0128 1375     		strb	r3, [r2, #20]
+ 547:src/mios32_iic.c **** 
+ 548:src/mios32_iic.c ****   // send start condition
+ 549:src/mios32_iic.c ****   I2C_GenerateSTART(iicx->base, ENABLE);
+ 1152              		.loc 1 549 3
+ 1153 012a 3B69     		ldr	r3, [r7, #16]
+ 1154 012c 1B68     		ldr	r3, [r3]
+ 1155 012e 0121     		movs	r1, #1
+ 1156 0130 1846     		mov	r0, r3
+ 1157 0132 0B4B     		ldr	r3, .L61+16
+ 1158 0134 9847     		blx	r3
+ 1159              	.LVL34:
+ 550:src/mios32_iic.c **** 
+ 551:src/mios32_iic.c ****   // enable I2V2 event, buffer and error interrupt
+ 552:src/mios32_iic.c ****   // this must be done *after* GenerateStart, for the case last transfer was WRITE_WITHOUT_STOP.
+ 553:src/mios32_iic.c ****   // in this case, start was already generated at the end of the last communication!
+ 554:src/mios32_iic.c ****   I2C_ITConfig(iicx->base, I2C_IT_EVT | I2C_IT_BUF | I2C_IT_ERR, ENABLE);
+ 1160              		.loc 1 554 3
+ 1161 0136 3B69     		ldr	r3, [r7, #16]
+ 1162 0138 1B68     		ldr	r3, [r3]
+ 1163 013a 0122     		movs	r2, #1
+ 1164 013c 4FF4E061 		mov	r1, #1792
+ 1165 0140 1846     		mov	r0, r3
+ 1166 0142 054B     		ldr	r3, .L61+8
+ 1167 0144 9847     		blx	r3
+ 1168              	.LVL35:
+ 555:src/mios32_iic.c **** 
+ 556:src/mios32_iic.c ****   return 0; // no error
+ 1169              		.loc 1 556 10
+ 1170 0146 0023     		movs	r3, #0
+ 1171              	.L54:
+ 557:src/mios32_iic.c **** }
+ 1172              		.loc 1 557 1
+ 1173 0148 1846     		mov	r0, r3
+ 1174 014a 1837     		adds	r7, r7, #24
+ 1175              	.LCFI41:
+ 1176              		.cfi_def_cfa_offset 8
+ 1177 014c BD46     		mov	sp, r7
+ 1178              	.LCFI42:
+ 1179              		.cfi_def_cfa_register 13
+ 1180              		@ sp needed
+ 1181 014e 80BD     		pop	{r7, pc}
+ 1182              	.L62:
+ 1183              		.align	2
+ 1184              	.L61:
+ 1185 0150 00000000 		.word	iic_rec
+ 1186 0154 00000000 		.word	MIOS32_IIC_TransferWait
+ 1187 0158 00000000 		.word	I2C_ITConfig
+ 1188 015c 00000000 		.word	I2C_AcknowledgeConfig
+ 1189 0160 00000000 		.word	I2C_GenerateSTART
+ 1190              		.cfi_endproc
+ 1191              	.LFE34:
+ 1193              		.section	.text.EV_IRQHandler,"ax",%progbits
+ 1194              		.align	1
+ 1195              		.syntax unified
+ 1196              		.thumb
+ 1197              		.thumb_func
+ 1199              	EV_IRQHandler:
+ 1200              	.LFB35:
+ 558:src/mios32_iic.c **** 
+ 559:src/mios32_iic.c **** 
+ 560:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+ 561:src/mios32_iic.c **** // Internal function for handling IIC event interrupts
+ 562:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+ 563:src/mios32_iic.c **** static void EV_IRQHandler(iic_rec_t *iicx)
+ 564:src/mios32_iic.c **** {
+ 1201              		.loc 1 564 1
+ 1202              		.cfi_startproc
+ 1203              		@ args = 0, pretend = 0, frame = 16
+ 1204              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1205 0000 90B5     		push	{r4, r7, lr}
+ 1206              	.LCFI43:
+ 1207              		.cfi_def_cfa_offset 12
+ 1208              		.cfi_offset 4, -12
+ 1209              		.cfi_offset 7, -8
+ 1210              		.cfi_offset 14, -4
+ 1211 0002 85B0     		sub	sp, sp, #20
+ 1212              	.LCFI44:
+ 1213              		.cfi_def_cfa_offset 32
+ 1214 0004 00AF     		add	r7, sp, #0
+ 1215              	.LCFI45:
+ 1216              		.cfi_def_cfa_register 7
+ 1217 0006 7860     		str	r0, [r7, #4]
+ 565:src/mios32_iic.c ****   u8 b;
+ 566:src/mios32_iic.c **** 
+ 567:src/mios32_iic.c ****   // Read SR1 and SR2 at the beginning (if not done so, flags may get lost)
+ 568:src/mios32_iic.c ****   u32 event = I2C_GetLastEvent(iicx->base);
+ 1218              		.loc 1 568 15
+ 1219 0008 7B68     		ldr	r3, [r7, #4]
+ 1220 000a 1B68     		ldr	r3, [r3]
+ 1221 000c 1846     		mov	r0, r3
+ 1222 000e 904B     		ldr	r3, .L85
+ 1223 0010 9847     		blx	r3
+ 1224              	.LVL36:
+ 1225 0012 F860     		str	r0, [r7, #12]
+ 569:src/mios32_iic.c **** 
+ 570:src/mios32_iic.c ****   // The order of the handling blocks is chosen by test results @ 1MHZ
+ 571:src/mios32_iic.c ****   // don't change this order
+ 572:src/mios32_iic.c **** 
+ 573:src/mios32_iic.c ****   // RxNE set, will be cleared by reading/writing DR
+ 574:src/mios32_iic.c ****   // note: also BTF will be reset after a read of SR1 (TxE flag) followed by either read/write DR
+ 575:src/mios32_iic.c ****   // or a START or STOP condition generated
+ 576:src/mios32_iic.c ****   // failsave: really requested a receive transfer? If not, continue to check TXE flag, if not set,
+ 577:src/mios32_iic.c ****   // we'll end up in the unexpected event handler.
+ 578:src/mios32_iic.c ****   if( event & I2C_FLAG_RXNE && iicx->rx_buffer_ptr != null ){
+ 1226              		.loc 1 578 13
+ 1227 0014 FA68     		ldr	r2, [r7, #12]
+ 1228 0016 8F4B     		ldr	r3, .L85+4
+ 1229 0018 1340     		ands	r3, r3, r2
+ 1230              		.loc 1 578 5
+ 1231 001a 002B     		cmp	r3, #0
+ 1232 001c 61D0     		beq	.L64
+ 1233              		.loc 1 578 36 discriminator 1
+ 1234 001e 7B68     		ldr	r3, [r7, #4]
+ 1235 0020 DB68     		ldr	r3, [r3, #12]
+ 1236              		.loc 1 578 29 discriminator 1
+ 1237 0022 002B     		cmp	r3, #0
+ 1238 0024 5DD0     		beq	.L64
+ 579:src/mios32_iic.c ****     // get received data
+ 580:src/mios32_iic.c ****     b = I2C_ReceiveData(iicx->base);
+ 1239              		.loc 1 580 9
+ 1240 0026 7B68     		ldr	r3, [r7, #4]
+ 1241 0028 1B68     		ldr	r3, [r3]
+ 1242 002a 1846     		mov	r0, r3
+ 1243 002c 8A4B     		ldr	r3, .L85+8
+ 1244 002e 9847     		blx	r3
+ 1245              	.LVL37:
+ 1246 0030 0346     		mov	r3, r0
+ 1247 0032 FB72     		strb	r3, [r7, #11]
+ 581:src/mios32_iic.c **** 
+ 582:src/mios32_iic.c ****     // failsave: still place in buffer?
+ 583:src/mios32_iic.c ****     if( iicx->buffer_ix < iicx->buffer_len )
+ 1248              		.loc 1 583 13
+ 1249 0034 7B68     		ldr	r3, [r7, #4]
+ 1250 0036 5B8A     		ldrh	r3, [r3, #18]	@ movhi
+ 1251 0038 9AB2     		uxth	r2, r3
+ 1252              		.loc 1 583 31
+ 1253 003a 7B68     		ldr	r3, [r7, #4]
+ 1254 003c 1B8A     		ldrh	r3, [r3, #16]	@ movhi
+ 1255 003e 9BB2     		uxth	r3, r3
+ 1256              		.loc 1 583 7
+ 1257 0040 9A42     		cmp	r2, r3
+ 1258 0042 0BD2     		bcs	.L65
+ 584:src/mios32_iic.c ****       iicx->rx_buffer_ptr[iicx->buffer_ix++] = b;
+ 1259              		.loc 1 584 11
+ 1260 0044 7B68     		ldr	r3, [r7, #4]
+ 1261 0046 DA68     		ldr	r2, [r3, #12]
+ 1262              		.loc 1 584 31
+ 1263 0048 7B68     		ldr	r3, [r7, #4]
+ 1264 004a 5B8A     		ldrh	r3, [r3, #18]	@ movhi
+ 1265 004c 9BB2     		uxth	r3, r3
+ 1266              		.loc 1 584 42
+ 1267 004e 591C     		adds	r1, r3, #1
+ 1268 0050 88B2     		uxth	r0, r1
+ 1269 0052 7968     		ldr	r1, [r7, #4]
+ 1270 0054 4882     		strh	r0, [r1, #18]	@ movhi
+ 1271              		.loc 1 584 26
+ 1272 0056 1344     		add	r3, r3, r2
+ 1273              		.loc 1 584 46
+ 1274 0058 FA7A     		ldrb	r2, [r7, #11]
+ 1275 005a 1A70     		strb	r2, [r3]
+ 1276              	.L65:
+ 585:src/mios32_iic.c **** 
+ 586:src/mios32_iic.c ****     // last byte received, disable interrupts and return.
+ 587:src/mios32_iic.c ****     if( iicx->transfer_state.STOP_REQUESTED ) {
+ 1277              		.loc 1 587 29
+ 1278 005c 7B68     		ldr	r3, [r7, #4]
+ 1279 005e 5B69     		ldr	r3, [r3, #20]
+ 1280 0060 C3F34003 		ubfx	r3, r3, #1, #1
+ 1281 0064 DBB2     		uxtb	r3, r3
+ 1282              		.loc 1 587 7
+ 1283 0066 002B     		cmp	r3, #0
+ 1284 0068 0DD0     		beq	.L66
+ 588:src/mios32_iic.c ****       // transfer finished
+ 589:src/mios32_iic.c ****       iicx->transfer_state.BUSY = 0;
+ 1285              		.loc 1 589 33
+ 1286 006a 7A68     		ldr	r2, [r7, #4]
+ 1287 006c 137D     		ldrb	r3, [r2, #20]
+ 1288 006e 6FF30003 		bfc	r3, #0, #1
+ 1289 0072 1375     		strb	r3, [r2, #20]
+ 590:src/mios32_iic.c ****       // disable all interrupts
+ 591:src/mios32_iic.c ****       I2C_ITConfig(iicx->base, I2C_IT_EVT | I2C_IT_BUF | I2C_IT_ERR, DISABLE);
+ 1290              		.loc 1 591 7
+ 1291 0074 7B68     		ldr	r3, [r7, #4]
+ 1292 0076 1B68     		ldr	r3, [r3]
+ 1293 0078 0022     		movs	r2, #0
+ 1294 007a 4FF4E061 		mov	r1, #1792
+ 1295 007e 1846     		mov	r0, r3
+ 1296 0080 764B     		ldr	r3, .L85+12
+ 1297 0082 9847     		blx	r3
+ 1298              	.LVL38:
+ 592:src/mios32_iic.c ****       return;
+ 1299              		.loc 1 592 7
+ 1300 0084 27E1     		b	.L63
+ 1301              	.L66:
+ 593:src/mios32_iic.c ****     }
+ 594:src/mios32_iic.c **** 
+ 595:src/mios32_iic.c ****     // request NAK and stop condition before receiving last data
+ 596:src/mios32_iic.c ****     if( (iicx->buffer_ix >= iicx->buffer_len-1) || (iicx->transfer_state.ABORT_IF_FIRST_BYTE_0 && i
+ 1302              		.loc 1 596 14
+ 1303 0086 7B68     		ldr	r3, [r7, #4]
+ 1304 0088 5B8A     		ldrh	r3, [r3, #18]	@ movhi
+ 1305 008a 9BB2     		uxth	r3, r3
+ 1306 008c 1A46     		mov	r2, r3
+ 1307              		.loc 1 596 33
+ 1308 008e 7B68     		ldr	r3, [r7, #4]
+ 1309 0090 1B8A     		ldrh	r3, [r3, #16]	@ movhi
+ 1310 0092 9BB2     		uxth	r3, r3
+ 1311              		.loc 1 596 45
+ 1312 0094 013B     		subs	r3, r3, #1
+ 1313              		.loc 1 596 7
+ 1314 0096 9A42     		cmp	r2, r3
+ 1315 0098 11DA     		bge	.L68
+ 1316              		.loc 1 596 73 discriminator 1
+ 1317 009a 7B68     		ldr	r3, [r7, #4]
+ 1318 009c 5B69     		ldr	r3, [r3, #20]
+ 1319 009e C3F38003 		ubfx	r3, r3, #2, #1
+ 1320 00a2 DBB2     		uxtb	r3, r3
+ 1321              		.loc 1 596 49 discriminator 1
+ 1322 00a4 002B     		cmp	r3, #0
+ 1323 00a6 00F01381 		beq	.L83
+ 1324              		.loc 1 596 103 discriminator 2
+ 1325 00aa 7B68     		ldr	r3, [r7, #4]
+ 1326 00ac 5B8A     		ldrh	r3, [r3, #18]	@ movhi
+ 1327 00ae 9BB2     		uxth	r3, r3
+ 1328              		.loc 1 596 96 discriminator 2
+ 1329 00b0 012B     		cmp	r3, #1
+ 1330 00b2 40F00D81 		bne	.L83
+ 1331              		.loc 1 596 120 discriminator 3
+ 1332 00b6 FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1333 00b8 002B     		cmp	r3, #0
+ 1334 00ba 40F00981 		bne	.L83
+ 1335              	.L68:
+ 597:src/mios32_iic.c ****       // request NAK
+ 598:src/mios32_iic.c ****       I2C_AcknowledgeConfig(iicx->base, DISABLE);
+ 1336              		.loc 1 598 7
+ 1337 00be 7B68     		ldr	r3, [r7, #4]
+ 1338 00c0 1B68     		ldr	r3, [r3]
+ 1339 00c2 0021     		movs	r1, #0
+ 1340 00c4 1846     		mov	r0, r3
+ 1341 00c6 664B     		ldr	r3, .L85+16
+ 1342 00c8 9847     		blx	r3
+ 1343              	.LVL39:
+ 599:src/mios32_iic.c ****       // request stop condition
+ 600:src/mios32_iic.c ****       I2C_GenerateSTOP(iicx->base, ENABLE);
+ 1344              		.loc 1 600 7
+ 1345 00ca 7B68     		ldr	r3, [r7, #4]
+ 1346 00cc 1B68     		ldr	r3, [r3]
+ 1347 00ce 0121     		movs	r1, #1
+ 1348 00d0 1846     		mov	r0, r3
+ 1349 00d2 644B     		ldr	r3, .L85+20
+ 1350 00d4 9847     		blx	r3
+ 1351              	.LVL40:
+ 601:src/mios32_iic.c ****       iicx->transfer_state.STOP_REQUESTED = 1;
+ 1352              		.loc 1 601 43
+ 1353 00d6 7A68     		ldr	r2, [r7, #4]
+ 1354 00d8 137D     		ldrb	r3, [r2, #20]
+ 1355 00da 43F00203 		orr	r3, r3, #2
+ 1356 00de 1375     		strb	r3, [r2, #20]
+ 602:src/mios32_iic.c ****     }
+ 603:src/mios32_iic.c ****     return;
+ 1357              		.loc 1 603 5
+ 1358 00e0 F6E0     		b	.L83
+ 1359              	.L64:
+ 604:src/mios32_iic.c ****   }
+ 605:src/mios32_iic.c **** 
+ 606:src/mios32_iic.c ****   // ADDR set, TRA flag not set (indicates transmitter/receiver mode).
+ 607:src/mios32_iic.c ****   // ADDR will be cleared by a read of SR1 followed by a read of SR2 (done by I2C_GetLastEvent)
+ 608:src/mios32_iic.c ****   // If transmitter mode is selected (TRA set), we go on, TXE will be catched to send the first byt
+ 609:src/mios32_iic.c ****   if( (event & I2C_FLAG_ADDR) && !(event & I2C_FLAG_TRA) ){
+ 1360              		.loc 1 609 14
+ 1361 00e2 FA68     		ldr	r2, [r7, #12]
+ 1362 00e4 604B     		ldr	r3, .L85+24
+ 1363 00e6 1340     		ands	r3, r3, r2
+ 1364              		.loc 1 609 5
+ 1365 00e8 002B     		cmp	r3, #0
+ 1366 00ea 1CD0     		beq	.L70
+ 1367              		.loc 1 609 42 discriminator 1
+ 1368 00ec FB68     		ldr	r3, [r7, #12]
+ 1369 00ee 03F48023 		and	r3, r3, #262144
+ 1370              		.loc 1 609 31 discriminator 1
+ 1371 00f2 002B     		cmp	r3, #0
+ 1372 00f4 17D1     		bne	.L70
+ 610:src/mios32_iic.c ****     // address sent (receiver mode), receiving first byte - check if we already have to request NAK
+ 611:src/mios32_iic.c ****     if( iicx->buffer_len == 1 ) {
+ 1373              		.loc 1 611 13
+ 1374 00f6 7B68     		ldr	r3, [r7, #4]
+ 1375 00f8 1B8A     		ldrh	r3, [r3, #16]	@ movhi
+ 1376 00fa 9BB2     		uxth	r3, r3
+ 1377              		.loc 1 611 7
+ 1378 00fc 012B     		cmp	r3, #1
+ 1379 00fe 40F0E980 		bne	.L84
+ 612:src/mios32_iic.c ****       // request NAK
+ 613:src/mios32_iic.c ****       I2C_AcknowledgeConfig(iicx->base, DISABLE);
+ 1380              		.loc 1 613 7
+ 1381 0102 7B68     		ldr	r3, [r7, #4]
+ 1382 0104 1B68     		ldr	r3, [r3]
+ 1383 0106 0021     		movs	r1, #0
+ 1384 0108 1846     		mov	r0, r3
+ 1385 010a 554B     		ldr	r3, .L85+16
+ 1386 010c 9847     		blx	r3
+ 1387              	.LVL41:
+ 614:src/mios32_iic.c ****       // request stop condition
+ 615:src/mios32_iic.c ****       I2C_GenerateSTOP(iicx->base, ENABLE);
+ 1388              		.loc 1 615 7
+ 1389 010e 7B68     		ldr	r3, [r7, #4]
+ 1390 0110 1B68     		ldr	r3, [r3]
+ 1391 0112 0121     		movs	r1, #1
+ 1392 0114 1846     		mov	r0, r3
+ 1393 0116 534B     		ldr	r3, .L85+20
+ 1394 0118 9847     		blx	r3
+ 1395              	.LVL42:
+ 616:src/mios32_iic.c ****       iicx->transfer_state.STOP_REQUESTED = 1;
+ 1396              		.loc 1 616 43
+ 1397 011a 7A68     		ldr	r2, [r7, #4]
+ 1398 011c 137D     		ldrb	r3, [r2, #20]
+ 1399 011e 43F00203 		orr	r3, r3, #2
+ 1400 0122 1375     		strb	r3, [r2, #20]
+ 617:src/mios32_iic.c ****     }
+ 618:src/mios32_iic.c ****     return;
+ 1401              		.loc 1 618 5
+ 1402 0124 D6E0     		b	.L84
+ 1403              	.L70:
+ 619:src/mios32_iic.c ****   }
+ 620:src/mios32_iic.c **** 
+ 621:src/mios32_iic.c ****   // TxE set, will be cleared by writing DR, or after START or STOP was generated
+ 622:src/mios32_iic.c ****   // This handling also applies for BTF, as TXE will alway be set if BTF is.
+ 623:src/mios32_iic.c ****   // note: also BTF will be reset after a read of SR1 (TxE flag) followed by either read/write DR
+ 624:src/mios32_iic.c ****   // or a START or STOP condition generated
+ 625:src/mios32_iic.c ****   if( event & I2C_FLAG_TXE ){
+ 1404              		.loc 1 625 13
+ 1405 0126 FA68     		ldr	r2, [r7, #12]
+ 1406 0128 504B     		ldr	r3, .L85+28
+ 1407 012a 1340     		ands	r3, r3, r2
+ 1408              		.loc 1 625 5
+ 1409 012c 002B     		cmp	r3, #0
+ 1410 012e 68D0     		beq	.L72
+ 626:src/mios32_iic.c **** 
+ 627:src/mios32_iic.c ****     // last byte already sent, disable interrupts and return.
+ 628:src/mios32_iic.c ****     if( iicx->transfer_state.STOP_REQUESTED ) {
+ 1411              		.loc 1 628 29
+ 1412 0130 7B68     		ldr	r3, [r7, #4]
+ 1413 0132 5B69     		ldr	r3, [r3, #20]
+ 1414 0134 C3F34003 		ubfx	r3, r3, #1, #1
+ 1415 0138 DBB2     		uxtb	r3, r3
+ 1416              		.loc 1 628 7
+ 1417 013a 002B     		cmp	r3, #0
+ 1418 013c 0DD0     		beq	.L73
+ 629:src/mios32_iic.c ****       // transfer finished
+ 630:src/mios32_iic.c ****       iicx->transfer_state.BUSY = 0;
+ 1419              		.loc 1 630 33
+ 1420 013e 7A68     		ldr	r2, [r7, #4]
+ 1421 0140 137D     		ldrb	r3, [r2, #20]
+ 1422 0142 6FF30003 		bfc	r3, #0, #1
+ 1423 0146 1375     		strb	r3, [r2, #20]
+ 631:src/mios32_iic.c ****       // disable all interrupts
+ 632:src/mios32_iic.c ****       I2C_ITConfig(iicx->base, I2C_IT_EVT | I2C_IT_BUF | I2C_IT_ERR, DISABLE);
+ 1424              		.loc 1 632 7
+ 1425 0148 7B68     		ldr	r3, [r7, #4]
+ 1426 014a 1B68     		ldr	r3, [r3]
+ 1427 014c 0022     		movs	r2, #0
+ 1428 014e 4FF4E061 		mov	r1, #1792
+ 1429 0152 1846     		mov	r0, r3
+ 1430 0154 414B     		ldr	r3, .L85+12
+ 1431 0156 9847     		blx	r3
+ 1432              	.LVL43:
+ 633:src/mios32_iic.c ****       return;
+ 1433              		.loc 1 633 7
+ 1434 0158 BDE0     		b	.L63
+ 1435              	.L73:
+ 634:src/mios32_iic.c ****     }
+ 635:src/mios32_iic.c **** 
+ 636:src/mios32_iic.c ****     if( iicx->buffer_ix < iicx->buffer_len ) {
+ 1436              		.loc 1 636 13
+ 1437 015a 7B68     		ldr	r3, [r7, #4]
+ 1438 015c 5B8A     		ldrh	r3, [r3, #18]	@ movhi
+ 1439 015e 9AB2     		uxth	r2, r3
+ 1440              		.loc 1 636 31
+ 1441 0160 7B68     		ldr	r3, [r7, #4]
+ 1442 0162 1B8A     		ldrh	r3, [r3, #16]	@ movhi
+ 1443 0164 9BB2     		uxth	r3, r3
+ 1444              		.loc 1 636 7
+ 1445 0166 9A42     		cmp	r2, r3
+ 1446 0168 16D2     		bcs	.L74
+ 637:src/mios32_iic.c ****       // checking tx_buffer_ptr for NULL is a failsafe measure.
+ 638:src/mios32_iic.c ****       I2C_SendData(iicx->base, (iicx->tx_buffer_ptr == null) ? 0 : iicx->tx_buffer_ptr[iicx->buffer
+ 1447              		.loc 1 638 7
+ 1448 016a 7B68     		ldr	r3, [r7, #4]
+ 1449 016c 1868     		ldr	r0, [r3]
+ 1450              		.loc 1 638 37
+ 1451 016e 7B68     		ldr	r3, [r7, #4]
+ 1452 0170 9B68     		ldr	r3, [r3, #8]
+ 1453              		.loc 1 638 7
+ 1454 0172 002B     		cmp	r3, #0
+ 1455 0174 0BD0     		beq	.L75
+ 1456              		.loc 1 638 72 discriminator 1
+ 1457 0176 7B68     		ldr	r3, [r7, #4]
+ 1458 0178 9A68     		ldr	r2, [r3, #8]
+ 1459              		.loc 1 638 92 discriminator 1
+ 1460 017a 7B68     		ldr	r3, [r7, #4]
+ 1461 017c 5B8A     		ldrh	r3, [r3, #18]	@ movhi
+ 1462 017e 9BB2     		uxth	r3, r3
+ 1463              		.loc 1 638 103 discriminator 1
+ 1464 0180 591C     		adds	r1, r3, #1
+ 1465 0182 8CB2     		uxth	r4, r1
+ 1466 0184 7968     		ldr	r1, [r7, #4]
+ 1467 0186 4C82     		strh	r4, [r1, #18]	@ movhi
+ 1468              		.loc 1 638 87 discriminator 1
+ 1469 0188 1344     		add	r3, r3, r2
+ 1470              		.loc 1 638 7 discriminator 1
+ 1471 018a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1472 018c 00E0     		b	.L76
+ 1473              	.L75:
+ 1474              		.loc 1 638 7 is_stmt 0 discriminator 2
+ 1475 018e 0023     		movs	r3, #0
+ 1476              	.L76:
+ 1477              		.loc 1 638 7 discriminator 4
+ 1478 0190 1946     		mov	r1, r3
+ 1479 0192 374B     		ldr	r3, .L85+32
+ 1480 0194 9847     		blx	r3
+ 1481              	.LVL44:
+ 639:src/mios32_iic.c ****       return;
+ 1482              		.loc 1 639 7 is_stmt 1 discriminator 4
+ 1483 0196 9EE0     		b	.L63
+ 1484              	.L74:
+ 640:src/mios32_iic.c ****     }
+ 641:src/mios32_iic.c **** 
+ 642:src/mios32_iic.c ****     // peripheral is transfering last byte, request stop condition /
+ 643:src/mios32_iic.c ****     // on write-without-stop transfer-type, request start condition instead
+ 644:src/mios32_iic.c ****     if( !iicx->transfer_state.WRITE_WITHOUT_STOP )
+ 1485              		.loc 1 644 30
+ 1486 0198 7B68     		ldr	r3, [r7, #4]
+ 1487 019a 5B69     		ldr	r3, [r3, #20]
+ 1488 019c C3F3C003 		ubfx	r3, r3, #3, #1
+ 1489 01a0 DBB2     		uxtb	r3, r3
+ 1490              		.loc 1 644 7
+ 1491 01a2 002B     		cmp	r3, #0
+ 1492 01a4 06D1     		bne	.L77
+ 645:src/mios32_iic.c ****       I2C_GenerateSTOP(iicx->base, ENABLE);
+ 1493              		.loc 1 645 7
+ 1494 01a6 7B68     		ldr	r3, [r7, #4]
+ 1495 01a8 1B68     		ldr	r3, [r3]
+ 1496 01aa 0121     		movs	r1, #1
+ 1497 01ac 1846     		mov	r0, r3
+ 1498 01ae 2D4B     		ldr	r3, .L85+20
+ 1499 01b0 9847     		blx	r3
+ 1500              	.LVL45:
+ 1501 01b2 05E0     		b	.L78
+ 1502              	.L77:
+ 646:src/mios32_iic.c ****     else
+ 647:src/mios32_iic.c ****       I2C_GenerateSTART(iicx->base, ENABLE);
+ 1503              		.loc 1 647 7
+ 1504 01b4 7B68     		ldr	r3, [r7, #4]
+ 1505 01b6 1B68     		ldr	r3, [r3]
+ 1506 01b8 0121     		movs	r1, #1
+ 1507 01ba 1846     		mov	r0, r3
+ 1508 01bc 2D4B     		ldr	r3, .L85+36
+ 1509 01be 9847     		blx	r3
+ 1510              	.LVL46:
+ 1511              	.L78:
+ 648:src/mios32_iic.c ****     iicx->transfer_state.STOP_REQUESTED = 1;
+ 1512              		.loc 1 648 41
+ 1513 01c0 7A68     		ldr	r2, [r7, #4]
+ 1514 01c2 137D     		ldrb	r3, [r2, #20]
+ 1515 01c4 43F00203 		orr	r3, r3, #2
+ 1516 01c8 1375     		strb	r3, [r2, #20]
+ 649:src/mios32_iic.c **** 
+ 650:src/mios32_iic.c ****     if( iicx->buffer_len == 0 ) {
+ 1517              		.loc 1 650 13
+ 1518 01ca 7B68     		ldr	r3, [r7, #4]
+ 1519 01cc 1B8A     		ldrh	r3, [r3, #16]	@ movhi
+ 1520 01ce 9BB2     		uxth	r3, r3
+ 1521              		.loc 1 650 7
+ 1522 01d0 002B     		cmp	r3, #0
+ 1523 01d2 0DD1     		bne	.L79
+ 651:src/mios32_iic.c ****       // transfer finished
+ 652:src/mios32_iic.c ****       iicx->transfer_state.BUSY = 0;
+ 1524              		.loc 1 652 33
+ 1525 01d4 7A68     		ldr	r2, [r7, #4]
+ 1526 01d6 137D     		ldrb	r3, [r2, #20]
+ 1527 01d8 6FF30003 		bfc	r3, #0, #1
+ 1528 01dc 1375     		strb	r3, [r2, #20]
+ 653:src/mios32_iic.c ****       // disable all interrupts
+ 654:src/mios32_iic.c ****       I2C_ITConfig(iicx->base, I2C_IT_EVT | I2C_IT_BUF | I2C_IT_ERR, DISABLE);
+ 1529              		.loc 1 654 7
+ 1530 01de 7B68     		ldr	r3, [r7, #4]
+ 1531 01e0 1B68     		ldr	r3, [r3]
+ 1532 01e2 0022     		movs	r2, #0
+ 1533 01e4 4FF4E061 		mov	r1, #1792
+ 1534 01e8 1846     		mov	r0, r3
+ 1535 01ea 1C4B     		ldr	r3, .L85+12
+ 1536 01ec 9847     		blx	r3
+ 1537              	.LVL47:
+ 655:src/mios32_iic.c ****     } else {
+ 656:src/mios32_iic.c ****       // Disable the I2C_IT_BUF interrupt after sending the last buffer data
+ 657:src/mios32_iic.c ****       // (last EV8) to not allow a new interrupt just with TxE - only BTF will generate it
+ 658:src/mios32_iic.c ****       // if this is not done, BUSY will be cleared before the transfer is finished
+ 659:src/mios32_iic.c ****       I2C_ITConfig(iicx->base, I2C_IT_BUF, DISABLE);
+ 660:src/mios32_iic.c ****     }
+ 661:src/mios32_iic.c ****   return;
+ 1538              		.loc 1 661 3
+ 1539 01ee 72E0     		b	.L63
+ 1540              	.L79:
+ 659:src/mios32_iic.c ****     }
+ 1541              		.loc 1 659 7
+ 1542 01f0 7B68     		ldr	r3, [r7, #4]
+ 1543 01f2 1B68     		ldr	r3, [r3]
+ 1544 01f4 0022     		movs	r2, #0
+ 1545 01f6 4FF48061 		mov	r1, #1024
+ 1546 01fa 1846     		mov	r0, r3
+ 1547 01fc 174B     		ldr	r3, .L85+12
+ 1548 01fe 9847     		blx	r3
+ 1549              	.LVL48:
+ 1550              		.loc 1 661 3
+ 1551 0200 69E0     		b	.L63
+ 1552              	.L72:
+ 662:src/mios32_iic.c ****   }
+ 663:src/mios32_iic.c **** 
+ 664:src/mios32_iic.c ****   // SB set, cleared by reading SR1 (done by I2C_GetLastEvent) followed by writing DR register
+ 665:src/mios32_iic.c ****   if( event & I2C_FLAG_SB ){
+ 1553              		.loc 1 665 13
+ 1554 0202 FA68     		ldr	r2, [r7, #12]
+ 1555 0204 1C4B     		ldr	r3, .L85+40
+ 1556 0206 1340     		ands	r3, r3, r2
+ 1557              		.loc 1 665 5
+ 1558 0208 002B     		cmp	r3, #0
+ 1559 020a 39D0     		beq	.L81
+ 666:src/mios32_iic.c ****     // don't send address if stop was requested (WRITE_WITHOUT_STOP - mode, start condition was sen
+ 667:src/mios32_iic.c ****     // we have to wait for the application to start the next transfer
+ 668:src/mios32_iic.c ****     if( iicx->transfer_state.STOP_REQUESTED ) {
+ 1560              		.loc 1 668 29
+ 1561 020c 7B68     		ldr	r3, [r7, #4]
+ 1562 020e 5B69     		ldr	r3, [r3, #20]
+ 1563 0210 C3F34003 		ubfx	r3, r3, #1, #1
+ 1564 0214 DBB2     		uxtb	r3, r3
+ 1565              		.loc 1 668 7
+ 1566 0216 002B     		cmp	r3, #0
+ 1567 0218 0DD0     		beq	.L82
+ 669:src/mios32_iic.c ****       // transfer finished
+ 670:src/mios32_iic.c ****       iicx->transfer_state.BUSY = 0;
+ 1568              		.loc 1 670 33
+ 1569 021a 7A68     		ldr	r2, [r7, #4]
+ 1570 021c 137D     		ldrb	r3, [r2, #20]
+ 1571 021e 6FF30003 		bfc	r3, #0, #1
+ 1572 0222 1375     		strb	r3, [r2, #20]
+ 671:src/mios32_iic.c ****       // disable all interrupts
+ 672:src/mios32_iic.c ****       I2C_ITConfig(iicx->base, I2C_IT_EVT | I2C_IT_BUF | I2C_IT_ERR, DISABLE);
+ 1573              		.loc 1 672 7
+ 1574 0224 7B68     		ldr	r3, [r7, #4]
+ 1575 0226 1B68     		ldr	r3, [r3]
+ 1576 0228 0022     		movs	r2, #0
+ 1577 022a 4FF4E061 		mov	r1, #1792
+ 1578 022e 1846     		mov	r0, r3
+ 1579 0230 0A4B     		ldr	r3, .L85+12
+ 1580 0232 9847     		blx	r3
+ 1581              	.LVL49:
+ 673:src/mios32_iic.c ****       return;
+ 1582              		.loc 1 673 7
+ 1583 0234 4FE0     		b	.L63
+ 1584              	.L82:
+ 674:src/mios32_iic.c ****     }
+ 675:src/mios32_iic.c ****     // send IIC address
+ 676:src/mios32_iic.c ****     I2C_Send7bitAddress(iicx->base, iicx->iic_address,
+ 1585              		.loc 1 676 5
+ 1586 0236 7B68     		ldr	r3, [r7, #4]
+ 1587 0238 1868     		ldr	r0, [r3]
+ 1588 023a 7B68     		ldr	r3, [r7, #4]
+ 1589 023c 1979     		ldrb	r1, [r3, #4]	@ zero_extendqisi2
+ 677:src/mios32_iic.c ****       (iicx->iic_address & 1)
+ 1590              		.loc 1 677 12
+ 1591 023e 7B68     		ldr	r3, [r7, #4]
+ 1592 0240 1B79     		ldrb	r3, [r3, #4]	@ zero_extendqisi2
+ 676:src/mios32_iic.c ****       (iicx->iic_address & 1)
+ 1593              		.loc 1 676 5
+ 1594 0242 03F00103 		and	r3, r3, #1
+ 1595 0246 DBB2     		uxtb	r3, r3
+ 1596 0248 1A46     		mov	r2, r3
+ 1597 024a 0C4B     		ldr	r3, .L85+44
+ 1598 024c 9847     		blx	r3
+ 1599              	.LVL50:
+ 678:src/mios32_iic.c ****       ? I2C_Direction_Receiver
+ 679:src/mios32_iic.c ****       : I2C_Direction_Transmitter);
+ 680:src/mios32_iic.c ****     return;
+ 1600              		.loc 1 680 5
+ 1601 024e 42E0     		b	.L63
+ 1602              	.L86:
+ 1603              		.align	2
+ 1604              	.L85:
+ 1605 0250 00000000 		.word	I2C_GetLastEvent
+ 1606 0254 40000010 		.word	268435520
+ 1607 0258 00000000 		.word	I2C_ReceiveData
+ 1608 025c 00000000 		.word	I2C_ITConfig
+ 1609 0260 00000000 		.word	I2C_AcknowledgeConfig
+ 1610 0264 00000000 		.word	I2C_GenerateSTOP
+ 1611 0268 02000010 		.word	268435458
+ 1612 026c 80000010 		.word	268435584
+ 1613 0270 00000000 		.word	I2C_SendData
+ 1614 0274 00000000 		.word	I2C_GenerateSTART
+ 1615 0278 01000010 		.word	268435457
+ 1616 027c 00000000 		.word	I2C_Send7bitAddress
+ 1617              	.L81:
+ 681:src/mios32_iic.c ****   }
+ 682:src/mios32_iic.c **** 
+ 683:src/mios32_iic.c ****   // this code is only reached if something got wrong, e.g. interrupt handler is called too late,
+ 684:src/mios32_iic.c ****   // the device reset itself (while testing, it was always event 0x00000000). we have to stop the t
+ 685:src/mios32_iic.c ****   // else read/write of corrupt data may be the result.
+ 686:src/mios32_iic.c ****   I2C_ITConfig(iicx->base, I2C_IT_EVT | I2C_IT_BUF | I2C_IT_ERR, DISABLE);
+ 1618              		.loc 1 686 3
+ 1619 0280 7B68     		ldr	r3, [r7, #4]
+ 1620 0282 1B68     		ldr	r3, [r3]
+ 1621 0284 0022     		movs	r2, #0
+ 1622 0286 4FF4E061 		mov	r1, #1792
+ 1623 028a 1846     		mov	r0, r3
+ 1624 028c 134B     		ldr	r3, .L87
+ 1625 028e 9847     		blx	r3
+ 1626              	.LVL51:
+ 687:src/mios32_iic.c ****   // notify error
+ 688:src/mios32_iic.c ****   MIOS32_IIC_unexpected_event = event;
+ 1627              		.loc 1 688 31
+ 1628 0290 134A     		ldr	r2, .L87+4
+ 1629 0292 FB68     		ldr	r3, [r7, #12]
+ 1630 0294 1360     		str	r3, [r2]
+ 689:src/mios32_iic.c ****   iicx->transfer_error = MIOS32_IIC_ERROR_UNEXPECTED_EVENT;
+ 1631              		.loc 1 689 24
+ 1632 0296 7B68     		ldr	r3, [r7, #4]
+ 1633 0298 6FF00702 		mvn	r2, #7
+ 1634 029c 9A61     		str	r2, [r3, #24]
+ 690:src/mios32_iic.c ****   iicx->transfer_state.BUSY = 0;
+ 1635              		.loc 1 690 29
+ 1636 029e 7A68     		ldr	r2, [r7, #4]
+ 1637 02a0 137D     		ldrb	r3, [r2, #20]
+ 1638 02a2 6FF30003 		bfc	r3, #0, #1
+ 1639 02a6 1375     		strb	r3, [r2, #20]
+ 691:src/mios32_iic.c ****   // do dummy read to send NAK + STOP condition
+ 692:src/mios32_iic.c ****   I2C_AcknowledgeConfig(iicx->base, DISABLE);
+ 1640              		.loc 1 692 3
+ 1641 02a8 7B68     		ldr	r3, [r7, #4]
+ 1642 02aa 1B68     		ldr	r3, [r3]
+ 1643 02ac 0021     		movs	r1, #0
+ 1644 02ae 1846     		mov	r0, r3
+ 1645 02b0 0C4B     		ldr	r3, .L87+8
+ 1646 02b2 9847     		blx	r3
+ 1647              	.LVL52:
+ 693:src/mios32_iic.c ****   b = I2C_ReceiveData(iicx->base);
+ 1648              		.loc 1 693 7
+ 1649 02b4 7B68     		ldr	r3, [r7, #4]
+ 1650 02b6 1B68     		ldr	r3, [r3]
+ 1651 02b8 1846     		mov	r0, r3
+ 1652 02ba 0B4B     		ldr	r3, .L87+12
+ 1653 02bc 9847     		blx	r3
+ 1654              	.LVL53:
+ 1655 02be 0346     		mov	r3, r0
+ 1656 02c0 FB72     		strb	r3, [r7, #11]
+ 694:src/mios32_iic.c ****   I2C_GenerateSTOP(iicx->base, ENABLE);
+ 1657              		.loc 1 694 3
+ 1658 02c2 7B68     		ldr	r3, [r7, #4]
+ 1659 02c4 1B68     		ldr	r3, [r3]
+ 1660 02c6 0121     		movs	r1, #1
+ 1661 02c8 1846     		mov	r0, r3
+ 1662 02ca 084B     		ldr	r3, .L87+16
+ 1663 02cc 9847     		blx	r3
+ 1664              	.LVL54:
+ 1665 02ce 02E0     		b	.L63
+ 1666              	.L83:
+ 603:src/mios32_iic.c ****   }
+ 1667              		.loc 1 603 5
+ 1668 02d0 00BF     		nop
+ 1669 02d2 00E0     		b	.L63
+ 1670              	.L84:
+ 618:src/mios32_iic.c ****   }
+ 1671              		.loc 1 618 5
+ 1672 02d4 00BF     		nop
+ 1673              	.L63:
+ 695:src/mios32_iic.c ****   }
+ 1674              		.loc 1 695 3
+ 1675 02d6 1437     		adds	r7, r7, #20
+ 1676              	.LCFI46:
+ 1677              		.cfi_def_cfa_offset 12
+ 1678 02d8 BD46     		mov	sp, r7
+ 1679              	.LCFI47:
+ 1680              		.cfi_def_cfa_register 13
+ 1681              		@ sp needed
+ 1682 02da 90BD     		pop	{r4, r7, pc}
+ 1683              	.L88:
+ 1684              		.align	2
+ 1685              	.L87:
+ 1686 02dc 00000000 		.word	I2C_ITConfig
+ 1687 02e0 00000000 		.word	MIOS32_IIC_unexpected_event
+ 1688 02e4 00000000 		.word	I2C_AcknowledgeConfig
+ 1689 02e8 00000000 		.word	I2C_ReceiveData
+ 1690 02ec 00000000 		.word	I2C_GenerateSTOP
+ 1691              		.cfi_endproc
+ 1692              	.LFE35:
+ 1694              		.section	.text.ER_IRQHandler,"ax",%progbits
+ 1695              		.align	1
+ 1696              		.syntax unified
+ 1697              		.thumb
+ 1698              		.thumb_func
+ 1700              	ER_IRQHandler:
+ 1701              	.LFB36:
+ 696:src/mios32_iic.c **** 
+ 697:src/mios32_iic.c **** 
+ 698:src/mios32_iic.c **** 
+ 699:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+ 700:src/mios32_iic.c **** // Internal function for handling IIC error interrupts
+ 701:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+ 702:src/mios32_iic.c **** static void ER_IRQHandler(iic_rec_t *iicx)
+ 703:src/mios32_iic.c **** {
+ 1702              		.loc 1 703 1
+ 1703              		.cfi_startproc
+ 1704              		@ args = 0, pretend = 0, frame = 16
+ 1705              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1706 0000 80B5     		push	{r7, lr}
+ 1707              	.LCFI48:
+ 1708              		.cfi_def_cfa_offset 8
+ 1709              		.cfi_offset 7, -8
+ 1710              		.cfi_offset 14, -4
+ 1711 0002 84B0     		sub	sp, sp, #16
+ 1712              	.LCFI49:
+ 1713              		.cfi_def_cfa_offset 24
+ 1714 0004 00AF     		add	r7, sp, #0
+ 1715              	.LCFI50:
+ 1716              		.cfi_def_cfa_register 7
+ 1717 0006 7860     		str	r0, [r7, #4]
+ 704:src/mios32_iic.c ****   // Read SR1 and SR2 at the beginning (if not done so, flags may get lost)
+ 705:src/mios32_iic.c ****   u32 event = I2C_GetLastEvent(iicx->base);
+ 1718              		.loc 1 705 15
+ 1719 0008 7B68     		ldr	r3, [r7, #4]
+ 1720 000a 1B68     		ldr	r3, [r3]
+ 1721 000c 1846     		mov	r0, r3
+ 1722 000e 244B     		ldr	r3, .L93
+ 1723 0010 9847     		blx	r3
+ 1724              	.LVL55:
+ 1725 0012 F860     		str	r0, [r7, #12]
+ 706:src/mios32_iic.c **** 
+ 707:src/mios32_iic.c ****   // note that only one error number is available
+ 708:src/mios32_iic.c ****   // the order of these checks defines the priority
+ 709:src/mios32_iic.c **** 
+ 710:src/mios32_iic.c ****   // bus error (start/stop condition during read
+ 711:src/mios32_iic.c ****   // unlikely, should only be relevant for slave mode?)
+ 712:src/mios32_iic.c ****   if( event & I2C_FLAG_BERR  ) {
+ 1726              		.loc 1 712 13
+ 1727 0014 FA68     		ldr	r2, [r7, #12]
+ 1728 0016 234B     		ldr	r3, .L93+4
+ 1729 0018 1340     		ands	r3, r3, r2
+ 1730              		.loc 1 712 5
+ 1731 001a 002B     		cmp	r3, #0
+ 1732 001c 0AD0     		beq	.L90
+ 713:src/mios32_iic.c ****     I2C_ClearITPendingBit(iicx->base, I2C_IT_BERR);
+ 1733              		.loc 1 713 5
+ 1734 001e 7B68     		ldr	r3, [r7, #4]
+ 1735 0020 1B68     		ldr	r3, [r3]
+ 1736 0022 4FF00121 		mov	r1, #16777472
+ 1737 0026 1846     		mov	r0, r3
+ 1738 0028 1F4B     		ldr	r3, .L93+8
+ 1739 002a 9847     		blx	r3
+ 1740              	.LVL56:
+ 714:src/mios32_iic.c ****     iicx->transfer_error = MIOS32_IIC_ERROR_BUS;
+ 1741              		.loc 1 714 26
+ 1742 002c 7B68     		ldr	r3, [r7, #4]
+ 1743 002e 6FF00502 		mvn	r2, #5
+ 1744 0032 9A61     		str	r2, [r3, #24]
+ 1745              	.L90:
+ 715:src/mios32_iic.c ****   }
+ 716:src/mios32_iic.c **** 
+ 717:src/mios32_iic.c ****   // arbitration lost
+ 718:src/mios32_iic.c ****   if( event & I2C_FLAG_ARLO ) {
+ 1746              		.loc 1 718 13
+ 1747 0034 FA68     		ldr	r2, [r7, #12]
+ 1748 0036 1D4B     		ldr	r3, .L93+12
+ 1749 0038 1340     		ands	r3, r3, r2
+ 1750              		.loc 1 718 5
+ 1751 003a 002B     		cmp	r3, #0
+ 1752 003c 09D0     		beq	.L91
+ 719:src/mios32_iic.c ****     I2C_ClearITPendingBit(iicx->base, I2C_IT_ARLO);
+ 1753              		.loc 1 719 5
+ 1754 003e 7B68     		ldr	r3, [r7, #4]
+ 1755 0040 1B68     		ldr	r3, [r3]
+ 1756 0042 1B49     		ldr	r1, .L93+16
+ 1757 0044 1846     		mov	r0, r3
+ 1758 0046 184B     		ldr	r3, .L93+8
+ 1759 0048 9847     		blx	r3
+ 1760              	.LVL57:
+ 720:src/mios32_iic.c ****     iicx->transfer_error = MIOS32_IIC_ERROR_ARBITRATION_LOST;
+ 1761              		.loc 1 720 26
+ 1762 004a 7B68     		ldr	r3, [r7, #4]
+ 1763 004c 6FF00402 		mvn	r2, #4
+ 1764 0050 9A61     		str	r2, [r3, #24]
+ 1765              	.L91:
+ 721:src/mios32_iic.c ****   }
+ 722:src/mios32_iic.c **** 
+ 723:src/mios32_iic.c ****   // no acknowledge received from slave (e.g. slave not connected)
+ 724:src/mios32_iic.c ****   if( event & I2C_FLAG_AF ) {
+ 1766              		.loc 1 724 13
+ 1767 0052 FA68     		ldr	r2, [r7, #12]
+ 1768 0054 174B     		ldr	r3, .L93+20
+ 1769 0056 1340     		ands	r3, r3, r2
+ 1770              		.loc 1 724 5
+ 1771 0058 002B     		cmp	r3, #0
+ 1772 005a 0FD0     		beq	.L92
+ 725:src/mios32_iic.c ****     I2C_ClearITPendingBit(iicx->base, I2C_IT_AF);
+ 1773              		.loc 1 725 5
+ 1774 005c 7B68     		ldr	r3, [r7, #4]
+ 1775 005e 1B68     		ldr	r3, [r3]
+ 1776 0060 1549     		ldr	r1, .L93+24
+ 1777 0062 1846     		mov	r0, r3
+ 1778 0064 104B     		ldr	r3, .L93+8
+ 1779 0066 9847     		blx	r3
+ 1780              	.LVL58:
+ 726:src/mios32_iic.c ****     iicx->transfer_error = MIOS32_IIC_ERROR_SLAVE_NOT_CONNECTED;
+ 1781              		.loc 1 726 26
+ 1782 0068 7B68     		ldr	r3, [r7, #4]
+ 1783 006a 6FF00602 		mvn	r2, #6
+ 1784 006e 9A61     		str	r2, [r3, #24]
+ 727:src/mios32_iic.c ****     // send stop condition to release bus
+ 728:src/mios32_iic.c ****     I2C_GenerateSTOP(iicx->base, ENABLE);
+ 1785              		.loc 1 728 5
+ 1786 0070 7B68     		ldr	r3, [r7, #4]
+ 1787 0072 1B68     		ldr	r3, [r3]
+ 1788 0074 0121     		movs	r1, #1
+ 1789 0076 1846     		mov	r0, r3
+ 1790 0078 104B     		ldr	r3, .L93+28
+ 1791 007a 9847     		blx	r3
+ 1792              	.LVL59:
+ 1793              	.L92:
+ 729:src/mios32_iic.c ****   }
+ 730:src/mios32_iic.c **** 
+ 731:src/mios32_iic.c ****   // disable interrupts
+ 732:src/mios32_iic.c ****   I2C_ITConfig(iicx->base, I2C_IT_EVT | I2C_IT_BUF | I2C_IT_ERR, DISABLE);
+ 1794              		.loc 1 732 3
+ 1795 007c 7B68     		ldr	r3, [r7, #4]
+ 1796 007e 1B68     		ldr	r3, [r3]
+ 1797 0080 0022     		movs	r2, #0
+ 1798 0082 4FF4E061 		mov	r1, #1792
+ 1799 0086 1846     		mov	r0, r3
+ 1800 0088 0D4B     		ldr	r3, .L93+32
+ 1801 008a 9847     		blx	r3
+ 1802              	.LVL60:
+ 733:src/mios32_iic.c **** 
+ 734:src/mios32_iic.c ****   // notify that transfer has finished (due to the error)
+ 735:src/mios32_iic.c ****   iicx->transfer_state.BUSY = 0;
+ 1803              		.loc 1 735 29
+ 1804 008c 7A68     		ldr	r2, [r7, #4]
+ 1805 008e 137D     		ldrb	r3, [r2, #20]
+ 1806 0090 6FF30003 		bfc	r3, #0, #1
+ 1807 0094 1375     		strb	r3, [r2, #20]
+ 736:src/mios32_iic.c **** }
+ 1808              		.loc 1 736 1
+ 1809 0096 00BF     		nop
+ 1810 0098 1037     		adds	r7, r7, #16
+ 1811              	.LCFI51:
+ 1812              		.cfi_def_cfa_offset 8
+ 1813 009a BD46     		mov	sp, r7
+ 1814              	.LCFI52:
+ 1815              		.cfi_def_cfa_register 13
+ 1816              		@ sp needed
+ 1817 009c 80BD     		pop	{r7, pc}
+ 1818              	.L94:
+ 1819 009e 00BF     		.align	2
+ 1820              	.L93:
+ 1821 00a0 00000000 		.word	I2C_GetLastEvent
+ 1822 00a4 00010010 		.word	268435712
+ 1823 00a8 00000000 		.word	I2C_ClearITPendingBit
+ 1824 00ac 00020010 		.word	268435968
+ 1825 00b0 00020001 		.word	16777728
+ 1826 00b4 00040010 		.word	268436480
+ 1827 00b8 00040001 		.word	16778240
+ 1828 00bc 00000000 		.word	I2C_GenerateSTOP
+ 1829 00c0 00000000 		.word	I2C_ITConfig
+ 1830              		.cfi_endproc
+ 1831              	.LFE36:
+ 1833              		.section	.text.I2C1_EV_IRQHandler,"ax",%progbits
+ 1834              		.align	1
+ 1835              		.global	I2C1_EV_IRQHandler
+ 1836              		.syntax unified
+ 1837              		.thumb
+ 1838              		.thumb_func
+ 1840              	I2C1_EV_IRQHandler:
+ 1841              	.LFB37:
+ 737:src/mios32_iic.c **** 
+ 738:src/mios32_iic.c **** 
+ 739:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+ 740:src/mios32_iic.c **** // interrupt vectors
+ 741:src/mios32_iic.c **** /////////////////////////////////////////////////////////////////////////////
+ 742:src/mios32_iic.c **** 
+ 743:src/mios32_iic.c **** void I2C1_EV_IRQHandler(void)
+ 744:src/mios32_iic.c **** {
+ 1842              		.loc 1 744 1
+ 1843              		.cfi_startproc
+ 1844              		@ args = 0, pretend = 0, frame = 0
+ 1845              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1846 0000 80B5     		push	{r7, lr}
+ 1847              	.LCFI53:
+ 1848              		.cfi_def_cfa_offset 8
+ 1849              		.cfi_offset 7, -8
+ 1850              		.cfi_offset 14, -4
+ 1851 0002 00AF     		add	r7, sp, #0
+ 1852              	.LCFI54:
+ 1853              		.cfi_def_cfa_register 7
+ 745:src/mios32_iic.c ****   EV_IRQHandler((iic_rec_t *)&iic_rec[0]);
+ 1854              		.loc 1 745 3
+ 1855 0004 0248     		ldr	r0, .L96
+ 1856 0006 034B     		ldr	r3, .L96+4
+ 1857 0008 9847     		blx	r3
+ 1858              	.LVL61:
+ 746:src/mios32_iic.c **** }
+ 1859              		.loc 1 746 1
+ 1860 000a 00BF     		nop
+ 1861 000c 80BD     		pop	{r7, pc}
+ 1862              	.L97:
+ 1863 000e 00BF     		.align	2
+ 1864              	.L96:
+ 1865 0010 00000000 		.word	iic_rec
+ 1866 0014 00000000 		.word	EV_IRQHandler
+ 1867              		.cfi_endproc
+ 1868              	.LFE37:
+ 1870              		.section	.text.I2C1_ER_IRQHandler,"ax",%progbits
+ 1871              		.align	1
+ 1872              		.global	I2C1_ER_IRQHandler
+ 1873              		.syntax unified
+ 1874              		.thumb
+ 1875              		.thumb_func
+ 1877              	I2C1_ER_IRQHandler:
+ 1878              	.LFB38:
+ 747:src/mios32_iic.c **** 
+ 748:src/mios32_iic.c **** void I2C1_ER_IRQHandler(void)
+ 749:src/mios32_iic.c **** {
+ 1879              		.loc 1 749 1
+ 1880              		.cfi_startproc
+ 1881              		@ args = 0, pretend = 0, frame = 0
+ 1882              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1883 0000 80B5     		push	{r7, lr}
+ 1884              	.LCFI55:
+ 1885              		.cfi_def_cfa_offset 8
+ 1886              		.cfi_offset 7, -8
+ 1887              		.cfi_offset 14, -4
+ 1888 0002 00AF     		add	r7, sp, #0
+ 1889              	.LCFI56:
+ 1890              		.cfi_def_cfa_register 7
+ 750:src/mios32_iic.c ****   ER_IRQHandler((iic_rec_t *)&iic_rec[0]);
+ 1891              		.loc 1 750 3
+ 1892 0004 0248     		ldr	r0, .L99
+ 1893 0006 034B     		ldr	r3, .L99+4
+ 1894 0008 9847     		blx	r3
+ 1895              	.LVL62:
+ 751:src/mios32_iic.c **** }
+ 1896              		.loc 1 751 1
+ 1897 000a 00BF     		nop
+ 1898 000c 80BD     		pop	{r7, pc}
+ 1899              	.L100:
+ 1900 000e 00BF     		.align	2
+ 1901              	.L99:
+ 1902 0010 00000000 		.word	iic_rec
+ 1903 0014 00000000 		.word	ER_IRQHandler
+ 1904              		.cfi_endproc
+ 1905              	.LFE38:
+ 1907              		.text
+ 1908              	.Letext0:
+ 1909              		.file 2 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 1910              		.file 3 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 1911              		.file 4 "common/lib.stm32/CMSIS/Core/CM3/stm32f10x.h"
+ 1912              		.file 5 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_gpio.h"
+ 1913              		.file 6 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_i2c.h"
+ 1914              		.file 7 "src/mios32_iic.h"
+ 1915              		.file 8 "src/mios32_irq.h"
+ 1916              		.file 9 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_rcc.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 mios32_iic.c
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:22     .bss.MIOS32_IIC_unexpected_event:00000000 MIOS32_IIC_unexpected_event
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:19     .bss.MIOS32_IIC_unexpected_event:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:25     .bss.iic_rec:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:28     .bss.iic_rec:00000000 iic_rec
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:31     .text.MIOS32_IIC_Init:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:37     .text.MIOS32_IIC_Init:00000000 MIOS32_IIC_Init
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:166    .text.MIOS32_IIC_Init:000000a0 $d
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:181    .text.MIOS32_IIC_InitPeripheral:00000000 MIOS32_IIC_InitPeripheral
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:176    .text.MIOS32_IIC_InitPeripheral:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:293    .text.MIOS32_IIC_InitPeripheral:0000008c $d
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:304    .text.MIOS32_IIC_TransferBegin:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:310    .text.MIOS32_IIC_TransferBegin:00000000 MIOS32_IIC_TransferBegin
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:409    .text.MIOS32_IIC_TransferBegin:00000074 $d
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:416    .text.MIOS32_IIC_TransferFinished:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:422    .text.MIOS32_IIC_TransferFinished:00000000 MIOS32_IIC_TransferFinished
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:482    .text.MIOS32_IIC_TransferFinished:00000038 $d
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:487    .text.MIOS32_IIC_LastErrorGet:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:493    .text.MIOS32_IIC_LastErrorGet:00000000 MIOS32_IIC_LastErrorGet
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:549    .text.MIOS32_IIC_LastErrorGet:00000034 $d
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:554    .text.MIOS32_IIC_TransferCheck:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:560    .text.MIOS32_IIC_TransferCheck:00000000 MIOS32_IIC_TransferCheck
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:655    .text.MIOS32_IIC_TransferCheck:00000068 $d
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:660    .text.MIOS32_IIC_TransferWait:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:666    .text.MIOS32_IIC_TransferWait:00000000 MIOS32_IIC_TransferWait
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:935    .text.MIOS32_IIC_TransferWait:00000160 $d
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:951    .text.MIOS32_IIC_Transfer:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:957    .text.MIOS32_IIC_Transfer:00000000 MIOS32_IIC_Transfer
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:1185   .text.MIOS32_IIC_Transfer:00000150 $d
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:1194   .text.EV_IRQHandler:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:1199   .text.EV_IRQHandler:00000000 EV_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:1605   .text.EV_IRQHandler:00000250 $d
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:1619   .text.EV_IRQHandler:00000280 $t
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:1686   .text.EV_IRQHandler:000002dc $d
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:1695   .text.ER_IRQHandler:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:1700   .text.ER_IRQHandler:00000000 ER_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:1821   .text.ER_IRQHandler:000000a0 $d
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:1834   .text.I2C1_EV_IRQHandler:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:1840   .text.I2C1_EV_IRQHandler:00000000 I2C1_EV_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:1865   .text.I2C1_EV_IRQHandler:00000010 $d
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:1871   .text.I2C1_ER_IRQHandler:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:1877   .text.I2C1_ER_IRQHandler:00000000 I2C1_ER_IRQHandler
+C:\Users\Admin\AppData\Local\Temp\cceINjrh.s:1902   .text.I2C1_ER_IRQHandler:00000010 $d
+
+UNDEFINED SYMBOLS
+GPIO_StructInit
+GPIO_Init
+MIOS32_IRQ_Install
+I2C_StructInit
+RCC_APB1PeriphClockCmd
+I2C_DeInit
+I2C_Init
+MIOS32_IRQ_Disable
+MIOS32_IRQ_Enable
+I2C_ITConfig
+I2C_Cmd
+GPIO_ResetBits
+vTaskDelay
+GPIO_SetBits
+I2C_AcknowledgeConfig
+I2C_GenerateSTART
+I2C_GetLastEvent
+I2C_ReceiveData
+I2C_GenerateSTOP
+I2C_SendData
+I2C_Send7bitAddress
+I2C_ClearITPendingBit

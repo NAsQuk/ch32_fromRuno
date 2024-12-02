@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?fileVersion 5.0.0?><cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage2">
+	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
+		<configuration buildProperties="" description="" id="0.597132577" name="Default" parent="org.eclipse.cdt.build.core.prefbase.cfg">
+			<folderInfo id="0.597132577." name="/" resourcePath="">
+				<toolChain id="org.eclipse.cdt.build.core.prefbase.toolchain.354646685" name="No ToolChain" resourceTypeBasedDiscovery="false" superClass="org.eclipse.cdt.build.core.prefbase.toolchain">
+					<targetPlatform id="org.eclipse.cdt.build.core.prefbase.toolchain.354646685.1223006962" name=""/>
+					<builder id="org.eclipse.cdt.build.core.settings.default.builder.1060402216" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" superClass="org.eclipse.cdt.build.core.settings.default.builder"/>
+					<tool id="org.eclipse.cdt.build.core.settings.holder.libs.669273014" name="holder for library settings" superClass="org.eclipse.cdt.build.core.settings.holder.libs"/>
+					<tool id="org.eclipse.cdt.build.core.settings.holder.1208614235" name="Assembly" superClass="org.eclipse.cdt.build.core.settings.holder">
+						<inputType id="org.eclipse.cdt.build.core.settings.holder.inType.760622265" languageId="org.eclipse.cdt.core.assembly" languageName="Assembly" sourceContentType="org.eclipse.cdt.core.asmSource" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
+					</tool>
+					<tool id="org.eclipse.cdt.build.core.settings.holder.1650257589" name="IAR Assembly" superClass="org.eclipse.cdt.build.core.settings.holder">
+						<inputType id="org.eclipse.cdt.build.core.settings.holder.inType.1752837881" languageId="com.iar.cdt.arm.language.asm" languageName="IAR Assembly" sourceContentType="com.iar.cdt.arm.toolchain.asmSource" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
+					</tool>
+					<tool id="org.eclipse.cdt.build.core.settings.holder.1289485758" name="GNU C++" superClass="org.eclipse.cdt.build.core.settings.holder">
+						<inputType id="org.eclipse.cdt.build.core.settings.holder.inType.934838773" languageId="org.eclipse.cdt.core.g++" languageName="GNU C++" sourceContentType="org.eclipse.cdt.core.cxxSource,org.eclipse.cdt.core.cxxHeader" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
+					</tool>
+					<tool id="org.eclipse.cdt.build.core.settings.holder.1927635624" name="GNU C" superClass="org.eclipse.cdt.build.core.settings.holder">
+						<inputType id="org.eclipse.cdt.build.core.settings.holder.inType.2089399920" languageId="org.eclipse.cdt.core.gcc" languageName="GNU C" sourceContentType="org.eclipse.cdt.core.cSource,org.eclipse.cdt.core.cHeader" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
+					</tool>
+					<tool id="org.eclipse.cdt.build.core.settings.holder.431044149" name="GNU C++ with IAR extensions" superClass="org.eclipse.cdt.build.core.settings.holder">
+						<inputType id="org.eclipse.cdt.build.core.settings.holder.inType.417039706" languageId="com.iar.cdt.arm.language.IARcpp" languageName="GNU C++ with IAR extensions" sourceContentType="com.iar.cdt.arm.toolchain.cxxSource,com.iar.cdt.arm.toolchain.cxxHeader" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
+					</tool>
+					<tool id="org.eclipse.cdt.build.core.settings.holder.1828682997" name="GNU C with IAR extensions" superClass="org.eclipse.cdt.build.core.settings.holder">
+						<inputType id="org.eclipse.cdt.build.core.settings.holder.inType.2013160322" languageId="com.iar.cdt.arm.language.IARc" languageName="GNU C with IAR extensions" sourceContentType="com.iar.cdt.arm.toolchain.cSource,com.iar.cdt.arm.toolchain.cHeader" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
+					</tool>
+				</toolChain>
+			</folderInfo>
+		</configuration>
+	</storageModule>
+</cproject>
