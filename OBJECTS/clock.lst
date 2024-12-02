@@ -1,0 +1,210 @@
+   1              		.cpu cortex-m3
+   2              		.arch armv7-m
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"clock.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.global	JrnlTime
+  18              		.section	.bss.JrnlTime,"aw",%nobits
+  21              	JrnlTime:
+  22 0000 00       		.space	1
+  23              		.global	ResetTime
+  24              		.section	.bss.ResetTime,"aw",%nobits
+  27              	ResetTime:
+  28 0000 00       		.space	1
+  29              		.global	ResetTimeEnd
+  30              		.section	.bss.ResetTimeEnd,"aw",%nobits
+  33              	ResetTimeEnd:
+  34 0000 00       		.space	1
+  35              		.section	.rodata
+  36              		.align	2
+  37              	.LC0:
+  38 0000 C2F0E5EC 		.ascii	"\302\360\345\354\377 \350\347\354\345\355\345\355\356"
+  38      FF20E8E7 
+  38      ECE5EDE5 
+  38      EDEE
+  39 000e 00       		.ascii	"\000"
+  40              		.section	.text.vClockTask,"ax",%progbits
+  41              		.align	1
+  42              		.global	vClockTask
+  43              		.syntax unified
+  44              		.thumb
+  45              		.thumb_func
+  47              	vClockTask:
+  48              	.LFB27:
+  49              		.file 1 "tasks/clock.c"
+   1:tasks/clock.c **** #include <stdlib.h>
+   2:tasks/clock.c **** #include <stdlib.h>
+   3:tasks/clock.c **** #include <stdarg.h>
+   4:tasks/clock.c **** 
+   5:tasks/clock.c **** #include "typedef.h"
+   6:tasks/clock.c **** #include "FreeRTOS.h"
+   7:tasks/clock.c **** #include "task.h"
+   8:tasks/clock.c **** #include "usart2.h"
+   9:tasks/clock.c **** #include "gprscon.h"
+  10:tasks/clock.c **** #include "rvnettcp.h"
+  11:tasks/clock.c **** #include "rtclock.h"
+  12:tasks/clock.c **** 
+  13:tasks/clock.c **** extern int counttick;
+  14:tasks/clock.c **** bool JrnlTime;
+  15:tasks/clock.c **** bool ResetTime;
+  16:tasks/clock.c **** bool ResetTimeEnd;
+  17:tasks/clock.c **** 
+  18:tasks/clock.c **** void vClockTask(void *pvParameters) {
+  50              		.loc 1 18 37
+  51              		.cfi_startproc
+  52              		@ args = 0, pretend = 0, frame = 16
+  53              		@ frame_needed = 1, uses_anonymous_args = 0
+  54 0000 80B5     		push	{r7, lr}
+  55              	.LCFI0:
+  56              		.cfi_def_cfa_offset 8
+  57              		.cfi_offset 7, -8
+  58              		.cfi_offset 14, -4
+  59 0002 84B0     		sub	sp, sp, #16
+  60              	.LCFI1:
+  61              		.cfi_def_cfa_offset 24
+  62 0004 00AF     		add	r7, sp, #0
+  63              	.LCFI2:
+  64              		.cfi_def_cfa_register 7
+  65 0006 7860     		str	r0, [r7, #4]
+  19:tasks/clock.c **** 	volatile int heapSize = 0;
+  66              		.loc 1 19 15
+  67 0008 0023     		movs	r3, #0
+  68 000a FB60     		str	r3, [r7, #12]
+  20:tasks/clock.c **** 	heapSize = xPortGetFreeHeapSize();
+  69              		.loc 1 20 13
+  70 000c 144B     		ldr	r3, .L5
+  71 000e 9847     		blx	r3
+  72              	.LVL0:
+  73 0010 0346     		mov	r3, r0
+  74              		.loc 1 20 11
+  75 0012 FB60     		str	r3, [r7, #12]
+  21:tasks/clock.c **** 	heapSize += 0;
+  76              		.loc 1 21 11
+  77 0014 FB68     		ldr	r3, [r7, #12]
+  78 0016 FB60     		str	r3, [r7, #12]
+  79              	.L4:
+  22:tasks/clock.c **** 	while (1) {
+  23:tasks/clock.c **** 		if (counttick >= 1000) {
+  80              		.loc 1 23 17
+  81 0018 124B     		ldr	r3, .L5+4
+  82 001a 1B68     		ldr	r3, [r3]
+  83              		.loc 1 23 6
+  84 001c B3F57A7F 		cmp	r3, #1000
+  85 0020 08DB     		blt	.L2
+  24:tasks/clock.c **** 			BKP_WriteBackupRegister(BKP_DR7, 3);
+  86              		.loc 1 24 4
+  87 0022 0321     		movs	r1, #3
+  88 0024 1C20     		movs	r0, #28
+  89 0026 104B     		ldr	r3, .L5+8
+  90 0028 9847     		blx	r3
+  91              	.LVL1:
+  25:tasks/clock.c **** 			UpdateTime();
+  92              		.loc 1 25 4
+  93 002a 104B     		ldr	r3, .L5+12
+  94 002c 9847     		blx	r3
+  95              	.LVL2:
+  26:tasks/clock.c **** 			counttick = 0;
+  96              		.loc 1 26 14
+  97 002e 0D4B     		ldr	r3, .L5+4
+  98 0030 0022     		movs	r2, #0
+  99 0032 1A60     		str	r2, [r3]
+ 100              	.L2:
+  27:tasks/clock.c **** 		}
+  28:tasks/clock.c **** 
+  29:tasks/clock.c **** 
+  30:tasks/clock.c **** 		if ((JrnlTime)&&(!ResetTimeEnd))
+ 101              		.loc 1 30 7
+ 102 0034 0E4B     		ldr	r3, .L5+16
+ 103 0036 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 104              		.loc 1 30 6
+ 105 0038 002B     		cmp	r3, #0
+ 106 003a 0CD0     		beq	.L3
+ 107              		.loc 1 30 20 discriminator 1
+ 108 003c 0D4B     		ldr	r3, .L5+20
+ 109 003e 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 110 0040 83F00103 		eor	r3, r3, #1
+ 111 0044 DBB2     		uxtb	r3, r3
+ 112              		.loc 1 30 17 discriminator 1
+ 113 0046 002B     		cmp	r3, #0
+ 114 0048 05D0     		beq	.L3
+ 115              	.LBB2:
+  31:tasks/clock.c **** 			{
+  32:tasks/clock.c **** 				JrnlWrite("Время изменено");
+ 116              		.loc 1 32 5
+ 117 004a 0B48     		ldr	r0, .L5+24
+ 118 004c 0B4B     		ldr	r3, .L5+28
+ 119 004e 9847     		blx	r3
+ 120              	.LVL3:
+  33:tasks/clock.c **** 				JrnlTime = 0;
+ 121              		.loc 1 33 14
+ 122 0050 074B     		ldr	r3, .L5+16
+ 123 0052 0022     		movs	r2, #0
+ 124 0054 1A70     		strb	r2, [r3]
+ 125              	.L3:
+ 126              	.LBE2:
+  34:tasks/clock.c **** 
+  35:tasks/clock.c **** 			}
+  36:tasks/clock.c **** 
+  37:tasks/clock.c **** 
+  38:tasks/clock.c **** 		vTaskDelay(700);
+ 127              		.loc 1 38 3
+ 128 0056 4FF42F70 		mov	r0, #700
+ 129 005a 094B     		ldr	r3, .L5+32
+ 130 005c 9847     		blx	r3
+ 131              	.LVL4:
+  23:tasks/clock.c **** 			BKP_WriteBackupRegister(BKP_DR7, 3);
+ 132              		.loc 1 23 6
+ 133 005e DBE7     		b	.L4
+ 134              	.L6:
+ 135              		.align	2
+ 136              	.L5:
+ 137 0060 00000000 		.word	xPortGetFreeHeapSize
+ 138 0064 00000000 		.word	counttick
+ 139 0068 00000000 		.word	BKP_WriteBackupRegister
+ 140 006c 00000000 		.word	UpdateTime
+ 141 0070 00000000 		.word	JrnlTime
+ 142 0074 00000000 		.word	ResetTimeEnd
+ 143 0078 00000000 		.word	.LC0
+ 144 007c 00000000 		.word	JrnlWrite
+ 145 0080 00000000 		.word	vTaskDelay
+ 146              		.cfi_endproc
+ 147              	.LFE27:
+ 149              		.text
+ 150              	.Letext0:
+ 151              		.file 2 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 152              		.file 3 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 153              		.file 4 "common/rtos/common/driver/rtclock.h"
+ 154              		.file 5 "common/rtos/include/portable.h"
+ 155              		.file 6 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_bkp.h"
+ 156              		.file 7 "common/rtos/include/task.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 clock.c
+C:\Users\Admin\AppData\Local\Temp\cciTsIcj.s:21     .bss.JrnlTime:00000000 JrnlTime
+C:\Users\Admin\AppData\Local\Temp\cciTsIcj.s:22     .bss.JrnlTime:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\cciTsIcj.s:27     .bss.ResetTime:00000000 ResetTime
+C:\Users\Admin\AppData\Local\Temp\cciTsIcj.s:28     .bss.ResetTime:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\cciTsIcj.s:33     .bss.ResetTimeEnd:00000000 ResetTimeEnd
+C:\Users\Admin\AppData\Local\Temp\cciTsIcj.s:34     .bss.ResetTimeEnd:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\cciTsIcj.s:36     .rodata:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\cciTsIcj.s:41     .text.vClockTask:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cciTsIcj.s:47     .text.vClockTask:00000000 vClockTask
+C:\Users\Admin\AppData\Local\Temp\cciTsIcj.s:137    .text.vClockTask:00000060 $d
+
+UNDEFINED SYMBOLS
+xPortGetFreeHeapSize
+counttick
+BKP_WriteBackupRegister
+UpdateTime
+JrnlWrite
+vTaskDelay

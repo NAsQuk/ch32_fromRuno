@@ -1,0 +1,530 @@
+   1              		.cpu cortex-m3
+   2              		.arch armv7-m
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"error.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.global	ErrorsAmount
+  18              		.section	.data.ErrorsAmount,"aw"
+  19              		.align	1
+  22              	ErrorsAmount:
+  23 0000 0100     		.short	1
+  24              		.global	ErrorsMaxAmount
+  25              		.section	.data.ErrorsMaxAmount,"aw"
+  26              		.align	1
+  29              	ErrorsMaxAmount:
+  30 0000 0100     		.short	1
+  31              		.global	IsErrorInitialized
+  32              		.section	.bss.IsErrorInitialized,"aw",%nobits
+  33              		.align	2
+  36              	IsErrorInitialized:
+  37 0000 00000000 		.space	4
+  38              		.global	Errors
+  39              		.section	.bss.Errors,"aw",%nobits
+  40              		.align	2
+  43              	Errors:
+  44 0000 00000000 		.space	4
+  45              		.global	ErrorStatus
+  46              		.section	.bss.ErrorStatus,"aw",%nobits
+  47              		.align	1
+  50              	ErrorStatus:
+  51 0000 0000     		.space	2
+  52              		.section	.text.ErrorCheckStatus,"ax",%progbits
+  53              		.align	1
+  54              		.global	ErrorCheckStatus
+  55              		.syntax unified
+  56              		.thumb
+  57              		.thumb_func
+  59              	ErrorCheckStatus:
+  60              	.LFB0:
+  61              		.file 1 "common/rtos/common/utils/error.c"
+   1:common/rtos/common/utils/error.c **** // Error File
+   2:common/rtos/common/utils/error.c **** #include "error.h"
+   3:common/rtos/common/utils/error.c **** 
+   4:common/rtos/common/utils/error.c **** uint16 ErrorsAmount    = 1;
+   5:common/rtos/common/utils/error.c **** uint16 ErrorsMaxAmount = 1;
+   6:common/rtos/common/utils/error.c **** bool   IsErrorInitialized = false;
+   7:common/rtos/common/utils/error.c **** ErrorDescriptor *Errors = null;
+   8:common/rtos/common/utils/error.c **** ErrorHandle ErrorStatus = 0;
+   9:common/rtos/common/utils/error.c **** 
+  10:common/rtos/common/utils/error.c **** ErrorHandle ErrorCheckStatus()
+  11:common/rtos/common/utils/error.c **** {
+  62              		.loc 1 11 1
+  63              		.cfi_startproc
+  64              		@ args = 0, pretend = 0, frame = 8
+  65              		@ frame_needed = 1, uses_anonymous_args = 0
+  66              		@ link register save eliminated.
+  67 0000 80B4     		push	{r7}
+  68              	.LCFI0:
+  69              		.cfi_def_cfa_offset 4
+  70              		.cfi_offset 7, -4
+  71 0002 83B0     		sub	sp, sp, #12
+  72              	.LCFI1:
+  73              		.cfi_def_cfa_offset 16
+  74 0004 00AF     		add	r7, sp, #0
+  75              	.LCFI2:
+  76              		.cfi_def_cfa_register 7
+  12:common/rtos/common/utils/error.c ****   ErrorHandle tmp = ErrorStatus;
+  77              		.loc 1 12 15
+  78 0006 064B     		ldr	r3, .L3
+  79 0008 1B88     		ldrh	r3, [r3]	@ movhi
+  80 000a FB80     		strh	r3, [r7, #6]	@ movhi
+  13:common/rtos/common/utils/error.c ****   ErrorStatus = 0;
+  81              		.loc 1 13 15
+  82 000c 044B     		ldr	r3, .L3
+  83 000e 0022     		movs	r2, #0
+  84 0010 1A80     		strh	r2, [r3]	@ movhi
+  14:common/rtos/common/utils/error.c ****   return tmp;
+  85              		.loc 1 14 10
+  86 0012 FB88     		ldrh	r3, [r7, #6]
+  15:common/rtos/common/utils/error.c **** }
+  87              		.loc 1 15 1
+  88 0014 1846     		mov	r0, r3
+  89 0016 0C37     		adds	r7, r7, #12
+  90              	.LCFI3:
+  91              		.cfi_def_cfa_offset 4
+  92 0018 BD46     		mov	sp, r7
+  93              	.LCFI4:
+  94              		.cfi_def_cfa_register 13
+  95              		@ sp needed
+  96 001a 80BC     		pop	{r7}
+  97              	.LCFI5:
+  98              		.cfi_restore 7
+  99              		.cfi_def_cfa_offset 0
+ 100 001c 7047     		bx	lr
+ 101              	.L4:
+ 102 001e 00BF     		.align	2
+ 103              	.L3:
+ 104 0020 00000000 		.word	ErrorStatus
+ 105              		.cfi_endproc
+ 106              	.LFE0:
+ 108              		.section	.rodata
+ 109              		.align	2
+ 110              	.LC0:
+ 111 0000 4572726F 		.ascii	"Errors Header\000"
+ 111      72732048 
+ 111      65616465 
+ 111      7200
+ 112              		.section	.text.ErrorInit,"ax",%progbits
+ 113              		.align	1
+ 114              		.global	ErrorInit
+ 115              		.syntax unified
+ 116              		.thumb
+ 117              		.thumb_func
+ 119              	ErrorInit:
+ 120              	.LFB1:
+  16:common/rtos/common/utils/error.c **** 
+  17:common/rtos/common/utils/error.c **** 
+  18:common/rtos/common/utils/error.c **** void ErrorInit(void *pxErrorsBuffer, uint16 ErrorTypesAmount)
+  19:common/rtos/common/utils/error.c **** {
+ 121              		.loc 1 19 1
+ 122              		.cfi_startproc
+ 123              		@ args = 0, pretend = 0, frame = 16
+ 124              		@ frame_needed = 1, uses_anonymous_args = 0
+ 125              		@ link register save eliminated.
+ 126 0000 80B4     		push	{r7}
+ 127              	.LCFI6:
+ 128              		.cfi_def_cfa_offset 4
+ 129              		.cfi_offset 7, -4
+ 130 0002 85B0     		sub	sp, sp, #20
+ 131              	.LCFI7:
+ 132              		.cfi_def_cfa_offset 24
+ 133 0004 00AF     		add	r7, sp, #0
+ 134              	.LCFI8:
+ 135              		.cfi_def_cfa_register 7
+ 136 0006 7860     		str	r0, [r7, #4]
+ 137 0008 0B46     		mov	r3, r1
+ 138 000a 7B80     		strh	r3, [r7, #2]	@ movhi
+  20:common/rtos/common/utils/error.c ****   uint16 i = 0;
+ 139              		.loc 1 20 10
+ 140 000c 0023     		movs	r3, #0
+ 141 000e FB81     		strh	r3, [r7, #14]	@ movhi
+  21:common/rtos/common/utils/error.c ****   char *eDescription = "Errors Header";
+ 142              		.loc 1 21 9
+ 143 0010 134B     		ldr	r3, .L8
+ 144 0012 BB60     		str	r3, [r7, #8]
+  22:common/rtos/common/utils/error.c ****   ErrorsMaxAmount = ErrorTypesAmount;
+ 145              		.loc 1 22 19
+ 146 0014 134A     		ldr	r2, .L8+4
+ 147 0016 7B88     		ldrh	r3, [r7, #2]	@ movhi
+ 148 0018 1380     		strh	r3, [r2]	@ movhi
+  23:common/rtos/common/utils/error.c ****   Errors  = (ErrorDescriptor*)pxErrorsBuffer;
+ 149              		.loc 1 23 11
+ 150 001a 134A     		ldr	r2, .L8+8
+ 151 001c 7B68     		ldr	r3, [r7, #4]
+ 152 001e 1360     		str	r3, [r2]
+  24:common/rtos/common/utils/error.c ****   IsErrorInitialized = true;
+ 153              		.loc 1 24 22
+ 154 0020 124B     		ldr	r3, .L8+12
+ 155 0022 4FF0FF32 		mov	r2, #-1
+ 156 0026 1A60     		str	r2, [r3]
+  25:common/rtos/common/utils/error.c ****   Errors[0].EvetsCounter = 0;
+ 157              		.loc 1 25 9
+ 158 0028 0F4B     		ldr	r3, .L8+8
+ 159 002a 1B68     		ldr	r3, [r3]
+ 160              		.loc 1 25 26
+ 161 002c 0022     		movs	r2, #0
+ 162 002e 1A80     		strh	r2, [r3]	@ movhi
+  26:common/rtos/common/utils/error.c ****   while( i< ERROR_DESCRIPTOR_TEXT_SIZE)
+ 163              		.loc 1 26 8
+ 164 0030 0DE0     		b	.L6
+ 165              	.L7:
+  27:common/rtos/common/utils/error.c ****     {
+  28:common/rtos/common/utils/error.c ****       Errors[0].Description[i] =  *eDescription;
+ 166              		.loc 1 28 13
+ 167 0032 0D4B     		ldr	r3, .L8+8
+ 168 0034 1A68     		ldr	r2, [r3]
+ 169              		.loc 1 28 28
+ 170 0036 FB89     		ldrh	r3, [r7, #14]
+ 171              		.loc 1 28 35
+ 172 0038 B968     		ldr	r1, [r7, #8]
+ 173 003a 0978     		ldrb	r1, [r1]	@ zero_extendqisi2
+ 174              		.loc 1 28 32
+ 175 003c 1344     		add	r3, r3, r2
+ 176 003e 0A46     		mov	r2, r1
+ 177 0040 9A70     		strb	r2, [r3, #2]
+  29:common/rtos/common/utils/error.c ****       eDescription++;
+ 178              		.loc 1 29 19
+ 179 0042 BB68     		ldr	r3, [r7, #8]
+ 180 0044 0133     		adds	r3, r3, #1
+ 181 0046 BB60     		str	r3, [r7, #8]
+  30:common/rtos/common/utils/error.c ****       i++;
+ 182              		.loc 1 30 8
+ 183 0048 FB89     		ldrh	r3, [r7, #14]
+ 184 004a 0133     		adds	r3, r3, #1
+ 185 004c FB81     		strh	r3, [r7, #14]	@ movhi
+ 186              	.L6:
+  26:common/rtos/common/utils/error.c ****     {
+ 187              		.loc 1 26 8
+ 188 004e FB89     		ldrh	r3, [r7, #14]
+ 189 0050 0F2B     		cmp	r3, #15
+ 190 0052 EED9     		bls	.L7
+  31:common/rtos/common/utils/error.c ****     }
+  32:common/rtos/common/utils/error.c **** 
+  33:common/rtos/common/utils/error.c **** }
+ 191              		.loc 1 33 1
+ 192 0054 00BF     		nop
+ 193 0056 00BF     		nop
+ 194 0058 1437     		adds	r7, r7, #20
+ 195              	.LCFI9:
+ 196              		.cfi_def_cfa_offset 4
+ 197 005a BD46     		mov	sp, r7
+ 198              	.LCFI10:
+ 199              		.cfi_def_cfa_register 13
+ 200              		@ sp needed
+ 201 005c 80BC     		pop	{r7}
+ 202              	.LCFI11:
+ 203              		.cfi_restore 7
+ 204              		.cfi_def_cfa_offset 0
+ 205 005e 7047     		bx	lr
+ 206              	.L9:
+ 207              		.align	2
+ 208              	.L8:
+ 209 0060 00000000 		.word	.LC0
+ 210 0064 00000000 		.word	ErrorsMaxAmount
+ 211 0068 00000000 		.word	Errors
+ 212 006c 00000000 		.word	IsErrorInitialized
+ 213              		.cfi_endproc
+ 214              	.LFE1:
+ 216              		.section	.text.ErrorCreate,"ax",%progbits
+ 217              		.align	1
+ 218              		.global	ErrorCreate
+ 219              		.syntax unified
+ 220              		.thumb
+ 221              		.thumb_func
+ 223              	ErrorCreate:
+ 224              	.LFB2:
+  34:common/rtos/common/utils/error.c **** ErrorHandle ErrorCreate(char *eDescription)
+  35:common/rtos/common/utils/error.c **** {
+ 225              		.loc 1 35 1
+ 226              		.cfi_startproc
+ 227              		@ args = 0, pretend = 0, frame = 16
+ 228              		@ frame_needed = 1, uses_anonymous_args = 0
+ 229              		@ link register save eliminated.
+ 230 0000 80B4     		push	{r7}
+ 231              	.LCFI12:
+ 232              		.cfi_def_cfa_offset 4
+ 233              		.cfi_offset 7, -4
+ 234 0002 85B0     		sub	sp, sp, #20
+ 235              	.LCFI13:
+ 236              		.cfi_def_cfa_offset 24
+ 237 0004 00AF     		add	r7, sp, #0
+ 238              	.LCFI14:
+ 239              		.cfi_def_cfa_register 7
+ 240 0006 7860     		str	r0, [r7, #4]
+  36:common/rtos/common/utils/error.c ****   uint16 i = 0;
+ 241              		.loc 1 36 10
+ 242 0008 0023     		movs	r3, #0
+ 243 000a FB81     		strh	r3, [r7, #14]	@ movhi
+  37:common/rtos/common/utils/error.c ****   ErrorHandle eHandle ;
+  38:common/rtos/common/utils/error.c ****   if((ErrorsAmount != ErrorsMaxAmount) && IsErrorInitialized)
+ 244              		.loc 1 38 20
+ 245 000c 234B     		ldr	r3, .L16
+ 246 000e 1A88     		ldrh	r2, [r3]
+ 247 0010 234B     		ldr	r3, .L16+4
+ 248 0012 1B88     		ldrh	r3, [r3]
+ 249              		.loc 1 38 5
+ 250 0014 9A42     		cmp	r2, r3
+ 251 0016 3AD0     		beq	.L11
+ 252              		.loc 1 38 40 discriminator 1
+ 253 0018 224B     		ldr	r3, .L16+8
+ 254 001a 1B68     		ldr	r3, [r3]
+ 255 001c 002B     		cmp	r3, #0
+ 256 001e 36D0     		beq	.L11
+  39:common/rtos/common/utils/error.c ****   {
+  40:common/rtos/common/utils/error.c ****     eHandle = ErrorsAmount;
+ 257              		.loc 1 40 13
+ 258 0020 1E4B     		ldr	r3, .L16
+ 259 0022 1B88     		ldrh	r3, [r3]	@ movhi
+ 260 0024 BB81     		strh	r3, [r7, #12]	@ movhi
+  41:common/rtos/common/utils/error.c ****     ErrorsAmount++;
+ 261              		.loc 1 41 17
+ 262 0026 1D4B     		ldr	r3, .L16
+ 263 0028 1B88     		ldrh	r3, [r3]
+ 264 002a 0133     		adds	r3, r3, #1
+ 265 002c 9AB2     		uxth	r2, r3
+ 266 002e 1B4B     		ldr	r3, .L16
+ 267 0030 1A80     		strh	r2, [r3]	@ movhi
+  42:common/rtos/common/utils/error.c ****     Errors[eHandle].EvetsCounter = 0;
+ 268              		.loc 1 42 11
+ 269 0032 1D4B     		ldr	r3, .L16+12
+ 270 0034 1968     		ldr	r1, [r3]
+ 271 0036 BA89     		ldrh	r2, [r7, #12]
+ 272 0038 1346     		mov	r3, r2
+ 273 003a DB00     		lsls	r3, r3, #3
+ 274 003c 1344     		add	r3, r3, r2
+ 275 003e 5B00     		lsls	r3, r3, #1
+ 276 0040 0B44     		add	r3, r3, r1
+ 277              		.loc 1 42 34
+ 278 0042 0022     		movs	r2, #0
+ 279 0044 1A80     		strh	r2, [r3]	@ movhi
+  43:common/rtos/common/utils/error.c ****     Errors[0].EvetsCounter++;
+ 280              		.loc 1 43 11
+ 281 0046 184B     		ldr	r3, .L16+12
+ 282 0048 1B68     		ldr	r3, [r3]
+ 283              		.loc 1 43 14
+ 284 004a 1A88     		ldrh	r2, [r3]
+ 285              		.loc 1 43 27
+ 286 004c 0132     		adds	r2, r2, #1
+ 287 004e 92B2     		uxth	r2, r2
+ 288 0050 1A80     		strh	r2, [r3]	@ movhi
+  44:common/rtos/common/utils/error.c ****     while( (i<ERROR_DESCRIPTOR_TEXT_SIZE) && (*eDescription))
+ 289              		.loc 1 44 10
+ 290 0052 13E0     		b	.L12
+ 291              	.L14:
+  45:common/rtos/common/utils/error.c ****     {
+  46:common/rtos/common/utils/error.c ****       Errors[eHandle].Description[i] =  *eDescription;
+ 292              		.loc 1 46 13
+ 293 0054 144B     		ldr	r3, .L16+12
+ 294 0056 1968     		ldr	r1, [r3]
+ 295 0058 BA89     		ldrh	r2, [r7, #12]
+ 296 005a 1346     		mov	r3, r2
+ 297 005c DB00     		lsls	r3, r3, #3
+ 298 005e 1344     		add	r3, r3, r2
+ 299 0060 5B00     		lsls	r3, r3, #1
+ 300 0062 CA18     		adds	r2, r1, r3
+ 301              		.loc 1 46 34
+ 302 0064 FB89     		ldrh	r3, [r7, #14]
+ 303              		.loc 1 46 41
+ 304 0066 7968     		ldr	r1, [r7, #4]
+ 305 0068 0978     		ldrb	r1, [r1]	@ zero_extendqisi2
+ 306              		.loc 1 46 38
+ 307 006a 1344     		add	r3, r3, r2
+ 308 006c 0A46     		mov	r2, r1
+ 309 006e 9A70     		strb	r2, [r3, #2]
+  47:common/rtos/common/utils/error.c ****       eDescription++;
+ 310              		.loc 1 47 19
+ 311 0070 7B68     		ldr	r3, [r7, #4]
+ 312 0072 0133     		adds	r3, r3, #1
+ 313 0074 7B60     		str	r3, [r7, #4]
+  48:common/rtos/common/utils/error.c ****       i++;
+ 314              		.loc 1 48 8
+ 315 0076 FB89     		ldrh	r3, [r7, #14]
+ 316 0078 0133     		adds	r3, r3, #1
+ 317 007a FB81     		strh	r3, [r7, #14]	@ movhi
+ 318              	.L12:
+  44:common/rtos/common/utils/error.c ****     {
+ 319              		.loc 1 44 10
+ 320 007c FB89     		ldrh	r3, [r7, #14]
+ 321 007e 0F2B     		cmp	r3, #15
+ 322 0080 03D8     		bhi	.L13
+  44:common/rtos/common/utils/error.c ****     {
+ 323              		.loc 1 44 47 discriminator 1
+ 324 0082 7B68     		ldr	r3, [r7, #4]
+ 325 0084 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+  44:common/rtos/common/utils/error.c ****     {
+ 326              		.loc 1 44 43 discriminator 1
+ 327 0086 002B     		cmp	r3, #0
+ 328 0088 E4D1     		bne	.L14
+ 329              	.L13:
+  49:common/rtos/common/utils/error.c ****     }
+  50:common/rtos/common/utils/error.c ****    return eHandle;
+ 330              		.loc 1 50 11
+ 331 008a BB89     		ldrh	r3, [r7, #12]
+ 332 008c 00E0     		b	.L15
+ 333              	.L11:
+  51:common/rtos/common/utils/error.c ****   }
+  52:common/rtos/common/utils/error.c ****   return 0;
+ 334              		.loc 1 52 10
+ 335 008e 0023     		movs	r3, #0
+ 336              	.L15:
+  53:common/rtos/common/utils/error.c **** }
+ 337              		.loc 1 53 1
+ 338 0090 1846     		mov	r0, r3
+ 339 0092 1437     		adds	r7, r7, #20
+ 340              	.LCFI15:
+ 341              		.cfi_def_cfa_offset 4
+ 342 0094 BD46     		mov	sp, r7
+ 343              	.LCFI16:
+ 344              		.cfi_def_cfa_register 13
+ 345              		@ sp needed
+ 346 0096 80BC     		pop	{r7}
+ 347              	.LCFI17:
+ 348              		.cfi_restore 7
+ 349              		.cfi_def_cfa_offset 0
+ 350 0098 7047     		bx	lr
+ 351              	.L17:
+ 352 009a 00BF     		.align	2
+ 353              	.L16:
+ 354 009c 00000000 		.word	ErrorsAmount
+ 355 00a0 00000000 		.word	ErrorsMaxAmount
+ 356 00a4 00000000 		.word	IsErrorInitialized
+ 357 00a8 00000000 		.word	Errors
+ 358              		.cfi_endproc
+ 359              	.LFE2:
+ 361              		.section	.text.SYSTEM_ERROR,"ax",%progbits
+ 362              		.align	1
+ 363              		.global	SYSTEM_ERROR
+ 364              		.syntax unified
+ 365              		.thumb
+ 366              		.thumb_func
+ 368              	SYSTEM_ERROR:
+ 369              	.LFB3:
+  54:common/rtos/common/utils/error.c **** bool SYSTEM_ERROR(ErrorHandle eHandle)
+  55:common/rtos/common/utils/error.c **** {
+ 370              		.loc 1 55 1
+ 371              		.cfi_startproc
+ 372              		@ args = 0, pretend = 0, frame = 8
+ 373              		@ frame_needed = 1, uses_anonymous_args = 0
+ 374              		@ link register save eliminated.
+ 375 0000 80B4     		push	{r7}
+ 376              	.LCFI18:
+ 377              		.cfi_def_cfa_offset 4
+ 378              		.cfi_offset 7, -4
+ 379 0002 83B0     		sub	sp, sp, #12
+ 380              	.LCFI19:
+ 381              		.cfi_def_cfa_offset 16
+ 382 0004 00AF     		add	r7, sp, #0
+ 383              	.LCFI20:
+ 384              		.cfi_def_cfa_register 7
+ 385 0006 0346     		mov	r3, r0
+ 386 0008 FB80     		strh	r3, [r7, #6]	@ movhi
+  56:common/rtos/common/utils/error.c ****   if( eHandle < ErrorsMaxAmount && eHandle > 0)
+ 387              		.loc 1 56 15
+ 388 000a 104B     		ldr	r3, .L21
+ 389 000c 1B88     		ldrh	r3, [r3]
+ 390              		.loc 1 56 5
+ 391 000e FA88     		ldrh	r2, [r7, #6]
+ 392 0010 9A42     		cmp	r2, r3
+ 393 0012 14D2     		bcs	.L19
+ 394              		.loc 1 56 33 discriminator 1
+ 395 0014 FB88     		ldrh	r3, [r7, #6]
+ 396 0016 002B     		cmp	r3, #0
+ 397 0018 11D0     		beq	.L19
+  57:common/rtos/common/utils/error.c ****   {
+  58:common/rtos/common/utils/error.c ****     Errors[eHandle].EvetsCounter++;
+ 398              		.loc 1 58 11
+ 399 001a 0D4B     		ldr	r3, .L21+4
+ 400 001c 1968     		ldr	r1, [r3]
+ 401 001e FA88     		ldrh	r2, [r7, #6]
+ 402 0020 1346     		mov	r3, r2
+ 403 0022 DB00     		lsls	r3, r3, #3
+ 404 0024 1344     		add	r3, r3, r2
+ 405 0026 5B00     		lsls	r3, r3, #1
+ 406 0028 0B44     		add	r3, r3, r1
+ 407              		.loc 1 58 20
+ 408 002a 1A88     		ldrh	r2, [r3]
+ 409              		.loc 1 58 33
+ 410 002c 0132     		adds	r2, r2, #1
+ 411 002e 92B2     		uxth	r2, r2
+ 412 0030 1A80     		strh	r2, [r3]	@ movhi
+  59:common/rtos/common/utils/error.c ****     ErrorStatus = eHandle;
+ 413              		.loc 1 59 17
+ 414 0032 084A     		ldr	r2, .L21+8
+ 415 0034 FB88     		ldrh	r3, [r7, #6]	@ movhi
+ 416 0036 1380     		strh	r3, [r2]	@ movhi
+  60:common/rtos/common/utils/error.c ****     return true;
+ 417              		.loc 1 60 12
+ 418 0038 4FF0FF33 		mov	r3, #-1
+ 419 003c 00E0     		b	.L20
+ 420              	.L19:
+  61:common/rtos/common/utils/error.c ****   }
+  62:common/rtos/common/utils/error.c ****   return false;
+ 421              		.loc 1 62 10
+ 422 003e 0023     		movs	r3, #0
+ 423              	.L20:
+  63:common/rtos/common/utils/error.c **** 
+  64:common/rtos/common/utils/error.c **** };
+ 424              		.loc 1 64 1
+ 425 0040 1846     		mov	r0, r3
+ 426 0042 0C37     		adds	r7, r7, #12
+ 427              	.LCFI21:
+ 428              		.cfi_def_cfa_offset 4
+ 429 0044 BD46     		mov	sp, r7
+ 430              	.LCFI22:
+ 431              		.cfi_def_cfa_register 13
+ 432              		@ sp needed
+ 433 0046 80BC     		pop	{r7}
+ 434              	.LCFI23:
+ 435              		.cfi_restore 7
+ 436              		.cfi_def_cfa_offset 0
+ 437 0048 7047     		bx	lr
+ 438              	.L22:
+ 439 004a 00BF     		.align	2
+ 440              	.L21:
+ 441 004c 00000000 		.word	ErrorsMaxAmount
+ 442 0050 00000000 		.word	Errors
+ 443 0054 00000000 		.word	ErrorStatus
+ 444              		.cfi_endproc
+ 445              	.LFE3:
+ 447              		.text
+ 448              	.Letext0:
+ 449              		.file 2 "common/rtos/common/utils/typedef.h"
+ 450              		.file 3 "common/rtos/common/utils/error.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 error.c
+C:\Users\Admin\AppData\Local\Temp\ccvmZKCe.s:22     .data.ErrorsAmount:00000000 ErrorsAmount
+C:\Users\Admin\AppData\Local\Temp\ccvmZKCe.s:19     .data.ErrorsAmount:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\ccvmZKCe.s:29     .data.ErrorsMaxAmount:00000000 ErrorsMaxAmount
+C:\Users\Admin\AppData\Local\Temp\ccvmZKCe.s:26     .data.ErrorsMaxAmount:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\ccvmZKCe.s:36     .bss.IsErrorInitialized:00000000 IsErrorInitialized
+C:\Users\Admin\AppData\Local\Temp\ccvmZKCe.s:33     .bss.IsErrorInitialized:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\ccvmZKCe.s:43     .bss.Errors:00000000 Errors
+C:\Users\Admin\AppData\Local\Temp\ccvmZKCe.s:40     .bss.Errors:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\ccvmZKCe.s:50     .bss.ErrorStatus:00000000 ErrorStatus
+C:\Users\Admin\AppData\Local\Temp\ccvmZKCe.s:47     .bss.ErrorStatus:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\ccvmZKCe.s:53     .text.ErrorCheckStatus:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccvmZKCe.s:59     .text.ErrorCheckStatus:00000000 ErrorCheckStatus
+C:\Users\Admin\AppData\Local\Temp\ccvmZKCe.s:104    .text.ErrorCheckStatus:00000020 $d
+C:\Users\Admin\AppData\Local\Temp\ccvmZKCe.s:109    .rodata:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\ccvmZKCe.s:113    .text.ErrorInit:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccvmZKCe.s:119    .text.ErrorInit:00000000 ErrorInit
+C:\Users\Admin\AppData\Local\Temp\ccvmZKCe.s:209    .text.ErrorInit:00000060 $d
+C:\Users\Admin\AppData\Local\Temp\ccvmZKCe.s:217    .text.ErrorCreate:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccvmZKCe.s:223    .text.ErrorCreate:00000000 ErrorCreate
+C:\Users\Admin\AppData\Local\Temp\ccvmZKCe.s:354    .text.ErrorCreate:0000009c $d
+C:\Users\Admin\AppData\Local\Temp\ccvmZKCe.s:362    .text.SYSTEM_ERROR:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\ccvmZKCe.s:368    .text.SYSTEM_ERROR:00000000 SYSTEM_ERROR
+C:\Users\Admin\AppData\Local\Temp\ccvmZKCe.s:441    .text.SYSTEM_ERROR:0000004c $d
+
+NO UNDEFINED SYMBOLS

@@ -1,0 +1,4279 @@
+   1              		.cpu cortex-m3
+   2              		.arch armv7-m
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"rs485.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.global	rs485buf
+  18              		.section	.bss.rs485buf,"aw",%nobits
+  19              		.align	2
+  22              	rs485buf:
+  23 0000 00000000 		.space	256
+  23      00000000 
+  23      00000000 
+  23      00000000 
+  23      00000000 
+  24              		.global	tmpbuff
+  25              		.section	.bss.tmpbuff,"aw",%nobits
+  26              		.align	2
+  29              	tmpbuff:
+  30 0000 00000000 		.space	128
+  30      00000000 
+  30      00000000 
+  30      00000000 
+  30      00000000 
+  31              		.global	rs485size
+  32              		.section	.bss.rs485size,"aw",%nobits
+  35              	rs485size:
+  36 0000 00       		.space	1
+  37              		.global	id
+  38              		.section	.bss.id,"aw",%nobits
+  39              		.align	2
+  42              	id:
+  43 0000 00000000 		.space	20
+  43      00000000 
+  43      00000000 
+  43      00000000 
+  43      00000000 
+  44              		.global	MeterNumber
+  45              		.section	.bss.MeterNumber,"aw",%nobits
+  46              		.align	2
+  49              	MeterNumber:
+  50 0000 00000000 		.space	4
+  51              		.section	.text.ClearUIPData,"ax",%progbits
+  52              		.align	1
+  53              		.global	ClearUIPData
+  54              		.syntax unified
+  55              		.thumb
+  56              		.thumb_func
+  58              	ClearUIPData:
+  59              	.LFB30:
+  60              		.file 1 "tasks/rs485.c"
+   1:tasks/rs485.c **** #include <stdlib.h>
+   2:tasks/rs485.c **** #include <stdio.h>
+   3:tasks/rs485.c **** #include <string.h>
+   4:tasks/rs485.c **** #include "FreeRTOS.h"
+   5:tasks/rs485.c **** #include "task.h"
+   6:tasks/rs485.c **** #include "usermemory.h"
+   7:tasks/rs485.c **** //#include "adc.h"
+   8:tasks/rs485.c **** //#include "pwmcapture.h"
+   9:tasks/rs485.c **** #include "iec61107.h"
+  10:tasks/rs485.c **** #include "smp_protocol.h"
+  11:tasks/rs485.c **** #include "rvnet.h"
+  12:tasks/rs485.c **** #include "uart.h"
+  13:tasks/rs485.c **** //#include "serial.h"
+  14:tasks/rs485.c **** 
+  15:tasks/rs485.c **** #include "stm32f10x.h"
+  16:tasks/rs485.c **** //#include "usb_lib.h"
+  17:tasks/rs485.c **** //#include "usb_desc.h"
+  18:tasks/rs485.c **** //#include "hw_config.h"
+  19:tasks/rs485.c **** //#include "usb_pwr.h"
+  20:tasks/rs485.c **** 
+  21:tasks/rs485.c **** char rs485buf[256];
+  22:tasks/rs485.c **** char tmpbuff[128];
+  23:tasks/rs485.c **** RVNET_DATATYPE rs485size;
+  24:tasks/rs485.c **** IDENTIFIER id;
+  25:tasks/rs485.c **** uint32 MeterNumber;
+  26:tasks/rs485.c **** 
+  27:tasks/rs485.c **** bool AskConunter();
+  28:tasks/rs485.c **** bool AskConunter318();
+  29:tasks/rs485.c **** 
+  30:tasks/rs485.c **** void ClearUIPData()
+  31:tasks/rs485.c **** {
+  61              		.loc 1 31 1
+  62              		.cfi_startproc
+  63              		@ args = 0, pretend = 0, frame = 8
+  64              		@ frame_needed = 1, uses_anonymous_args = 0
+  65              		@ link register save eliminated.
+  66 0000 80B4     		push	{r7}
+  67              	.LCFI0:
+  68              		.cfi_def_cfa_offset 4
+  69              		.cfi_offset 7, -4
+  70 0002 83B0     		sub	sp, sp, #12
+  71              	.LCFI1:
+  72              		.cfi_def_cfa_offset 16
+  73 0004 00AF     		add	r7, sp, #0
+  74              	.LCFI2:
+  75              		.cfi_def_cfa_register 7
+  76              	.LBB2:
+  32:tasks/rs485.c **** 	for(int i=0;i<16;i++)
+  77              		.loc 1 32 10
+  78 0006 0023     		movs	r3, #0
+  79 0008 7B60     		str	r3, [r7, #4]
+  80              		.loc 1 32 2
+  81 000a 1EE0     		b	.L2
+  82              	.L5:
+  33:tasks/rs485.c **** 	{
+  34:tasks/rs485.c **** 		RAM.UIPparams[i] = 0;
+  83              		.loc 1 34 20
+  84 000c 134A     		ldr	r2, .L6
+  85 000e 7B68     		ldr	r3, [r7, #4]
+  86 0010 0C33     		adds	r3, r3, #12
+  87 0012 5B00     		lsls	r3, r3, #1
+  88 0014 1344     		add	r3, r3, r2
+  89 0016 0022     		movs	r2, #0
+  90 0018 1A71     		strb	r2, [r3, #4]
+  91 001a 0022     		movs	r2, #0
+  92 001c 5A71     		strb	r2, [r3, #5]
+  93              	.LBB3:
+  35:tasks/rs485.c **** 		for(int j=0;j<16;j++)
+  94              		.loc 1 35 11
+  95 001e 0023     		movs	r3, #0
+  96 0020 3B60     		str	r3, [r7]
+  97              		.loc 1 35 3
+  98 0022 0CE0     		b	.L3
+  99              	.L4:
+  36:tasks/rs485.c **** 			{
+  37:tasks/rs485.c **** 				RAM.strings[i][j] = 0;
+ 100              		.loc 1 37 23 discriminator 3
+ 101 0024 0D4A     		ldr	r2, .L6
+ 102 0026 7B68     		ldr	r3, [r7, #4]
+ 103 0028 1B01     		lsls	r3, r3, #4
+ 104 002a 1A44     		add	r2, r2, r3
+ 105 002c 3B68     		ldr	r3, [r7]
+ 106 002e 1344     		add	r3, r3, r2
+ 107 0030 03F58263 		add	r3, r3, #1040
+ 108 0034 0022     		movs	r2, #0
+ 109 0036 1A70     		strb	r2, [r3]
+  35:tasks/rs485.c **** 		for(int j=0;j<16;j++)
+ 110              		.loc 1 35 21 discriminator 3
+ 111 0038 3B68     		ldr	r3, [r7]
+ 112 003a 0133     		adds	r3, r3, #1
+ 113 003c 3B60     		str	r3, [r7]
+ 114              	.L3:
+  35:tasks/rs485.c **** 		for(int j=0;j<16;j++)
+ 115              		.loc 1 35 3 discriminator 1
+ 116 003e 3B68     		ldr	r3, [r7]
+ 117 0040 0F2B     		cmp	r3, #15
+ 118 0042 EFDD     		ble	.L4
+ 119              	.LBE3:
+  32:tasks/rs485.c **** 	{
+ 120              		.loc 1 32 20 discriminator 2
+ 121 0044 7B68     		ldr	r3, [r7, #4]
+ 122 0046 0133     		adds	r3, r3, #1
+ 123 0048 7B60     		str	r3, [r7, #4]
+ 124              	.L2:
+  32:tasks/rs485.c **** 	{
+ 125              		.loc 1 32 2 discriminator 1
+ 126 004a 7B68     		ldr	r3, [r7, #4]
+ 127 004c 0F2B     		cmp	r3, #15
+ 128 004e DDDD     		ble	.L5
+ 129              	.LBE2:
+  38:tasks/rs485.c **** 			}
+  39:tasks/rs485.c **** 	}
+  40:tasks/rs485.c **** }
+ 130              		.loc 1 40 1
+ 131 0050 00BF     		nop
+ 132 0052 00BF     		nop
+ 133 0054 0C37     		adds	r7, r7, #12
+ 134              	.LCFI3:
+ 135              		.cfi_def_cfa_offset 4
+ 136 0056 BD46     		mov	sp, r7
+ 137              	.LCFI4:
+ 138              		.cfi_def_cfa_register 13
+ 139              		@ sp needed
+ 140 0058 80BC     		pop	{r7}
+ 141              	.LCFI5:
+ 142              		.cfi_restore 7
+ 143              		.cfi_def_cfa_offset 0
+ 144 005a 7047     		bx	lr
+ 145              	.L7:
+ 146              		.align	2
+ 147              	.L6:
+ 148 005c 00000000 		.word	RAM
+ 149              		.cfi_endproc
+ 150              	.LFE30:
+ 152              		.section	.text.ClearBuffer,"ax",%progbits
+ 153              		.align	1
+ 154              		.global	ClearBuffer
+ 155              		.syntax unified
+ 156              		.thumb
+ 157              		.thumb_func
+ 159              	ClearBuffer:
+ 160              	.LFB31:
+  41:tasks/rs485.c **** 
+  42:tasks/rs485.c **** void ClearBuffer(int size)
+  43:tasks/rs485.c **** {
+ 161              		.loc 1 43 1
+ 162              		.cfi_startproc
+ 163              		@ args = 0, pretend = 0, frame = 16
+ 164              		@ frame_needed = 1, uses_anonymous_args = 0
+ 165              		@ link register save eliminated.
+ 166 0000 80B4     		push	{r7}
+ 167              	.LCFI6:
+ 168              		.cfi_def_cfa_offset 4
+ 169              		.cfi_offset 7, -4
+ 170 0002 85B0     		sub	sp, sp, #20
+ 171              	.LCFI7:
+ 172              		.cfi_def_cfa_offset 24
+ 173 0004 00AF     		add	r7, sp, #0
+ 174              	.LCFI8:
+ 175              		.cfi_def_cfa_register 7
+ 176 0006 7860     		str	r0, [r7, #4]
+ 177              	.LBB4:
+  44:tasks/rs485.c ****   for(int i=0;i<size;i++)
+ 178              		.loc 1 44 11
+ 179 0008 0023     		movs	r3, #0
+ 180 000a FB60     		str	r3, [r7, #12]
+ 181              		.loc 1 44 3
+ 182 000c 07E0     		b	.L9
+ 183              	.L10:
+  45:tasks/rs485.c ****   {
+  46:tasks/rs485.c **** 	  rs485buf[i]=0xFF;
+ 184              		.loc 1 46 15 discriminator 3
+ 185 000e 094A     		ldr	r2, .L11
+ 186 0010 FB68     		ldr	r3, [r7, #12]
+ 187 0012 1344     		add	r3, r3, r2
+ 188 0014 FF22     		movs	r2, #255
+ 189 0016 1A70     		strb	r2, [r3]
+  44:tasks/rs485.c ****   for(int i=0;i<size;i++)
+ 190              		.loc 1 44 23 discriminator 3
+ 191 0018 FB68     		ldr	r3, [r7, #12]
+ 192 001a 0133     		adds	r3, r3, #1
+ 193 001c FB60     		str	r3, [r7, #12]
+ 194              	.L9:
+  44:tasks/rs485.c ****   for(int i=0;i<size;i++)
+ 195              		.loc 1 44 3 discriminator 1
+ 196 001e FA68     		ldr	r2, [r7, #12]
+ 197 0020 7B68     		ldr	r3, [r7, #4]
+ 198 0022 9A42     		cmp	r2, r3
+ 199 0024 F3DB     		blt	.L10
+ 200              	.LBE4:
+  47:tasks/rs485.c ****   }
+  48:tasks/rs485.c **** }
+ 201              		.loc 1 48 1
+ 202 0026 00BF     		nop
+ 203 0028 00BF     		nop
+ 204 002a 1437     		adds	r7, r7, #20
+ 205              	.LCFI9:
+ 206              		.cfi_def_cfa_offset 4
+ 207 002c BD46     		mov	sp, r7
+ 208              	.LCFI10:
+ 209              		.cfi_def_cfa_register 13
+ 210              		@ sp needed
+ 211 002e 80BC     		pop	{r7}
+ 212              	.LCFI11:
+ 213              		.cfi_restore 7
+ 214              		.cfi_def_cfa_offset 0
+ 215 0030 7047     		bx	lr
+ 216              	.L12:
+ 217 0032 00BF     		.align	2
+ 218              	.L11:
+ 219 0034 00000000 		.word	rs485buf
+ 220              		.cfi_endproc
+ 221              	.LFE31:
+ 223              		.global	__aeabi_ddiv
+ 224              		.global	__aeabi_dmul
+ 225              		.global	__aeabi_d2uiz
+ 226              		.section	.text.ConvertUIP,"ax",%progbits
+ 227              		.align	1
+ 228              		.global	ConvertUIP
+ 229              		.syntax unified
+ 230              		.thumb
+ 231              		.thumb_func
+ 233              	ConvertUIP:
+ 234              	.LFB32:
+  49:tasks/rs485.c **** uint16 ConvertUIP(char* string)
+  50:tasks/rs485.c ****     {
+ 235              		.loc 1 50 5
+ 236              		.cfi_startproc
+ 237              		@ args = 0, pretend = 0, frame = 8
+ 238              		@ frame_needed = 1, uses_anonymous_args = 0
+ 239 0000 90B5     		push	{r4, r7, lr}
+ 240              	.LCFI12:
+ 241              		.cfi_def_cfa_offset 12
+ 242              		.cfi_offset 4, -12
+ 243              		.cfi_offset 7, -8
+ 244              		.cfi_offset 14, -4
+ 245 0002 83B0     		sub	sp, sp, #12
+ 246              	.LCFI13:
+ 247              		.cfi_def_cfa_offset 24
+ 248 0004 00AF     		add	r7, sp, #0
+ 249              	.LCFI14:
+ 250              		.cfi_def_cfa_register 7
+ 251 0006 7860     		str	r0, [r7, #4]
+  51:tasks/rs485.c **** 
+  52:tasks/rs485.c ****     return (atof(string) / 400) * 65536;
+ 252              		.loc 1 52 13
+ 253 0008 7868     		ldr	r0, [r7, #4]
+ 254 000a 0E4B     		ldr	r3, .L15
+ 255 000c 9847     		blx	r3
+ 256              	.LVL0:
+ 257              		.loc 1 52 26
+ 258 000e 0E4C     		ldr	r4, .L15+4
+ 259 0010 4FF00002 		mov	r2, #0
+ 260 0014 0D4B     		ldr	r3, .L15+8
+ 261 0016 A047     		blx	r4
+ 262              	.LVL1:
+ 263 0018 0246     		mov	r2, r0
+ 264 001a 0B46     		mov	r3, r1
+ 265 001c 1046     		mov	r0, r2
+ 266 001e 1946     		mov	r1, r3
+ 267              		.loc 1 52 33
+ 268 0020 0B4C     		ldr	r4, .L15+12
+ 269 0022 4FF00002 		mov	r2, #0
+ 270 0026 0B4B     		ldr	r3, .L15+16
+ 271 0028 A047     		blx	r4
+ 272              	.LVL2:
+ 273 002a 0246     		mov	r2, r0
+ 274 002c 0B46     		mov	r3, r1
+ 275 002e 0A4C     		ldr	r4, .L15+20
+ 276 0030 1046     		mov	r0, r2
+ 277 0032 1946     		mov	r1, r3
+ 278 0034 A047     		blx	r4
+ 279              	.LVL3:
+ 280 0036 0346     		mov	r3, r0
+ 281 0038 9BB2     		uxth	r3, r3
+  53:tasks/rs485.c ****     }
+ 282              		.loc 1 53 5
+ 283 003a 1846     		mov	r0, r3
+ 284 003c 0C37     		adds	r7, r7, #12
+ 285              	.LCFI15:
+ 286              		.cfi_def_cfa_offset 12
+ 287 003e BD46     		mov	sp, r7
+ 288              	.LCFI16:
+ 289              		.cfi_def_cfa_register 13
+ 290              		@ sp needed
+ 291 0040 90BD     		pop	{r4, r7, pc}
+ 292              	.L16:
+ 293 0042 00BF     		.align	2
+ 294              	.L15:
+ 295 0044 00000000 		.word	atof
+ 296 0048 00000000 		.word	__aeabi_ddiv
+ 297 004c 00007940 		.word	1081671680
+ 298 0050 00000000 		.word	__aeabi_dmul
+ 299 0054 0000F040 		.word	1089470464
+ 300 0058 00000000 		.word	__aeabi_d2uiz
+ 301              		.cfi_endproc
+ 302              	.LFE32:
+ 304              		.global	__aeabi_i2d
+ 305              		.global	__aeabi_dadd
+ 306              		.section	.text.new_atof,"ax",%progbits
+ 307              		.align	1
+ 308              		.global	new_atof
+ 309              		.syntax unified
+ 310              		.thumb
+ 311              		.thumb_func
+ 313              	new_atof:
+ 314              	.LFB33:
+  54:tasks/rs485.c **** 
+  55:tasks/rs485.c **** 
+  56:tasks/rs485.c **** double new_atof(char* s)
+  57:tasks/rs485.c **** {
+ 315              		.loc 1 57 1
+ 316              		.cfi_startproc
+ 317              		@ args = 0, pretend = 0, frame = 40
+ 318              		@ frame_needed = 1, uses_anonymous_args = 0
+ 319 0000 90B5     		push	{r4, r7, lr}
+ 320              	.LCFI17:
+ 321              		.cfi_def_cfa_offset 12
+ 322              		.cfi_offset 4, -12
+ 323              		.cfi_offset 7, -8
+ 324              		.cfi_offset 14, -4
+ 325 0002 8BB0     		sub	sp, sp, #44
+ 326              	.LCFI18:
+ 327              		.cfi_def_cfa_offset 56
+ 328 0004 00AF     		add	r7, sp, #0
+ 329              	.LCFI19:
+ 330              		.cfi_def_cfa_register 7
+ 331 0006 7860     		str	r0, [r7, #4]
+  58:tasks/rs485.c ****  double sign = 1;
+ 332              		.loc 1 58 9
+ 333 0008 4FF00002 		mov	r2, #0
+ 334 000c 6A4B     		ldr	r3, .L39
+ 335 000e C7E90223 		strd	r2, [r7, #8]
+  59:tasks/rs485.c ****  double val = 0;
+ 336              		.loc 1 59 9
+ 337 0012 4FF00002 		mov	r2, #0
+ 338 0016 4FF00003 		mov	r3, #0
+ 339 001a C7E90823 		strd	r2, [r7, #32]
+  60:tasks/rs485.c ****  int d = 0;
+ 340              		.loc 1 60 6
+ 341 001e 0023     		movs	r3, #0
+ 342 0020 FB61     		str	r3, [r7, #28]
+  61:tasks/rs485.c ****  if (s) while (((*s<'0' || *s>'9') && *s!='-' && *s!='+' && *s!='.') && *(++s));
+ 343              		.loc 1 61 5
+ 344 0022 7B68     		ldr	r3, [r7, #4]
+ 345 0024 002B     		cmp	r3, #0
+ 346 0026 1CD0     		beq	.L18
+ 347              		.loc 1 61 15
+ 348 0028 00BF     		nop
+ 349              	.L21:
+ 350              		.loc 1 61 18 discriminator 7
+ 351 002a 7B68     		ldr	r3, [r7, #4]
+ 352 002c 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 353              		.loc 1 61 15 discriminator 7
+ 354 002e 2F2B     		cmp	r3, #47
+ 355 0030 03D9     		bls	.L19
+ 356              		.loc 1 61 28 discriminator 2
+ 357 0032 7B68     		ldr	r3, [r7, #4]
+ 358 0034 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 359              		.loc 1 61 25 discriminator 2
+ 360 0036 392B     		cmp	r3, #57
+ 361 0038 18D9     		bls	.L20
+ 362              	.L19:
+ 363              		.loc 1 61 39 discriminator 3
+ 364 003a 7B68     		ldr	r3, [r7, #4]
+ 365 003c 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 366              		.loc 1 61 36 discriminator 3
+ 367 003e 2D2B     		cmp	r3, #45
+ 368 0040 14D0     		beq	.L20
+ 369              		.loc 1 61 50 discriminator 4
+ 370 0042 7B68     		ldr	r3, [r7, #4]
+ 371 0044 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 372              		.loc 1 61 47 discriminator 4
+ 373 0046 2B2B     		cmp	r3, #43
+ 374 0048 10D0     		beq	.L20
+ 375              		.loc 1 61 61 discriminator 5
+ 376 004a 7B68     		ldr	r3, [r7, #4]
+ 377 004c 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 378              		.loc 1 61 58 discriminator 5
+ 379 004e 2E2B     		cmp	r3, #46
+ 380 0050 0CD0     		beq	.L20
+ 381              		.loc 1 61 70 discriminator 6
+ 382 0052 7B68     		ldr	r3, [r7, #4]
+ 383 0054 0133     		adds	r3, r3, #1
+ 384 0056 7B60     		str	r3, [r7, #4]
+ 385              		.loc 1 61 73 discriminator 6
+ 386 0058 7B68     		ldr	r3, [r7, #4]
+ 387 005a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 388              		.loc 1 61 70 discriminator 6
+ 389 005c 002B     		cmp	r3, #0
+ 390 005e E4D1     		bne	.L21
+ 391 0060 04E0     		b	.L20
+ 392              	.L18:
+  62:tasks/rs485.c ****  else return 0.0;
+ 393              		.loc 1 62 14
+ 394 0062 4FF00002 		mov	r2, #0
+ 395 0066 4FF00003 		mov	r3, #0
+ 396 006a 9FE0     		b	.L22
+ 397              	.L20:
+  63:tasks/rs485.c ****  sign*=(*s == '-' && ++s) ? -1.0 : ((*s == '+' && ++s),1.0);
+ 398              		.loc 1 63 9
+ 399 006c 7B68     		ldr	r3, [r7, #4]
+ 400 006e 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 401              		.loc 1 63 34
+ 402 0070 2D2B     		cmp	r3, #45
+ 403 0072 05D1     		bne	.L23
+ 404              		.loc 1 63 19 discriminator 2
+ 405 0074 7B68     		ldr	r3, [r7, #4]
+ 406 0076 0133     		adds	r3, r3, #1
+ 407 0078 7B60     		str	r3, [r7, #4]
+ 408 007a 7B68     		ldr	r3, [r7, #4]
+ 409 007c 002B     		cmp	r3, #0
+ 410 007e 0CD1     		bne	.L24
+ 411              	.L23:
+ 412              		.loc 1 63 38 discriminator 3
+ 413 0080 7B68     		ldr	r3, [r7, #4]
+ 414 0082 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 415              		.loc 1 63 48 discriminator 3
+ 416 0084 2B2B     		cmp	r3, #43
+ 417 0086 04D1     		bne	.L26
+ 418              		.loc 1 63 48 is_stmt 0 discriminator 5
+ 419 0088 7B68     		ldr	r3, [r7, #4]
+ 420 008a 0133     		adds	r3, r3, #1
+ 421 008c 7B60     		str	r3, [r7, #4]
+ 422 008e 7B68     		ldr	r3, [r7, #4]
+ 423 0090 002B     		cmp	r3, #0
+ 424              	.L26:
+ 425              		.loc 1 63 34 is_stmt 1 discriminator 10
+ 426 0092 4FF00002 		mov	r2, #0
+ 427 0096 484B     		ldr	r3, .L39
+ 428 0098 02E0     		b	.L27
+ 429              	.L24:
+ 430              		.loc 1 63 34 is_stmt 0 discriminator 4
+ 431 009a 4FF00002 		mov	r2, #0
+ 432 009e 474B     		ldr	r3, .L39+4
+ 433              	.L27:
+ 434              		.loc 1 63 6 is_stmt 1 discriminator 12
+ 435 00a0 474C     		ldr	r4, .L39+8
+ 436 00a2 D7E90201 		ldrd	r0, [r7, #8]
+ 437 00a6 A047     		blx	r4
+ 438              	.LVL4:
+ 439 00a8 0246     		mov	r2, r0
+ 440 00aa 0B46     		mov	r3, r1
+ 441 00ac C7E90223 		strd	r2, [r7, #8]
+  64:tasks/rs485.c ****  while ((*s >= '0' && *s <= '9') || (*s == '.' && d < 1))
+ 442              		.loc 1 64 8 discriminator 12
+ 443 00b0 43E0     		b	.L28
+ 444              	.L34:
+  65:tasks/rs485.c ****  {
+  66:tasks/rs485.c ****    val += *s == '.' ? (++d, 0.0) : d > 0 ? ((++d, val*=10.0), *s-'0') :(val*=10.0, *s-'0');
+ 445              		.loc 1 66 11
+ 446 00b2 7B68     		ldr	r3, [r7, #4]
+ 447 00b4 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 448              		.loc 1 66 34
+ 449 00b6 2E2B     		cmp	r3, #46
+ 450 00b8 07D1     		bne	.L29
+ 451              		.loc 1 66 24 discriminator 1
+ 452 00ba FB69     		ldr	r3, [r7, #28]
+ 453 00bc 0133     		adds	r3, r3, #1
+ 454 00be FB61     		str	r3, [r7, #28]
+ 455              		.loc 1 66 34 discriminator 1
+ 456 00c0 4FF00002 		mov	r2, #0
+ 457 00c4 4FF00003 		mov	r3, #0
+ 458 00c8 2CE0     		b	.L30
+ 459              	.L29:
+ 460              		.loc 1 66 34 is_stmt 0 discriminator 2
+ 461 00ca FB69     		ldr	r3, [r7, #28]
+ 462 00cc 002B     		cmp	r3, #0
+ 463 00ce 16DD     		ble	.L31
+ 464              		.loc 1 66 46 is_stmt 1 discriminator 4
+ 465 00d0 FB69     		ldr	r3, [r7, #28]
+ 466 00d2 0133     		adds	r3, r3, #1
+ 467 00d4 FB61     		str	r3, [r7, #28]
+ 468              		.loc 1 66 54 discriminator 4
+ 469 00d6 3A4C     		ldr	r4, .L39+8
+ 470 00d8 4FF00002 		mov	r2, #0
+ 471 00dc 394B     		ldr	r3, .L39+12
+ 472 00de D7E90801 		ldrd	r0, [r7, #32]
+ 473 00e2 A047     		blx	r4
+ 474              	.LVL5:
+ 475 00e4 0246     		mov	r2, r0
+ 476 00e6 0B46     		mov	r3, r1
+ 477 00e8 C7E90823 		strd	r2, [r7, #32]
+ 478              		.loc 1 66 63 discriminator 4
+ 479 00ec 7B68     		ldr	r3, [r7, #4]
+ 480 00ee 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 481              		.loc 1 66 65 discriminator 4
+ 482 00f0 303B     		subs	r3, r3, #48
+ 483              		.loc 1 66 34 discriminator 4
+ 484 00f2 354A     		ldr	r2, .L39+16
+ 485 00f4 1846     		mov	r0, r3
+ 486 00f6 9047     		blx	r2
+ 487              	.LVL6:
+ 488 00f8 0246     		mov	r2, r0
+ 489 00fa 0B46     		mov	r3, r1
+ 490 00fc 12E0     		b	.L30
+ 491              	.L31:
+ 492              		.loc 1 66 76 discriminator 5
+ 493 00fe 304C     		ldr	r4, .L39+8
+ 494 0100 4FF00002 		mov	r2, #0
+ 495 0104 2F4B     		ldr	r3, .L39+12
+ 496 0106 D7E90801 		ldrd	r0, [r7, #32]
+ 497 010a A047     		blx	r4
+ 498              	.LVL7:
+ 499 010c 0246     		mov	r2, r0
+ 500 010e 0B46     		mov	r3, r1
+ 501 0110 C7E90823 		strd	r2, [r7, #32]
+ 502              		.loc 1 66 84 discriminator 5
+ 503 0114 7B68     		ldr	r3, [r7, #4]
+ 504 0116 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 505              		.loc 1 66 86 discriminator 5
+ 506 0118 303B     		subs	r3, r3, #48
+ 507              		.loc 1 66 34 discriminator 5
+ 508 011a 2B4A     		ldr	r2, .L39+16
+ 509 011c 1846     		mov	r0, r3
+ 510 011e 9047     		blx	r2
+ 511              	.LVL8:
+ 512 0120 0246     		mov	r2, r0
+ 513 0122 0B46     		mov	r3, r1
+ 514              	.L30:
+ 515              		.loc 1 66 8 discriminator 8
+ 516 0124 294C     		ldr	r4, .L39+20
+ 517 0126 D7E90801 		ldrd	r0, [r7, #32]
+ 518 012a A047     		blx	r4
+ 519              	.LVL9:
+ 520 012c 0246     		mov	r2, r0
+ 521 012e 0B46     		mov	r3, r1
+ 522 0130 C7E90823 		strd	r2, [r7, #32]
+  67:tasks/rs485.c ****    ++s;
+ 523              		.loc 1 67 4 discriminator 8
+ 524 0134 7B68     		ldr	r3, [r7, #4]
+ 525 0136 0133     		adds	r3, r3, #1
+ 526 0138 7B60     		str	r3, [r7, #4]
+ 527              	.L28:
+  64:tasks/rs485.c ****  while ((*s >= '0' && *s <= '9') || (*s == '.' && d < 1))
+ 528              		.loc 1 64 10
+ 529 013a 7B68     		ldr	r3, [r7, #4]
+ 530 013c 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+  64:tasks/rs485.c ****  while ((*s >= '0' && *s <= '9') || (*s == '.' && d < 1))
+ 531              		.loc 1 64 8
+ 532 013e 2F2B     		cmp	r3, #47
+ 533 0140 03D9     		bls	.L33
+  64:tasks/rs485.c ****  while ((*s >= '0' && *s <= '9') || (*s == '.' && d < 1))
+ 534              		.loc 1 64 23 discriminator 1
+ 535 0142 7B68     		ldr	r3, [r7, #4]
+ 536 0144 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+  64:tasks/rs485.c ****  while ((*s >= '0' && *s <= '9') || (*s == '.' && d < 1))
+ 537              		.loc 1 64 20 discriminator 1
+ 538 0146 392B     		cmp	r3, #57
+ 539 0148 B3D9     		bls	.L34
+ 540              	.L33:
+  64:tasks/rs485.c ****  while ((*s >= '0' && *s <= '9') || (*s == '.' && d < 1))
+ 541              		.loc 1 64 38 discriminator 3
+ 542 014a 7B68     		ldr	r3, [r7, #4]
+ 543 014c 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+  64:tasks/rs485.c ****  while ((*s >= '0' && *s <= '9') || (*s == '.' && d < 1))
+ 544              		.loc 1 64 34 discriminator 3
+ 545 014e 2E2B     		cmp	r3, #46
+ 546 0150 02D1     		bne	.L35
+  64:tasks/rs485.c ****  while ((*s >= '0' && *s <= '9') || (*s == '.' && d < 1))
+ 547              		.loc 1 64 48 discriminator 4
+ 548 0152 FB69     		ldr	r3, [r7, #28]
+ 549 0154 002B     		cmp	r3, #0
+ 550 0156 ACDD     		ble	.L34
+ 551              	.L35:
+  68:tasks/rs485.c ****  }
+  69:tasks/rs485.c ****  double den = 1;
+ 552              		.loc 1 69 9
+ 553 0158 4FF00002 		mov	r2, #0
+ 554 015c 164B     		ldr	r3, .L39
+ 555 015e C7E90423 		strd	r2, [r7, #16]
+  70:tasks/rs485.c ****  if(d > 0) while(--d) den*=10.0;
+ 556              		.loc 1 70 4
+ 557 0162 FB69     		ldr	r3, [r7, #28]
+ 558 0164 002B     		cmp	r3, #0
+ 559 0166 11DD     		ble	.L36
+ 560              		.loc 1 70 17
+ 561 0168 0AE0     		b	.L37
+ 562              	.L38:
+ 563              		.loc 1 70 26 discriminator 2
+ 564 016a 154C     		ldr	r4, .L39+8
+ 565 016c 4FF00002 		mov	r2, #0
+ 566 0170 144B     		ldr	r3, .L39+12
+ 567 0172 D7E90401 		ldrd	r0, [r7, #16]
+ 568 0176 A047     		blx	r4
+ 569              	.LVL10:
+ 570 0178 0246     		mov	r2, r0
+ 571 017a 0B46     		mov	r3, r1
+ 572 017c C7E90423 		strd	r2, [r7, #16]
+ 573              	.L37:
+ 574              		.loc 1 70 17 discriminator 1
+ 575 0180 FB69     		ldr	r3, [r7, #28]
+ 576 0182 013B     		subs	r3, r3, #1
+ 577 0184 FB61     		str	r3, [r7, #28]
+ 578 0186 FB69     		ldr	r3, [r7, #28]
+ 579 0188 002B     		cmp	r3, #0
+ 580 018a EED1     		bne	.L38
+ 581              	.L36:
+  71:tasks/rs485.c ****  return (val*sign)/den;
+ 582              		.loc 1 71 13
+ 583 018c 0C4C     		ldr	r4, .L39+8
+ 584 018e D7E90223 		ldrd	r2, [r7, #8]
+ 585 0192 D7E90801 		ldrd	r0, [r7, #32]
+ 586 0196 A047     		blx	r4
+ 587              	.LVL11:
+ 588 0198 0246     		mov	r2, r0
+ 589 019a 0B46     		mov	r3, r1
+ 590 019c 1046     		mov	r0, r2
+ 591 019e 1946     		mov	r1, r3
+ 592              		.loc 1 71 19
+ 593 01a0 0B4C     		ldr	r4, .L39+24
+ 594 01a2 D7E90423 		ldrd	r2, [r7, #16]
+ 595 01a6 A047     		blx	r4
+ 596              	.LVL12:
+ 597 01a8 0246     		mov	r2, r0
+ 598 01aa 0B46     		mov	r3, r1
+ 599              	.L22:
+  72:tasks/rs485.c **** }
+ 600              		.loc 1 72 1
+ 601 01ac 1046     		mov	r0, r2
+ 602 01ae 1946     		mov	r1, r3
+ 603 01b0 2C37     		adds	r7, r7, #44
+ 604              	.LCFI20:
+ 605              		.cfi_def_cfa_offset 12
+ 606 01b2 BD46     		mov	sp, r7
+ 607              	.LCFI21:
+ 608              		.cfi_def_cfa_register 13
+ 609              		@ sp needed
+ 610 01b4 90BD     		pop	{r4, r7, pc}
+ 611              	.L40:
+ 612 01b6 00BF     		.align	2
+ 613              	.L39:
+ 614 01b8 0000F03F 		.word	1072693248
+ 615 01bc 0000F0BF 		.word	-1074790400
+ 616 01c0 00000000 		.word	__aeabi_dmul
+ 617 01c4 00002440 		.word	1076101120
+ 618 01c8 00000000 		.word	__aeabi_i2d
+ 619 01cc 00000000 		.word	__aeabi_dadd
+ 620 01d0 00000000 		.word	__aeabi_ddiv
+ 621              		.cfi_endproc
+ 622              	.LFE33:
+ 624              		.section	.text.MakeiFixUIP,"ax",%progbits
+ 625              		.align	1
+ 626              		.global	MakeiFixUIP
+ 627              		.syntax unified
+ 628              		.thumb
+ 629              		.thumb_func
+ 631              	MakeiFixUIP:
+ 632              	.LFB34:
+  73:tasks/rs485.c **** 
+  74:tasks/rs485.c **** void MakeiFixUIP()
+  75:tasks/rs485.c ****     {
+ 633              		.loc 1 75 5
+ 634              		.cfi_startproc
+ 635              		@ args = 0, pretend = 0, frame = 0
+ 636              		@ frame_needed = 1, uses_anonymous_args = 0
+ 637 0000 98B5     		push	{r3, r4, r7, lr}
+ 638              	.LCFI22:
+ 639              		.cfi_def_cfa_offset 16
+ 640              		.cfi_offset 3, -16
+ 641              		.cfi_offset 4, -12
+ 642              		.cfi_offset 7, -8
+ 643              		.cfi_offset 14, -4
+ 644 0002 00AF     		add	r7, sp, #0
+ 645              	.LCFI23:
+ 646              		.cfi_def_cfa_register 7
+  76:tasks/rs485.c **** 
+  77:tasks/rs485.c ****     RAM.UIPparams[0] = (uint16) (new_atof(&RAM.strings[8][0]) * 65535 / 400);
+ 647              		.loc 1 77 34
+ 648 0004 AC48     		ldr	r0, .L42+16
+ 649 0006 AD4B     		ldr	r3, .L42+20
+ 650 0008 9847     		blx	r3
+ 651              	.LVL13:
+ 652              		.loc 1 77 63
+ 653 000a AD4C     		ldr	r4, .L42+24
+ 654 000c A6A3     		adr	r3, .L42
+ 655 000e D3E90023 		ldrd	r2, [r3]
+ 656 0012 A047     		blx	r4
+ 657              	.LVL14:
+ 658 0014 0246     		mov	r2, r0
+ 659 0016 0B46     		mov	r3, r1
+ 660 0018 1046     		mov	r0, r2
+ 661 001a 1946     		mov	r1, r3
+ 662              		.loc 1 77 71
+ 663 001c A94C     		ldr	r4, .L42+28
+ 664 001e 4FF00002 		mov	r2, #0
+ 665 0022 A94B     		ldr	r3, .L42+32
+ 666 0024 A047     		blx	r4
+ 667              	.LVL15:
+ 668 0026 0246     		mov	r2, r0
+ 669 0028 0B46     		mov	r3, r1
+ 670              		.loc 1 77 24
+ 671 002a A84C     		ldr	r4, .L42+36
+ 672 002c 1046     		mov	r0, r2
+ 673 002e 1946     		mov	r1, r3
+ 674 0030 A047     		blx	r4
+ 675              	.LVL16:
+ 676 0032 0346     		mov	r3, r0
+ 677 0034 9AB2     		uxth	r2, r3
+ 678              		.loc 1 77 22
+ 679 0036 A64B     		ldr	r3, .L42+40
+ 680 0038 9A83     		strh	r2, [r3, #28]	@ unaligned
+  78:tasks/rs485.c ****     RAM.UIPparams[1] = (uint16) (new_atof(&RAM.strings[9][0]) * 65535 / 400);
+ 681              		.loc 1 78 34
+ 682 003a A648     		ldr	r0, .L42+44
+ 683 003c 9F4B     		ldr	r3, .L42+20
+ 684 003e 9847     		blx	r3
+ 685              	.LVL17:
+ 686              		.loc 1 78 63
+ 687 0040 9F4C     		ldr	r4, .L42+24
+ 688 0042 99A3     		adr	r3, .L42
+ 689 0044 D3E90023 		ldrd	r2, [r3]
+ 690 0048 A047     		blx	r4
+ 691              	.LVL18:
+ 692 004a 0246     		mov	r2, r0
+ 693 004c 0B46     		mov	r3, r1
+ 694 004e 1046     		mov	r0, r2
+ 695 0050 1946     		mov	r1, r3
+ 696              		.loc 1 78 71
+ 697 0052 9C4C     		ldr	r4, .L42+28
+ 698 0054 4FF00002 		mov	r2, #0
+ 699 0058 9B4B     		ldr	r3, .L42+32
+ 700 005a A047     		blx	r4
+ 701              	.LVL19:
+ 702 005c 0246     		mov	r2, r0
+ 703 005e 0B46     		mov	r3, r1
+ 704              		.loc 1 78 24
+ 705 0060 9A4C     		ldr	r4, .L42+36
+ 706 0062 1046     		mov	r0, r2
+ 707 0064 1946     		mov	r1, r3
+ 708 0066 A047     		blx	r4
+ 709              	.LVL20:
+ 710 0068 0346     		mov	r3, r0
+ 711 006a 9AB2     		uxth	r2, r3
+ 712              		.loc 1 78 22
+ 713 006c 984B     		ldr	r3, .L42+40
+ 714 006e DA83     		strh	r2, [r3, #30]	@ unaligned
+  79:tasks/rs485.c ****     RAM.UIPparams[2] = (uint16) (new_atof(&RAM.strings[10][0]) * 65535 / 400);
+ 715              		.loc 1 79 34
+ 716 0070 9948     		ldr	r0, .L42+48
+ 717 0072 924B     		ldr	r3, .L42+20
+ 718 0074 9847     		blx	r3
+ 719              	.LVL21:
+ 720              		.loc 1 79 64
+ 721 0076 924C     		ldr	r4, .L42+24
+ 722 0078 8BA3     		adr	r3, .L42
+ 723 007a D3E90023 		ldrd	r2, [r3]
+ 724 007e A047     		blx	r4
+ 725              	.LVL22:
+ 726 0080 0246     		mov	r2, r0
+ 727 0082 0B46     		mov	r3, r1
+ 728 0084 1046     		mov	r0, r2
+ 729 0086 1946     		mov	r1, r3
+ 730              		.loc 1 79 72
+ 731 0088 8E4C     		ldr	r4, .L42+28
+ 732 008a 4FF00002 		mov	r2, #0
+ 733 008e 8E4B     		ldr	r3, .L42+32
+ 734 0090 A047     		blx	r4
+ 735              	.LVL23:
+ 736 0092 0246     		mov	r2, r0
+ 737 0094 0B46     		mov	r3, r1
+ 738              		.loc 1 79 24
+ 739 0096 8D4C     		ldr	r4, .L42+36
+ 740 0098 1046     		mov	r0, r2
+ 741 009a 1946     		mov	r1, r3
+ 742 009c A047     		blx	r4
+ 743              	.LVL24:
+ 744 009e 0346     		mov	r3, r0
+ 745 00a0 9AB2     		uxth	r2, r3
+ 746              		.loc 1 79 22
+ 747 00a2 8B4B     		ldr	r3, .L42+40
+ 748 00a4 1A84     		strh	r2, [r3, #32]	@ unaligned
+  80:tasks/rs485.c **** 
+  81:tasks/rs485.c ****     //current
+  82:tasks/rs485.c ****     RAM.UIPparams[3] = (uint16) (new_atof(&RAM.strings[11][0]) * 65535 / 100);
+ 749              		.loc 1 82 34
+ 750 00a6 8D48     		ldr	r0, .L42+52
+ 751 00a8 844B     		ldr	r3, .L42+20
+ 752 00aa 9847     		blx	r3
+ 753              	.LVL25:
+ 754              		.loc 1 82 64
+ 755 00ac 844C     		ldr	r4, .L42+24
+ 756 00ae 7EA3     		adr	r3, .L42
+ 757 00b0 D3E90023 		ldrd	r2, [r3]
+ 758 00b4 A047     		blx	r4
+ 759              	.LVL26:
+ 760 00b6 0246     		mov	r2, r0
+ 761 00b8 0B46     		mov	r3, r1
+ 762 00ba 1046     		mov	r0, r2
+ 763 00bc 1946     		mov	r1, r3
+ 764              		.loc 1 82 72
+ 765 00be 814C     		ldr	r4, .L42+28
+ 766 00c0 4FF00002 		mov	r2, #0
+ 767 00c4 864B     		ldr	r3, .L42+56
+ 768 00c6 A047     		blx	r4
+ 769              	.LVL27:
+ 770 00c8 0246     		mov	r2, r0
+ 771 00ca 0B46     		mov	r3, r1
+ 772              		.loc 1 82 24
+ 773 00cc 7F4C     		ldr	r4, .L42+36
+ 774 00ce 1046     		mov	r0, r2
+ 775 00d0 1946     		mov	r1, r3
+ 776 00d2 A047     		blx	r4
+ 777              	.LVL28:
+ 778 00d4 0346     		mov	r3, r0
+ 779 00d6 9AB2     		uxth	r2, r3
+ 780              		.loc 1 82 22
+ 781 00d8 7D4B     		ldr	r3, .L42+40
+ 782 00da 5A84     		strh	r2, [r3, #34]	@ unaligned
+  83:tasks/rs485.c ****     RAM.UIPparams[4] = (uint16) (new_atof(&RAM.strings[12][0]) * 65535 / 100);
+ 783              		.loc 1 83 34
+ 784 00dc 8148     		ldr	r0, .L42+60
+ 785 00de 774B     		ldr	r3, .L42+20
+ 786 00e0 9847     		blx	r3
+ 787              	.LVL29:
+ 788              		.loc 1 83 64
+ 789 00e2 774C     		ldr	r4, .L42+24
+ 790 00e4 70A3     		adr	r3, .L42
+ 791 00e6 D3E90023 		ldrd	r2, [r3]
+ 792 00ea A047     		blx	r4
+ 793              	.LVL30:
+ 794 00ec 0246     		mov	r2, r0
+ 795 00ee 0B46     		mov	r3, r1
+ 796 00f0 1046     		mov	r0, r2
+ 797 00f2 1946     		mov	r1, r3
+ 798              		.loc 1 83 72
+ 799 00f4 734C     		ldr	r4, .L42+28
+ 800 00f6 4FF00002 		mov	r2, #0
+ 801 00fa 794B     		ldr	r3, .L42+56
+ 802 00fc A047     		blx	r4
+ 803              	.LVL31:
+ 804 00fe 0246     		mov	r2, r0
+ 805 0100 0B46     		mov	r3, r1
+ 806              		.loc 1 83 24
+ 807 0102 724C     		ldr	r4, .L42+36
+ 808 0104 1046     		mov	r0, r2
+ 809 0106 1946     		mov	r1, r3
+ 810 0108 A047     		blx	r4
+ 811              	.LVL32:
+ 812 010a 0346     		mov	r3, r0
+ 813 010c 9AB2     		uxth	r2, r3
+ 814              		.loc 1 83 22
+ 815 010e 704B     		ldr	r3, .L42+40
+ 816 0110 9A84     		strh	r2, [r3, #36]	@ unaligned
+  84:tasks/rs485.c ****     RAM.UIPparams[5] = (uint16) (new_atof(&RAM.strings[13][0]) * 65535 / 100);
+ 817              		.loc 1 84 34
+ 818 0112 7548     		ldr	r0, .L42+64
+ 819 0114 694B     		ldr	r3, .L42+20
+ 820 0116 9847     		blx	r3
+ 821              	.LVL33:
+ 822              		.loc 1 84 64
+ 823 0118 694C     		ldr	r4, .L42+24
+ 824 011a 63A3     		adr	r3, .L42
+ 825 011c D3E90023 		ldrd	r2, [r3]
+ 826 0120 A047     		blx	r4
+ 827              	.LVL34:
+ 828 0122 0246     		mov	r2, r0
+ 829 0124 0B46     		mov	r3, r1
+ 830 0126 1046     		mov	r0, r2
+ 831 0128 1946     		mov	r1, r3
+ 832              		.loc 1 84 72
+ 833 012a 664C     		ldr	r4, .L42+28
+ 834 012c 4FF00002 		mov	r2, #0
+ 835 0130 6B4B     		ldr	r3, .L42+56
+ 836 0132 A047     		blx	r4
+ 837              	.LVL35:
+ 838 0134 0246     		mov	r2, r0
+ 839 0136 0B46     		mov	r3, r1
+ 840              		.loc 1 84 24
+ 841 0138 644C     		ldr	r4, .L42+36
+ 842 013a 1046     		mov	r0, r2
+ 843 013c 1946     		mov	r1, r3
+ 844 013e A047     		blx	r4
+ 845              	.LVL36:
+ 846 0140 0346     		mov	r3, r0
+ 847 0142 9AB2     		uxth	r2, r3
+ 848              		.loc 1 84 22
+ 849 0144 624B     		ldr	r3, .L42+40
+ 850 0146 DA84     		strh	r2, [r3, #38]	@ unaligned
+  85:tasks/rs485.c ****     //Power
+  86:tasks/rs485.c ****     RAM.UIPparams[6] = (uint16) (new_atof(&RAM.strings[5][0]) * 65535 / 40);
+ 851              		.loc 1 86 34
+ 852 0148 6848     		ldr	r0, .L42+68
+ 853 014a 5C4B     		ldr	r3, .L42+20
+ 854 014c 9847     		blx	r3
+ 855              	.LVL37:
+ 856              		.loc 1 86 63
+ 857 014e 5C4C     		ldr	r4, .L42+24
+ 858 0150 55A3     		adr	r3, .L42
+ 859 0152 D3E90023 		ldrd	r2, [r3]
+ 860 0156 A047     		blx	r4
+ 861              	.LVL38:
+ 862 0158 0246     		mov	r2, r0
+ 863 015a 0B46     		mov	r3, r1
+ 864 015c 1046     		mov	r0, r2
+ 865 015e 1946     		mov	r1, r3
+ 866              		.loc 1 86 71
+ 867 0160 584C     		ldr	r4, .L42+28
+ 868 0162 4FF00002 		mov	r2, #0
+ 869 0166 624B     		ldr	r3, .L42+72
+ 870 0168 A047     		blx	r4
+ 871              	.LVL39:
+ 872 016a 0246     		mov	r2, r0
+ 873 016c 0B46     		mov	r3, r1
+ 874              		.loc 1 86 24
+ 875 016e 574C     		ldr	r4, .L42+36
+ 876 0170 1046     		mov	r0, r2
+ 877 0172 1946     		mov	r1, r3
+ 878 0174 A047     		blx	r4
+ 879              	.LVL40:
+ 880 0176 0346     		mov	r3, r0
+ 881 0178 9AB2     		uxth	r2, r3
+ 882              		.loc 1 86 22
+ 883 017a 554B     		ldr	r3, .L42+40
+ 884 017c 1A85     		strh	r2, [r3, #40]	@ unaligned
+  87:tasks/rs485.c ****     RAM.UIPparams[7] = (uint16) (new_atof(&RAM.strings[6][0]) * 65535 / 40);
+ 885              		.loc 1 87 34
+ 886 017e 5D48     		ldr	r0, .L42+76
+ 887 0180 4E4B     		ldr	r3, .L42+20
+ 888 0182 9847     		blx	r3
+ 889              	.LVL41:
+ 890              		.loc 1 87 63
+ 891 0184 4E4C     		ldr	r4, .L42+24
+ 892 0186 48A3     		adr	r3, .L42
+ 893 0188 D3E90023 		ldrd	r2, [r3]
+ 894 018c A047     		blx	r4
+ 895              	.LVL42:
+ 896 018e 0246     		mov	r2, r0
+ 897 0190 0B46     		mov	r3, r1
+ 898 0192 1046     		mov	r0, r2
+ 899 0194 1946     		mov	r1, r3
+ 900              		.loc 1 87 71
+ 901 0196 4B4C     		ldr	r4, .L42+28
+ 902 0198 4FF00002 		mov	r2, #0
+ 903 019c 544B     		ldr	r3, .L42+72
+ 904 019e A047     		blx	r4
+ 905              	.LVL43:
+ 906 01a0 0246     		mov	r2, r0
+ 907 01a2 0B46     		mov	r3, r1
+ 908              		.loc 1 87 24
+ 909 01a4 494C     		ldr	r4, .L42+36
+ 910 01a6 1046     		mov	r0, r2
+ 911 01a8 1946     		mov	r1, r3
+ 912 01aa A047     		blx	r4
+ 913              	.LVL44:
+ 914 01ac 0346     		mov	r3, r0
+ 915 01ae 9AB2     		uxth	r2, r3
+ 916              		.loc 1 87 22
+ 917 01b0 474B     		ldr	r3, .L42+40
+ 918 01b2 5A85     		strh	r2, [r3, #42]	@ unaligned
+  88:tasks/rs485.c ****     RAM.UIPparams[8] = (uint16) (new_atof(&RAM.strings[7][0]) * 65535 / 40);
+ 919              		.loc 1 88 34
+ 920 01b4 5048     		ldr	r0, .L42+80
+ 921 01b6 414B     		ldr	r3, .L42+20
+ 922 01b8 9847     		blx	r3
+ 923              	.LVL45:
+ 924              		.loc 1 88 63
+ 925 01ba 414C     		ldr	r4, .L42+24
+ 926 01bc 3AA3     		adr	r3, .L42
+ 927 01be D3E90023 		ldrd	r2, [r3]
+ 928 01c2 A047     		blx	r4
+ 929              	.LVL46:
+ 930 01c4 0246     		mov	r2, r0
+ 931 01c6 0B46     		mov	r3, r1
+ 932 01c8 1046     		mov	r0, r2
+ 933 01ca 1946     		mov	r1, r3
+ 934              		.loc 1 88 71
+ 935 01cc 3D4C     		ldr	r4, .L42+28
+ 936 01ce 4FF00002 		mov	r2, #0
+ 937 01d2 474B     		ldr	r3, .L42+72
+ 938 01d4 A047     		blx	r4
+ 939              	.LVL47:
+ 940 01d6 0246     		mov	r2, r0
+ 941 01d8 0B46     		mov	r3, r1
+ 942              		.loc 1 88 24
+ 943 01da 3C4C     		ldr	r4, .L42+36
+ 944 01dc 1046     		mov	r0, r2
+ 945 01de 1946     		mov	r1, r3
+ 946 01e0 A047     		blx	r4
+ 947              	.LVL48:
+ 948 01e2 0346     		mov	r3, r0
+ 949 01e4 9AB2     		uxth	r2, r3
+ 950              		.loc 1 88 22
+ 951 01e6 3A4B     		ldr	r3, .L42+40
+ 952 01e8 9A85     		strh	r2, [r3, #44]	@ unaligned
+  89:tasks/rs485.c **** 
+  90:tasks/rs485.c ****     RAM.UIPparams[9] = ((uint32)(new_atof(&RAM.strings[4][0])*4294967296/999999))&0xFFFF;
+ 953              		.loc 1 90 34
+ 954 01ea 4448     		ldr	r0, .L42+84
+ 955 01ec 334B     		ldr	r3, .L42+20
+ 956 01ee 9847     		blx	r3
+ 957              	.LVL49:
+ 958              		.loc 1 90 62
+ 959 01f0 334C     		ldr	r4, .L42+24
+ 960 01f2 4FF00002 		mov	r2, #0
+ 961 01f6 424B     		ldr	r3, .L42+88
+ 962 01f8 A047     		blx	r4
+ 963              	.LVL50:
+ 964 01fa 0246     		mov	r2, r0
+ 965 01fc 0B46     		mov	r3, r1
+ 966 01fe 1046     		mov	r0, r2
+ 967 0200 1946     		mov	r1, r3
+ 968              		.loc 1 90 73
+ 969 0202 304C     		ldr	r4, .L42+28
+ 970 0204 2AA3     		adr	r3, .L42+8
+ 971 0206 D3E90023 		ldrd	r2, [r3]
+ 972 020a A047     		blx	r4
+ 973              	.LVL51:
+ 974 020c 0246     		mov	r2, r0
+ 975 020e 0B46     		mov	r3, r1
+ 976              		.loc 1 90 25
+ 977 0210 2E4C     		ldr	r4, .L42+36
+ 978 0212 1046     		mov	r0, r2
+ 979 0214 1946     		mov	r1, r3
+ 980 0216 A047     		blx	r4
+ 981              	.LVL52:
+ 982 0218 0346     		mov	r3, r0
+ 983              		.loc 1 90 22
+ 984 021a 9AB2     		uxth	r2, r3
+ 985 021c 2C4B     		ldr	r3, .L42+40
+ 986 021e DA85     		strh	r2, [r3, #46]	@ unaligned
+  91:tasks/rs485.c ****     RAM.UIPparams[10] = (((uint32)(new_atof(&RAM.strings[4][0])*4294967296/999999))>>16)&0xFFFF;
+ 987              		.loc 1 91 36
+ 988 0220 3648     		ldr	r0, .L42+84
+ 989 0222 264B     		ldr	r3, .L42+20
+ 990 0224 9847     		blx	r3
+ 991              	.LVL53:
+ 992              		.loc 1 91 64
+ 993 0226 264C     		ldr	r4, .L42+24
+ 994 0228 4FF00002 		mov	r2, #0
+ 995 022c 344B     		ldr	r3, .L42+88
+ 996 022e A047     		blx	r4
+ 997              	.LVL54:
+ 998 0230 0246     		mov	r2, r0
+ 999 0232 0B46     		mov	r3, r1
+ 1000 0234 1046     		mov	r0, r2
+ 1001 0236 1946     		mov	r1, r3
+ 1002              		.loc 1 91 75
+ 1003 0238 224C     		ldr	r4, .L42+28
+ 1004 023a 1DA3     		adr	r3, .L42+8
+ 1005 023c D3E90023 		ldrd	r2, [r3]
+ 1006 0240 A047     		blx	r4
+ 1007              	.LVL55:
+ 1008 0242 0246     		mov	r2, r0
+ 1009 0244 0B46     		mov	r3, r1
+ 1010              		.loc 1 91 27
+ 1011 0246 214C     		ldr	r4, .L42+36
+ 1012 0248 1046     		mov	r0, r2
+ 1013 024a 1946     		mov	r1, r3
+ 1014 024c A047     		blx	r4
+ 1015              	.LVL56:
+ 1016 024e 0346     		mov	r3, r0
+ 1017              		.loc 1 91 84
+ 1018 0250 1B0C     		lsrs	r3, r3, #16
+ 1019              		.loc 1 91 23
+ 1020 0252 9AB2     		uxth	r2, r3
+ 1021 0254 1E4B     		ldr	r3, .L42+40
+ 1022 0256 1A86     		strh	r2, [r3, #48]	@ unaligned
+  92:tasks/rs485.c **** 
+  93:tasks/rs485.c ****     RAM.UIPparams[11] = ((uint32)(new_atof(&RAM.strings[15][0])*4294967296/999999))&0xFFFF;
+ 1023              		.loc 1 93 35
+ 1024 0258 2A48     		ldr	r0, .L42+92
+ 1025 025a 184B     		ldr	r3, .L42+20
+ 1026 025c 9847     		blx	r3
+ 1027              	.LVL57:
+ 1028              		.loc 1 93 64
+ 1029 025e 184C     		ldr	r4, .L42+24
+ 1030 0260 4FF00002 		mov	r2, #0
+ 1031 0264 264B     		ldr	r3, .L42+88
+ 1032 0266 A047     		blx	r4
+ 1033              	.LVL58:
+ 1034 0268 0246     		mov	r2, r0
+ 1035 026a 0B46     		mov	r3, r1
+ 1036 026c 1046     		mov	r0, r2
+ 1037 026e 1946     		mov	r1, r3
+ 1038              		.loc 1 93 75
+ 1039 0270 144C     		ldr	r4, .L42+28
+ 1040 0272 0FA3     		adr	r3, .L42+8
+ 1041 0274 D3E90023 		ldrd	r2, [r3]
+ 1042 0278 A047     		blx	r4
+ 1043              	.LVL59:
+ 1044 027a 0246     		mov	r2, r0
+ 1045 027c 0B46     		mov	r3, r1
+ 1046              		.loc 1 93 26
+ 1047 027e 134C     		ldr	r4, .L42+36
+ 1048 0280 1046     		mov	r0, r2
+ 1049 0282 1946     		mov	r1, r3
+ 1050 0284 A047     		blx	r4
+ 1051              	.LVL60:
+ 1052 0286 0346     		mov	r3, r0
+ 1053              		.loc 1 93 23
+ 1054 0288 9AB2     		uxth	r2, r3
+ 1055 028a 114B     		ldr	r3, .L42+40
+ 1056 028c 5A86     		strh	r2, [r3, #50]	@ unaligned
+  94:tasks/rs485.c ****     RAM.UIPparams[12] = (((uint32)(new_atof(&RAM.strings[15][0])*4294967296/999999))>>16)&0xFFFF;
+ 1057              		.loc 1 94 36
+ 1058 028e 1D48     		ldr	r0, .L42+92
+ 1059 0290 0A4B     		ldr	r3, .L42+20
+ 1060 0292 9847     		blx	r3
+ 1061              	.LVL61:
+ 1062              		.loc 1 94 65
+ 1063 0294 0A4C     		ldr	r4, .L42+24
+ 1064 0296 4FF00002 		mov	r2, #0
+ 1065 029a 194B     		ldr	r3, .L42+88
+ 1066 029c A047     		blx	r4
+ 1067              	.LVL62:
+ 1068 029e 0246     		mov	r2, r0
+ 1069 02a0 0B46     		mov	r3, r1
+ 1070 02a2 1046     		mov	r0, r2
+ 1071 02a4 30E0     		b	.L43
+ 1072              	.L44:
+ 1073 02a6 00BF     		.align	3
+ 1074              	.L42:
+ 1075 02a8 00000000 		.word	0
+ 1076 02ac E0FFEF40 		.word	1089470432
+ 1077 02b0 00000000 		.word	0
+ 1078 02b4 7E842E41 		.word	1093567614
+ 1079 02b8 90040000 		.word	RAM+1168
+ 1080 02bc 00000000 		.word	new_atof
+ 1081 02c0 00000000 		.word	__aeabi_dmul
+ 1082 02c4 00000000 		.word	__aeabi_ddiv
+ 1083 02c8 00007940 		.word	1081671680
+ 1084 02cc 00000000 		.word	__aeabi_d2uiz
+ 1085 02d0 00000000 		.word	RAM
+ 1086 02d4 A0040000 		.word	RAM+1184
+ 1087 02d8 B0040000 		.word	RAM+1200
+ 1088 02dc C0040000 		.word	RAM+1216
+ 1089 02e0 00005940 		.word	1079574528
+ 1090 02e4 D0040000 		.word	RAM+1232
+ 1091 02e8 E0040000 		.word	RAM+1248
+ 1092 02ec 60040000 		.word	RAM+1120
+ 1093 02f0 00004440 		.word	1078198272
+ 1094 02f4 70040000 		.word	RAM+1136
+ 1095 02f8 80040000 		.word	RAM+1152
+ 1096 02fc 50040000 		.word	RAM+1104
+ 1097 0300 0000F041 		.word	1106247680
+ 1098 0304 00050000 		.word	RAM+1280
+ 1099              	.L43:
+ 1100 0308 1946     		mov	r1, r3
+ 1101              		.loc 1 94 76
+ 1102 030a 0B4C     		ldr	r4, .L45+8
+ 1103 030c 08A3     		adr	r3, .L45
+ 1104 030e D3E90023 		ldrd	r2, [r3]
+ 1105 0312 A047     		blx	r4
+ 1106              	.LVL63:
+ 1107 0314 0246     		mov	r2, r0
+ 1108 0316 0B46     		mov	r3, r1
+ 1109              		.loc 1 94 27
+ 1110 0318 084C     		ldr	r4, .L45+12
+ 1111 031a 1046     		mov	r0, r2
+ 1112 031c 1946     		mov	r1, r3
+ 1113 031e A047     		blx	r4
+ 1114              	.LVL64:
+ 1115 0320 0346     		mov	r3, r0
+ 1116              		.loc 1 94 85
+ 1117 0322 1B0C     		lsrs	r3, r3, #16
+ 1118              		.loc 1 94 23
+ 1119 0324 9AB2     		uxth	r2, r3
+ 1120 0326 064B     		ldr	r3, .L45+16
+ 1121 0328 9A86     		strh	r2, [r3, #52]	@ unaligned
+  95:tasks/rs485.c **** 
+  96:tasks/rs485.c ****    // RAM.UIPparams[13] = ((uint32)(new_atof(&RAM.strings[16][0])*4294967296/60000))&0xFFFF;
+  97:tasks/rs485.c ****   //  RAM.UIPparams[14] = (((uint32)(new_atof(&RAM.strings[16][0])*4294967296/60000))>>16)&0xFFFF;
+  98:tasks/rs485.c **** 
+  99:tasks/rs485.c **** //    RAM.UIPparams[13] = ((uint32)(new_atof(&RAM.strings[16][0])*4294967296/999999))&0xFFFF;
+ 100:tasks/rs485.c **** //    RAM.UIPparams[14] = (((uint32)(new_atof(&RAM.strings[16][0])*4294967296/999999))>>16)&0xFFFF;
+ 101:tasks/rs485.c **** //
+ 102:tasks/rs485.c **** //   // RAM.UIPparams[15] = ((uint32)(new_atof(&RAM.strings[17][0])*65535/2000));
+ 103:tasks/rs485.c **** //    RAM.UIPparams[15] = ((uint32)(new_atof(&RAM.strings[17][0])*4294967296/999999))&0xFFFF;
+ 104:tasks/rs485.c **** //    RAM.UIPparams[16] = (((uint32)(new_atof(&RAM.strings[17][0])*4294967296/999999))>>16)&0xFFFF;
+ 105:tasks/rs485.c **** 
+ 106:tasks/rs485.c ****     }
+ 1122              		.loc 1 106 5
+ 1123 032a 00BF     		nop
+ 1124 032c 98BD     		pop	{r3, r4, r7, pc}
+ 1125              	.L46:
+ 1126 032e 00BF     		.align	3
+ 1127              	.L45:
+ 1128 0330 00000000 		.word	0
+ 1129 0334 7E842E41 		.word	1093567614
+ 1130 0338 00000000 		.word	__aeabi_ddiv
+ 1131 033c 00000000 		.word	__aeabi_d2uiz
+ 1132 0340 00000000 		.word	RAM
+ 1133              		.cfi_endproc
+ 1134              	.LFE34:
+ 1136              		.global	USART_InitStructure
+ 1137              		.section	.bss.USART_InitStructure,"aw",%nobits
+ 1138              		.align	2
+ 1141              	USART_InitStructure:
+ 1142 0000 00000000 		.space	16
+ 1142      00000000 
+ 1142      00000000 
+ 1142      00000000 
+ 1143              		.section	.text.processBuffer7to8,"ax",%progbits
+ 1144              		.align	1
+ 1145              		.global	processBuffer7to8
+ 1146              		.syntax unified
+ 1147              		.thumb
+ 1148              		.thumb_func
+ 1150              	processBuffer7to8:
+ 1151              	.LFB35:
+ 107:tasks/rs485.c **** 
+ 108:tasks/rs485.c **** //extern uint8_t buffer_out[VIRTUAL_COM_PORT_DATA_SIZE];
+ 109:tasks/rs485.c **** 
+ 110:tasks/rs485.c **** /* Private variables ---------------------------------------------------------*/
+ 111:tasks/rs485.c ****  USART_InitTypeDef USART_InitStructure;
+ 112:tasks/rs485.c **** 
+ 113:tasks/rs485.c **** 
+ 114:tasks/rs485.c **** 
+ 115:tasks/rs485.c **** void DMA_Configuration(void);
+ 116:tasks/rs485.c **** 
+ 117:tasks/rs485.c **** //uint32_t T1, oldT1, cntT1;
+ 118:tasks/rs485.c **** //uint32_t T2, oldT2, cntT2;
+ 119:tasks/rs485.c **** 
+ 120:tasks/rs485.c **** 
+ 121:tasks/rs485.c **** /*
+ 122:tasks/rs485.c **** uint8_t SerialGetBuffer(xComPortHandle pxPort, uint8_t* aBuffer)
+ 123:tasks/rs485.c **** {
+ 124:tasks/rs485.c **** 	uint8_t count = 0;
+ 125:tasks/rs485.c **** 	uint8_t bufvar = 0;
+ 126:tasks/rs485.c **** 	while (xSerialGetChar(pxPort,&bufvar,50) == pdTRUE)
+ 127:tasks/rs485.c **** 	{
+ 128:tasks/rs485.c **** 		aBuffer[count++] = bufvar;
+ 129:tasks/rs485.c **** 		vTaskDelay(10);
+ 130:tasks/rs485.c **** 	}
+ 131:tasks/rs485.c **** 	return count;
+ 132:tasks/rs485.c **** }*/
+ 133:tasks/rs485.c **** 
+ 134:tasks/rs485.c **** 
+ 135:tasks/rs485.c **** /*
+ 136:tasks/rs485.c **** void writeBuffer(uint8_t* buffer,uint8_t  size)
+ 137:tasks/rs485.c **** {
+ 138:tasks/rs485.c **** 	for(int i=0;i<size;i++)
+ 139:tasks/rs485.c **** 	{
+ 140:tasks/rs485.c **** 		USART_SendData (uart4, buffer++);
+ 141:tasks/rs485.c **** 	}
+ 142:tasks/rs485.c **** }*/
+ 143:tasks/rs485.c **** 
+ 144:tasks/rs485.c **** void processBuffer7to8(char* buf,uint16 size)
+ 145:tasks/rs485.c **** {
+ 1152              		.loc 1 145 1
+ 1153              		.cfi_startproc
+ 1154              		@ args = 0, pretend = 0, frame = 16
+ 1155              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1156              		@ link register save eliminated.
+ 1157 0000 80B4     		push	{r7}
+ 1158              	.LCFI24:
+ 1159              		.cfi_def_cfa_offset 4
+ 1160              		.cfi_offset 7, -4
+ 1161 0002 85B0     		sub	sp, sp, #20
+ 1162              	.LCFI25:
+ 1163              		.cfi_def_cfa_offset 24
+ 1164 0004 00AF     		add	r7, sp, #0
+ 1165              	.LCFI26:
+ 1166              		.cfi_def_cfa_register 7
+ 1167 0006 7860     		str	r0, [r7, #4]
+ 1168 0008 0B46     		mov	r3, r1
+ 1169 000a 7B80     		strh	r3, [r7, #2]	@ movhi
+ 1170              	.LBB5:
+ 146:tasks/rs485.c **** 	for(int i=0;i<size;i++)
+ 1171              		.loc 1 146 10
+ 1172 000c 0023     		movs	r3, #0
+ 1173 000e FB60     		str	r3, [r7, #12]
+ 1174              		.loc 1 146 2
+ 1175 0010 0DE0     		b	.L48
+ 1176              	.L49:
+ 147:tasks/rs485.c **** 	{
+ 148:tasks/rs485.c **** 		buf[i]=buf[i]&0x7F;
+ 1177              		.loc 1 148 13 discriminator 3
+ 1178 0012 FB68     		ldr	r3, [r7, #12]
+ 1179 0014 7A68     		ldr	r2, [r7, #4]
+ 1180 0016 1344     		add	r3, r3, r2
+ 1181 0018 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 1182              		.loc 1 148 6 discriminator 3
+ 1183 001a FB68     		ldr	r3, [r7, #12]
+ 1184 001c 7968     		ldr	r1, [r7, #4]
+ 1185 001e 0B44     		add	r3, r3, r1
+ 1186              		.loc 1 148 16 discriminator 3
+ 1187 0020 02F07F02 		and	r2, r2, #127
+ 1188 0024 D2B2     		uxtb	r2, r2
+ 1189              		.loc 1 148 9 discriminator 3
+ 1190 0026 1A70     		strb	r2, [r3]
+ 146:tasks/rs485.c **** 	for(int i=0;i<size;i++)
+ 1191              		.loc 1 146 22 discriminator 3
+ 1192 0028 FB68     		ldr	r3, [r7, #12]
+ 1193 002a 0133     		adds	r3, r3, #1
+ 1194 002c FB60     		str	r3, [r7, #12]
+ 1195              	.L48:
+ 146:tasks/rs485.c **** 	for(int i=0;i<size;i++)
+ 1196              		.loc 1 146 15 discriminator 1
+ 1197 002e 7B88     		ldrh	r3, [r7, #2]
+ 146:tasks/rs485.c **** 	for(int i=0;i<size;i++)
+ 1198              		.loc 1 146 2 discriminator 1
+ 1199 0030 FA68     		ldr	r2, [r7, #12]
+ 1200 0032 9A42     		cmp	r2, r3
+ 1201 0034 EDDB     		blt	.L49
+ 1202              	.LBE5:
+ 149:tasks/rs485.c **** 	}
+ 150:tasks/rs485.c **** }
+ 1203              		.loc 1 150 1
+ 1204 0036 00BF     		nop
+ 1205 0038 00BF     		nop
+ 1206 003a 1437     		adds	r7, r7, #20
+ 1207              	.LCFI27:
+ 1208              		.cfi_def_cfa_offset 4
+ 1209 003c BD46     		mov	sp, r7
+ 1210              	.LCFI28:
+ 1211              		.cfi_def_cfa_register 13
+ 1212              		@ sp needed
+ 1213 003e 80BC     		pop	{r7}
+ 1214              	.LCFI29:
+ 1215              		.cfi_restore 7
+ 1216              		.cfi_def_cfa_offset 0
+ 1217 0040 7047     		bx	lr
+ 1218              		.cfi_endproc
+ 1219              	.LFE35:
+ 1221              		.section	.text.processBuffer8to7,"ax",%progbits
+ 1222              		.align	1
+ 1223              		.global	processBuffer8to7
+ 1224              		.syntax unified
+ 1225              		.thumb
+ 1226              		.thumb_func
+ 1228              	processBuffer8to7:
+ 1229              	.LFB36:
+ 151:tasks/rs485.c **** 
+ 152:tasks/rs485.c **** void processBuffer8to7(char* buf,uint16 size)
+ 153:tasks/rs485.c **** {
+ 1230              		.loc 1 153 1
+ 1231              		.cfi_startproc
+ 1232              		@ args = 0, pretend = 0, frame = 16
+ 1233              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1234              		@ link register save eliminated.
+ 1235 0000 80B4     		push	{r7}
+ 1236              	.LCFI30:
+ 1237              		.cfi_def_cfa_offset 4
+ 1238              		.cfi_offset 7, -4
+ 1239 0002 85B0     		sub	sp, sp, #20
+ 1240              	.LCFI31:
+ 1241              		.cfi_def_cfa_offset 24
+ 1242 0004 00AF     		add	r7, sp, #0
+ 1243              	.LCFI32:
+ 1244              		.cfi_def_cfa_register 7
+ 1245 0006 7860     		str	r0, [r7, #4]
+ 1246 0008 0B46     		mov	r3, r1
+ 1247 000a 7B80     		strh	r3, [r7, #2]	@ movhi
+ 154:tasks/rs485.c **** 	int count=0;
+ 1248              		.loc 1 154 6
+ 1249 000c 0023     		movs	r3, #0
+ 1250 000e BB60     		str	r3, [r7, #8]
+ 1251              	.LBB6:
+ 155:tasks/rs485.c **** 	for(int i=0;i<size;i++)
+ 1252              		.loc 1 155 10
+ 1253 0010 0023     		movs	r3, #0
+ 1254 0012 FB60     		str	r3, [r7, #12]
+ 1255              		.loc 1 155 2
+ 1256 0014 5DE0     		b	.L51
+ 1257              	.L52:
+ 156:tasks/rs485.c **** 	{
+ 157:tasks/rs485.c **** 		count = 0;
+ 1258              		.loc 1 157 9 discriminator 3
+ 1259 0016 0023     		movs	r3, #0
+ 1260 0018 BB60     		str	r3, [r7, #8]
+ 158:tasks/rs485.c **** 		count += (buf[i]&0x01) ? 1 : 0;
+ 1261              		.loc 1 158 16 discriminator 3
+ 1262 001a FB68     		ldr	r3, [r7, #12]
+ 1263 001c 7A68     		ldr	r2, [r7, #4]
+ 1264 001e 1344     		add	r3, r3, r2
+ 1265 0020 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1266              		.loc 1 158 30 discriminator 3
+ 1267 0022 03F00103 		and	r3, r3, #1
+ 1268              		.loc 1 158 9 discriminator 3
+ 1269 0026 BA68     		ldr	r2, [r7, #8]
+ 1270 0028 1344     		add	r3, r3, r2
+ 1271 002a BB60     		str	r3, [r7, #8]
+ 159:tasks/rs485.c **** 		count += (buf[i]&0x02) ? 1 : 0;
+ 1272              		.loc 1 159 16 discriminator 3
+ 1273 002c FB68     		ldr	r3, [r7, #12]
+ 1274 002e 7A68     		ldr	r2, [r7, #4]
+ 1275 0030 1344     		add	r3, r3, r2
+ 1276 0032 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1277              		.loc 1 159 30 discriminator 3
+ 1278 0034 5B10     		asrs	r3, r3, #1
+ 1279 0036 03F00103 		and	r3, r3, #1
+ 1280              		.loc 1 159 9 discriminator 3
+ 1281 003a BA68     		ldr	r2, [r7, #8]
+ 1282 003c 1344     		add	r3, r3, r2
+ 1283 003e BB60     		str	r3, [r7, #8]
+ 160:tasks/rs485.c **** 		count += (buf[i]&0x04) ? 1 : 0;
+ 1284              		.loc 1 160 16 discriminator 3
+ 1285 0040 FB68     		ldr	r3, [r7, #12]
+ 1286 0042 7A68     		ldr	r2, [r7, #4]
+ 1287 0044 1344     		add	r3, r3, r2
+ 1288 0046 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1289              		.loc 1 160 30 discriminator 3
+ 1290 0048 9B10     		asrs	r3, r3, #2
+ 1291 004a 03F00103 		and	r3, r3, #1
+ 1292              		.loc 1 160 9 discriminator 3
+ 1293 004e BA68     		ldr	r2, [r7, #8]
+ 1294 0050 1344     		add	r3, r3, r2
+ 1295 0052 BB60     		str	r3, [r7, #8]
+ 161:tasks/rs485.c **** 		count += (buf[i]&0x08) ? 1 : 0;
+ 1296              		.loc 1 161 16 discriminator 3
+ 1297 0054 FB68     		ldr	r3, [r7, #12]
+ 1298 0056 7A68     		ldr	r2, [r7, #4]
+ 1299 0058 1344     		add	r3, r3, r2
+ 1300 005a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1301              		.loc 1 161 30 discriminator 3
+ 1302 005c DB10     		asrs	r3, r3, #3
+ 1303 005e 03F00103 		and	r3, r3, #1
+ 1304              		.loc 1 161 9 discriminator 3
+ 1305 0062 BA68     		ldr	r2, [r7, #8]
+ 1306 0064 1344     		add	r3, r3, r2
+ 1307 0066 BB60     		str	r3, [r7, #8]
+ 162:tasks/rs485.c **** 		count += (buf[i]&0x10) ? 1 : 0;
+ 1308              		.loc 1 162 16 discriminator 3
+ 1309 0068 FB68     		ldr	r3, [r7, #12]
+ 1310 006a 7A68     		ldr	r2, [r7, #4]
+ 1311 006c 1344     		add	r3, r3, r2
+ 1312 006e 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1313              		.loc 1 162 30 discriminator 3
+ 1314 0070 1B11     		asrs	r3, r3, #4
+ 1315 0072 03F00103 		and	r3, r3, #1
+ 1316              		.loc 1 162 9 discriminator 3
+ 1317 0076 BA68     		ldr	r2, [r7, #8]
+ 1318 0078 1344     		add	r3, r3, r2
+ 1319 007a BB60     		str	r3, [r7, #8]
+ 163:tasks/rs485.c **** 		count += (buf[i]&0x20) ? 1 : 0;
+ 1320              		.loc 1 163 16 discriminator 3
+ 1321 007c FB68     		ldr	r3, [r7, #12]
+ 1322 007e 7A68     		ldr	r2, [r7, #4]
+ 1323 0080 1344     		add	r3, r3, r2
+ 1324 0082 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1325              		.loc 1 163 30 discriminator 3
+ 1326 0084 5B11     		asrs	r3, r3, #5
+ 1327 0086 03F00103 		and	r3, r3, #1
+ 1328              		.loc 1 163 9 discriminator 3
+ 1329 008a BA68     		ldr	r2, [r7, #8]
+ 1330 008c 1344     		add	r3, r3, r2
+ 1331 008e BB60     		str	r3, [r7, #8]
+ 164:tasks/rs485.c **** 		count += (buf[i]&0x40) ? 1 : 0;
+ 1332              		.loc 1 164 16 discriminator 3
+ 1333 0090 FB68     		ldr	r3, [r7, #12]
+ 1334 0092 7A68     		ldr	r2, [r7, #4]
+ 1335 0094 1344     		add	r3, r3, r2
+ 1336 0096 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1337              		.loc 1 164 30 discriminator 3
+ 1338 0098 9B11     		asrs	r3, r3, #6
+ 1339 009a 03F00103 		and	r3, r3, #1
+ 1340              		.loc 1 164 9 discriminator 3
+ 1341 009e BA68     		ldr	r2, [r7, #8]
+ 1342 00a0 1344     		add	r3, r3, r2
+ 1343 00a2 BB60     		str	r3, [r7, #8]
+ 165:tasks/rs485.c **** 
+ 166:tasks/rs485.c **** 		buf[i]=buf[i]|(count%2)<<7;
+ 1344              		.loc 1 166 13 discriminator 3
+ 1345 00a4 FB68     		ldr	r3, [r7, #12]
+ 1346 00a6 7A68     		ldr	r2, [r7, #4]
+ 1347 00a8 1344     		add	r3, r3, r2
+ 1348 00aa 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1349 00ac 5AB2     		sxtb	r2, r3
+ 1350              		.loc 1 166 23 discriminator 3
+ 1351 00ae BB68     		ldr	r3, [r7, #8]
+ 1352 00b0 002B     		cmp	r3, #0
+ 1353 00b2 03F00103 		and	r3, r3, #1
+ 1354 00b6 B8BF     		it	lt
+ 1355 00b8 5B42     		rsblt	r3, r3, #0
+ 1356              		.loc 1 166 26 discriminator 3
+ 1357 00ba DB01     		lsls	r3, r3, #7
+ 1358              		.loc 1 166 16 discriminator 3
+ 1359 00bc 5BB2     		sxtb	r3, r3
+ 1360 00be 1343     		orrs	r3, r3, r2
+ 1361 00c0 59B2     		sxtb	r1, r3
+ 1362              		.loc 1 166 6 discriminator 3
+ 1363 00c2 FB68     		ldr	r3, [r7, #12]
+ 1364 00c4 7A68     		ldr	r2, [r7, #4]
+ 1365 00c6 1344     		add	r3, r3, r2
+ 1366              		.loc 1 166 16 discriminator 3
+ 1367 00c8 CAB2     		uxtb	r2, r1
+ 1368              		.loc 1 166 9 discriminator 3
+ 1369 00ca 1A70     		strb	r2, [r3]
+ 155:tasks/rs485.c **** 	{
+ 1370              		.loc 1 155 22 discriminator 3
+ 1371 00cc FB68     		ldr	r3, [r7, #12]
+ 1372 00ce 0133     		adds	r3, r3, #1
+ 1373 00d0 FB60     		str	r3, [r7, #12]
+ 1374              	.L51:
+ 155:tasks/rs485.c **** 	{
+ 1375              		.loc 1 155 15 discriminator 1
+ 1376 00d2 7B88     		ldrh	r3, [r7, #2]
+ 155:tasks/rs485.c **** 	{
+ 1377              		.loc 1 155 2 discriminator 1
+ 1378 00d4 FA68     		ldr	r2, [r7, #12]
+ 1379 00d6 9A42     		cmp	r2, r3
+ 1380 00d8 9DDB     		blt	.L52
+ 1381              	.LBE6:
+ 167:tasks/rs485.c **** 	}
+ 168:tasks/rs485.c **** }
+ 1382              		.loc 1 168 1
+ 1383 00da 00BF     		nop
+ 1384 00dc 00BF     		nop
+ 1385 00de 1437     		adds	r7, r7, #20
+ 1386              	.LCFI33:
+ 1387              		.cfi_def_cfa_offset 4
+ 1388 00e0 BD46     		mov	sp, r7
+ 1389              	.LCFI34:
+ 1390              		.cfi_def_cfa_register 13
+ 1391              		@ sp needed
+ 1392 00e2 80BC     		pop	{r7}
+ 1393              	.LCFI35:
+ 1394              		.cfi_restore 7
+ 1395              		.cfi_def_cfa_offset 0
+ 1396 00e4 7047     		bx	lr
+ 1397              		.cfi_endproc
+ 1398              	.LFE36:
+ 1400              		.section	.text.SendReseive,"ax",%progbits
+ 1401              		.align	1
+ 1402              		.global	SendReseive
+ 1403              		.syntax unified
+ 1404              		.thumb
+ 1405              		.thumb_func
+ 1407              	SendReseive:
+ 1408              	.LFB37:
+ 169:tasks/rs485.c **** 
+ 170:tasks/rs485.c **** bool SendReseive()
+ 171:tasks/rs485.c ****     {
+ 1409              		.loc 1 171 5
+ 1410              		.cfi_startproc
+ 1411              		@ args = 0, pretend = 0, frame = 8
+ 1412              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1413 0000 80B5     		push	{r7, lr}
+ 1414              	.LCFI36:
+ 1415              		.cfi_def_cfa_offset 8
+ 1416              		.cfi_offset 7, -8
+ 1417              		.cfi_offset 14, -4
+ 1418 0002 82B0     		sub	sp, sp, #8
+ 1419              	.LCFI37:
+ 1420              		.cfi_def_cfa_offset 16
+ 1421 0004 00AF     		add	r7, sp, #0
+ 1422              	.LCFI38:
+ 1423              		.cfi_def_cfa_register 7
+ 172:tasks/rs485.c **** 	int exit_counter = 0;
+ 1424              		.loc 1 172 6
+ 1425 0006 0023     		movs	r3, #0
+ 1426 0008 7B60     		str	r3, [r7, #4]
+ 173:tasks/rs485.c ****     //  vTaskDelay(50);
+ 174:tasks/rs485.c **** 	int sendsize = rs485size;
+ 1427              		.loc 1 174 6
+ 1428 000a 294B     		ldr	r3, .L60
+ 1429 000c 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1430 000e 3B60     		str	r3, [r7]
+ 175:tasks/rs485.c **** 	while(exit_counter++ <5)
+ 1431              		.loc 1 175 7
+ 1432 0010 2BE0     		b	.L54
+ 1433              	.L56:
+ 176:tasks/rs485.c **** 	{
+ 177:tasks/rs485.c **** 		GPIO_SetBits(GPIOC, GPIO_Pin_12);
+ 1434              		.loc 1 177 3
+ 1435 0012 4FF48051 		mov	r1, #4096
+ 1436 0016 2748     		ldr	r0, .L60+4
+ 1437 0018 274B     		ldr	r3, .L60+8
+ 1438 001a 9847     		blx	r3
+ 1439              	.LVL65:
+ 178:tasks/rs485.c **** 	   // AT91F_PIO_SetOutput(AT91C_BASE_PIOA, LED_485);
+ 179:tasks/rs485.c **** 		vTaskDelay(5);
+ 1440              		.loc 1 179 3
+ 1441 001c 0520     		movs	r0, #5
+ 1442 001e 274B     		ldr	r3, .L60+12
+ 1443 0020 9847     		blx	r3
+ 1444              	.LVL66:
+ 180:tasks/rs485.c **** 
+ 181:tasks/rs485.c **** 		processBuffer8to7(rs485buf,sendsize);
+ 1445              		.loc 1 181 3
+ 1446 0022 3B68     		ldr	r3, [r7]
+ 1447 0024 9BB2     		uxth	r3, r3
+ 1448 0026 1946     		mov	r1, r3
+ 1449 0028 2548     		ldr	r0, .L60+16
+ 1450 002a 264B     		ldr	r3, .L60+20
+ 1451 002c 9847     		blx	r3
+ 1452              	.LVL67:
+ 182:tasks/rs485.c **** 		uart3Write ((uint8*) rs485buf, sendsize);
+ 1453              		.loc 1 182 3
+ 1454 002e 3B68     		ldr	r3, [r7]
+ 1455 0030 1946     		mov	r1, r3
+ 1456 0032 2348     		ldr	r0, .L60+16
+ 1457 0034 244B     		ldr	r3, .L60+24
+ 1458 0036 9847     		blx	r3
+ 1459              	.LVL68:
+ 183:tasks/rs485.c **** 		vTaskDelay(30);
+ 1460              		.loc 1 183 3
+ 1461 0038 1E20     		movs	r0, #30
+ 1462 003a 204B     		ldr	r3, .L60+12
+ 1463 003c 9847     		blx	r3
+ 1464              	.LVL69:
+ 184:tasks/rs485.c **** 
+ 185:tasks/rs485.c **** 		//AT91F_PIO_ClearOutput(AT91C_BASE_PIOA, LED_485);
+ 186:tasks/rs485.c **** 
+ 187:tasks/rs485.c **** 		GPIO_ResetBits(GPIOC, GPIO_Pin_12);
+ 1465              		.loc 1 187 3
+ 1466 003e 4FF48051 		mov	r1, #4096
+ 1467 0042 1C48     		ldr	r0, .L60+4
+ 1468 0044 214B     		ldr	r3, .L60+28
+ 1469 0046 9847     		blx	r3
+ 1470              	.LVL70:
+ 188:tasks/rs485.c **** 
+ 189:tasks/rs485.c **** 		vTaskDelay(1000);
+ 1471              		.loc 1 189 3
+ 1472 0048 4FF47A70 		mov	r0, #1000
+ 1473 004c 1B4B     		ldr	r3, .L60+12
+ 1474 004e 9847     		blx	r3
+ 1475              	.LVL71:
+ 190:tasks/rs485.c **** 
+ 191:tasks/rs485.c **** 		rs485size = uart3Read((uint8*) rs485buf, 256/*, 3000*/);
+ 1476              		.loc 1 191 15
+ 1477 0050 4FF48071 		mov	r1, #256
+ 1478 0054 1A48     		ldr	r0, .L60+16
+ 1479 0056 1E4B     		ldr	r3, .L60+32
+ 1480 0058 9847     		blx	r3
+ 1481              	.LVL72:
+ 1482 005a 0346     		mov	r3, r0
+ 1483              		.loc 1 191 13
+ 1484 005c DAB2     		uxtb	r2, r3
+ 1485 005e 144B     		ldr	r3, .L60
+ 1486 0060 1A70     		strb	r2, [r3]
+ 192:tasks/rs485.c **** 
+ 193:tasks/rs485.c ****     if (rs485size != 0) break;
+ 1487              		.loc 1 193 19
+ 1488 0062 134B     		ldr	r3, .L60
+ 1489 0064 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1490              		.loc 1 193 8
+ 1491 0066 002B     		cmp	r3, #0
+ 1492 0068 05D1     		bne	.L59
+ 1493              	.L54:
+ 175:tasks/rs485.c **** 	{
+ 1494              		.loc 1 175 20
+ 1495 006a 7B68     		ldr	r3, [r7, #4]
+ 1496 006c 5A1C     		adds	r2, r3, #1
+ 1497 006e 7A60     		str	r2, [r7, #4]
+ 175:tasks/rs485.c **** 	{
+ 1498              		.loc 1 175 7
+ 1499 0070 042B     		cmp	r3, #4
+ 1500 0072 CEDD     		ble	.L56
+ 1501 0074 00E0     		b	.L55
+ 1502              	.L59:
+ 1503              		.loc 1 193 5
+ 1504 0076 00BF     		nop
+ 1505              	.L55:
+ 194:tasks/rs485.c ****     }
+ 195:tasks/rs485.c ****     if (rs485size == 0)
+ 1506              		.loc 1 195 19
+ 1507 0078 0D4B     		ldr	r3, .L60
+ 1508 007a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1509              		.loc 1 195 8
+ 1510 007c 002B     		cmp	r3, #0
+ 1511 007e 05D1     		bne	.L57
+ 196:tasks/rs485.c ****     {   vTaskDelay(2500);
+ 1512              		.loc 1 196 9
+ 1513 0080 40F6C410 		movw	r0, #2500
+ 1514 0084 0D4B     		ldr	r3, .L60+12
+ 1515 0086 9847     		blx	r3
+ 1516              	.LVL73:
+ 197:tasks/rs485.c ****     	return false;
+ 1517              		.loc 1 197 13
+ 1518 0088 0023     		movs	r3, #0
+ 1519 008a 0DE0     		b	.L58
+ 1520              	.L57:
+ 198:tasks/rs485.c ****     }
+ 199:tasks/rs485.c **** 
+ 200:tasks/rs485.c ****     processBuffer7to8(rs485buf,rs485size);
+ 1521              		.loc 1 200 5
+ 1522 008c 084B     		ldr	r3, .L60
+ 1523 008e 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1524 0090 9BB2     		uxth	r3, r3
+ 1525 0092 1946     		mov	r1, r3
+ 1526 0094 0A48     		ldr	r0, .L60+16
+ 1527 0096 0F4B     		ldr	r3, .L60+36
+ 1528 0098 9847     		blx	r3
+ 1529              	.LVL74:
+ 201:tasks/rs485.c ****     vTaskDelay(50);
+ 1530              		.loc 1 201 5
+ 1531 009a 3220     		movs	r0, #50
+ 1532 009c 074B     		ldr	r3, .L60+12
+ 1533 009e 9847     		blx	r3
+ 1534              	.LVL75:
+ 202:tasks/rs485.c ****   //  AT91F_PIO_SetOutput(AT91C_BASE_PIOA, LED_485);
+ 203:tasks/rs485.c ****     vTaskDelay(100);
+ 1535              		.loc 1 203 5
+ 1536 00a0 6420     		movs	r0, #100
+ 1537 00a2 064B     		ldr	r3, .L60+12
+ 1538 00a4 9847     		blx	r3
+ 1539              	.LVL76:
+ 204:tasks/rs485.c ****     //
+ 205:tasks/rs485.c **** 
+ 206:tasks/rs485.c ****     return true;
+ 1540              		.loc 1 206 12
+ 1541 00a6 0123     		movs	r3, #1
+ 1542              	.L58:
+ 207:tasks/rs485.c ****     }
+ 1543              		.loc 1 207 5
+ 1544 00a8 1846     		mov	r0, r3
+ 1545 00aa 0837     		adds	r7, r7, #8
+ 1546              	.LCFI39:
+ 1547              		.cfi_def_cfa_offset 8
+ 1548 00ac BD46     		mov	sp, r7
+ 1549              	.LCFI40:
+ 1550              		.cfi_def_cfa_register 13
+ 1551              		@ sp needed
+ 1552 00ae 80BD     		pop	{r7, pc}
+ 1553              	.L61:
+ 1554              		.align	2
+ 1555              	.L60:
+ 1556 00b0 00000000 		.word	rs485size
+ 1557 00b4 00100140 		.word	1073811456
+ 1558 00b8 00000000 		.word	GPIO_SetBits
+ 1559 00bc 00000000 		.word	vTaskDelay
+ 1560 00c0 00000000 		.word	rs485buf
+ 1561 00c4 00000000 		.word	processBuffer8to7
+ 1562 00c8 00000000 		.word	uart3Write
+ 1563 00cc 00000000 		.word	GPIO_ResetBits
+ 1564 00d0 00000000 		.word	uart3Read
+ 1565 00d4 00000000 		.word	processBuffer7to8
+ 1566              		.cfi_endproc
+ 1567              	.LFE37:
+ 1569              		.section	.text.AskParam,"ax",%progbits
+ 1570              		.align	1
+ 1571              		.global	AskParam
+ 1572              		.syntax unified
+ 1573              		.thumb
+ 1574              		.thumb_func
+ 1576              	AskParam:
+ 1577              	.LFB38:
+ 208:tasks/rs485.c **** 
+ 209:tasks/rs485.c **** bool AskParam(char *paramName, char *value)
+ 210:tasks/rs485.c ****     {
+ 1578              		.loc 1 210 5
+ 1579              		.cfi_startproc
+ 1580              		@ args = 0, pretend = 0, frame = 16
+ 1581              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1582 0000 80B5     		push	{r7, lr}
+ 1583              	.LCFI41:
+ 1584              		.cfi_def_cfa_offset 8
+ 1585              		.cfi_offset 7, -8
+ 1586              		.cfi_offset 14, -4
+ 1587 0002 84B0     		sub	sp, sp, #16
+ 1588              	.LCFI42:
+ 1589              		.cfi_def_cfa_offset 24
+ 1590 0004 00AF     		add	r7, sp, #0
+ 1591              	.LCFI43:
+ 1592              		.cfi_def_cfa_register 7
+ 1593 0006 7860     		str	r0, [r7, #4]
+ 1594 0008 3960     		str	r1, [r7]
+ 211:tasks/rs485.c ****     value[0] = 0;
+ 1595              		.loc 1 211 14
+ 1596 000a 3B68     		ldr	r3, [r7]
+ 1597 000c 0022     		movs	r2, #0
+ 1598 000e 1A70     		strb	r2, [r3]
+ 212:tasks/rs485.c ****     rs485size = iecProcVarReqPacket(rs485buf, paramName, 32);
+ 1599              		.loc 1 212 17
+ 1600 0010 2022     		movs	r2, #32
+ 1601 0012 7968     		ldr	r1, [r7, #4]
+ 1602 0014 1048     		ldr	r0, .L66
+ 1603 0016 114B     		ldr	r3, .L66+4
+ 1604 0018 9847     		blx	r3
+ 1605              	.LVL77:
+ 1606 001a 0346     		mov	r3, r0
+ 1607              		.loc 1 212 15
+ 1608 001c DAB2     		uxtb	r2, r3
+ 1609 001e 104B     		ldr	r3, .L66+8
+ 1610 0020 1A70     		strb	r2, [r3]
+ 213:tasks/rs485.c ****     if (!SendReseive())
+ 1611              		.loc 1 213 10
+ 1612 0022 104B     		ldr	r3, .L66+12
+ 1613 0024 9847     		blx	r3
+ 1614              	.LVL78:
+ 1615 0026 0346     		mov	r3, r0
+ 1616              		.loc 1 213 9
+ 1617 0028 83F00103 		eor	r3, r3, #1
+ 1618 002c DBB2     		uxtb	r3, r3
+ 1619              		.loc 1 213 8
+ 1620 002e 002B     		cmp	r3, #0
+ 1621 0030 01D0     		beq	.L63
+ 214:tasks/rs485.c **** 	return false;
+ 1622              		.loc 1 214 9
+ 1623 0032 0023     		movs	r3, #0
+ 1624 0034 0CE0     		b	.L64
+ 1625              	.L63:
+ 215:tasks/rs485.c **** 
+ 216:tasks/rs485.c ****     uint8 boolX = iecProcVarAnswerPacket(rs485buf, value, 128);
+ 1626              		.loc 1 216 19
+ 1627 0036 8022     		movs	r2, #128
+ 1628 0038 3968     		ldr	r1, [r7]
+ 1629 003a 0748     		ldr	r0, .L66
+ 1630 003c 0A4B     		ldr	r3, .L66+16
+ 1631 003e 9847     		blx	r3
+ 1632              	.LVL79:
+ 1633 0040 0346     		mov	r3, r0
+ 1634              		.loc 1 216 11
+ 1635 0042 FB73     		strb	r3, [r7, #15]
+ 217:tasks/rs485.c ****     if(boolX == false)
+ 1636              		.loc 1 217 7
+ 1637 0044 FB7B     		ldrb	r3, [r7, #15]	@ zero_extendqisi2
+ 1638 0046 002B     		cmp	r3, #0
+ 1639 0048 01D1     		bne	.L65
+ 218:tasks/rs485.c **** 	{
+ 219:tasks/rs485.c ****     	return false;
+ 1640              		.loc 1 219 13
+ 1641 004a 0023     		movs	r3, #0
+ 1642 004c 00E0     		b	.L64
+ 1643              	.L65:
+ 220:tasks/rs485.c **** 	}
+ 221:tasks/rs485.c **** 
+ 222:tasks/rs485.c ****     return true;
+ 1644              		.loc 1 222 12
+ 1645 004e 0123     		movs	r3, #1
+ 1646              	.L64:
+ 223:tasks/rs485.c ****     }
+ 1647              		.loc 1 223 5
+ 1648 0050 1846     		mov	r0, r3
+ 1649 0052 1037     		adds	r7, r7, #16
+ 1650              	.LCFI44:
+ 1651              		.cfi_def_cfa_offset 8
+ 1652 0054 BD46     		mov	sp, r7
+ 1653              	.LCFI45:
+ 1654              		.cfi_def_cfa_register 13
+ 1655              		@ sp needed
+ 1656 0056 80BD     		pop	{r7, pc}
+ 1657              	.L67:
+ 1658              		.align	2
+ 1659              	.L66:
+ 1660 0058 00000000 		.word	rs485buf
+ 1661 005c 00000000 		.word	iecProcVarReqPacket
+ 1662 0060 00000000 		.word	rs485size
+ 1663 0064 00000000 		.word	SendReseive
+ 1664 0068 00000000 		.word	iecProcVarAnswerPacket
+ 1665              		.cfi_endproc
+ 1666              	.LFE38:
+ 1668              		.section	.text.AskParamArg,"ax",%progbits
+ 1669              		.align	1
+ 1670              		.global	AskParamArg
+ 1671              		.syntax unified
+ 1672              		.thumb
+ 1673              		.thumb_func
+ 1675              	AskParamArg:
+ 1676              	.LFB39:
+ 224:tasks/rs485.c **** 
+ 225:tasks/rs485.c **** bool AskParamArg(char *paramName, char *value,char *arg)
+ 226:tasks/rs485.c ****     {
+ 1677              		.loc 1 226 5
+ 1678              		.cfi_startproc
+ 1679              		@ args = 0, pretend = 0, frame = 24
+ 1680              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1681 0000 90B5     		push	{r4, r7, lr}
+ 1682              	.LCFI46:
+ 1683              		.cfi_def_cfa_offset 12
+ 1684              		.cfi_offset 4, -12
+ 1685              		.cfi_offset 7, -8
+ 1686              		.cfi_offset 14, -4
+ 1687 0002 87B0     		sub	sp, sp, #28
+ 1688              	.LCFI47:
+ 1689              		.cfi_def_cfa_offset 40
+ 1690 0004 00AF     		add	r7, sp, #0
+ 1691              	.LCFI48:
+ 1692              		.cfi_def_cfa_register 7
+ 1693 0006 F860     		str	r0, [r7, #12]
+ 1694 0008 B960     		str	r1, [r7, #8]
+ 1695 000a 7A60     		str	r2, [r7, #4]
+ 227:tasks/rs485.c ****     value[0] = 0;
+ 1696              		.loc 1 227 14
+ 1697 000c BB68     		ldr	r3, [r7, #8]
+ 1698 000e 0022     		movs	r2, #0
+ 1699 0010 1A70     		strb	r2, [r3]
+ 228:tasks/rs485.c ****     rs485size = iecProcVarReqPacketArg(rs485buf, paramName, 32,arg);
+ 1700              		.loc 1 228 17
+ 1701 0012 7B68     		ldr	r3, [r7, #4]
+ 1702 0014 2022     		movs	r2, #32
+ 1703 0016 F968     		ldr	r1, [r7, #12]
+ 1704 0018 1048     		ldr	r0, .L72
+ 1705 001a 114C     		ldr	r4, .L72+4
+ 1706 001c A047     		blx	r4
+ 1707              	.LVL80:
+ 1708 001e 0346     		mov	r3, r0
+ 1709              		.loc 1 228 15
+ 1710 0020 DAB2     		uxtb	r2, r3
+ 1711 0022 104B     		ldr	r3, .L72+8
+ 1712 0024 1A70     		strb	r2, [r3]
+ 229:tasks/rs485.c ****     if (!SendReseive())
+ 1713              		.loc 1 229 10
+ 1714 0026 104B     		ldr	r3, .L72+12
+ 1715 0028 9847     		blx	r3
+ 1716              	.LVL81:
+ 1717 002a 0346     		mov	r3, r0
+ 1718              		.loc 1 229 9
+ 1719 002c 83F00103 		eor	r3, r3, #1
+ 1720 0030 DBB2     		uxtb	r3, r3
+ 1721              		.loc 1 229 8
+ 1722 0032 002B     		cmp	r3, #0
+ 1723 0034 01D0     		beq	.L69
+ 230:tasks/rs485.c **** 	return false;
+ 1724              		.loc 1 230 9
+ 1725 0036 0023     		movs	r3, #0
+ 1726 0038 0CE0     		b	.L70
+ 1727              	.L69:
+ 231:tasks/rs485.c ****     uint8 boolX = iecProcVarAnswerPacket(rs485buf, value, 128);
+ 1728              		.loc 1 231 19
+ 1729 003a 8022     		movs	r2, #128
+ 1730 003c B968     		ldr	r1, [r7, #8]
+ 1731 003e 0748     		ldr	r0, .L72
+ 1732 0040 0A4B     		ldr	r3, .L72+16
+ 1733 0042 9847     		blx	r3
+ 1734              	.LVL82:
+ 1735 0044 0346     		mov	r3, r0
+ 1736              		.loc 1 231 11
+ 1737 0046 FB75     		strb	r3, [r7, #23]
+ 232:tasks/rs485.c ****     if(boolX == false)
+ 1738              		.loc 1 232 7
+ 1739 0048 FB7D     		ldrb	r3, [r7, #23]	@ zero_extendqisi2
+ 1740 004a 002B     		cmp	r3, #0
+ 1741 004c 01D1     		bne	.L71
+ 233:tasks/rs485.c ****    	{
+ 234:tasks/rs485.c ****        	return false;
+ 1742              		.loc 1 234 16
+ 1743 004e 0023     		movs	r3, #0
+ 1744 0050 00E0     		b	.L70
+ 1745              	.L71:
+ 235:tasks/rs485.c ****    	}
+ 236:tasks/rs485.c ****     return true;
+ 1746              		.loc 1 236 12
+ 1747 0052 0123     		movs	r3, #1
+ 1748              	.L70:
+ 237:tasks/rs485.c ****     }
+ 1749              		.loc 1 237 5
+ 1750 0054 1846     		mov	r0, r3
+ 1751 0056 1C37     		adds	r7, r7, #28
+ 1752              	.LCFI49:
+ 1753              		.cfi_def_cfa_offset 12
+ 1754 0058 BD46     		mov	sp, r7
+ 1755              	.LCFI50:
+ 1756              		.cfi_def_cfa_register 13
+ 1757              		@ sp needed
+ 1758 005a 90BD     		pop	{r4, r7, pc}
+ 1759              	.L73:
+ 1760              		.align	2
+ 1761              	.L72:
+ 1762 005c 00000000 		.word	rs485buf
+ 1763 0060 00000000 		.word	iecProcVarReqPacketArg
+ 1764 0064 00000000 		.word	rs485size
+ 1765 0068 00000000 		.word	SendReseive
+ 1766 006c 00000000 		.word	iecProcVarAnswerPacket
+ 1767              		.cfi_endproc
+ 1768              	.LFE39:
+ 1770              		.section	.text.ParseAnswer,"ax",%progbits
+ 1771              		.align	1
+ 1772              		.global	ParseAnswer
+ 1773              		.syntax unified
+ 1774              		.thumb
+ 1775              		.thumb_func
+ 1777              	ParseAnswer:
+ 1778              	.LFB40:
+ 238:tasks/rs485.c **** char* ParseAnswer(char *buf, char *dsn)
+ 239:tasks/rs485.c ****     {
+ 1779              		.loc 1 239 5
+ 1780              		.cfi_startproc
+ 1781              		@ args = 0, pretend = 0, frame = 8
+ 1782              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1783              		@ link register save eliminated.
+ 1784 0000 80B4     		push	{r7}
+ 1785              	.LCFI51:
+ 1786              		.cfi_def_cfa_offset 4
+ 1787              		.cfi_offset 7, -4
+ 1788 0002 83B0     		sub	sp, sp, #12
+ 1789              	.LCFI52:
+ 1790              		.cfi_def_cfa_offset 16
+ 1791 0004 00AF     		add	r7, sp, #0
+ 1792              	.LCFI53:
+ 1793              		.cfi_def_cfa_register 7
+ 1794 0006 7860     		str	r0, [r7, #4]
+ 1795 0008 3960     		str	r1, [r7]
+ 240:tasks/rs485.c ****     while ( *buf != '(')
+ 1796              		.loc 1 240 11
+ 1797 000a 02E0     		b	.L75
+ 1798              	.L76:
+ 241:tasks/rs485.c **** 	buf++;
+ 1799              		.loc 1 241 5
+ 1800 000c 7B68     		ldr	r3, [r7, #4]
+ 1801 000e 0133     		adds	r3, r3, #1
+ 1802 0010 7B60     		str	r3, [r7, #4]
+ 1803              	.L75:
+ 240:tasks/rs485.c ****     while ( *buf != '(')
+ 1804              		.loc 1 240 13
+ 1805 0012 7B68     		ldr	r3, [r7, #4]
+ 1806 0014 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 240:tasks/rs485.c ****     while ( *buf != '(')
+ 1807              		.loc 1 240 11
+ 1808 0016 282B     		cmp	r3, #40
+ 1809 0018 F8D1     		bne	.L76
+ 242:tasks/rs485.c ****     buf++;
+ 1810              		.loc 1 242 8
+ 1811 001a 7B68     		ldr	r3, [r7, #4]
+ 1812 001c 0133     		adds	r3, r3, #1
+ 1813 001e 7B60     		str	r3, [r7, #4]
+ 243:tasks/rs485.c ****     while (*buf && *buf != ')')
+ 1814              		.loc 1 243 11
+ 1815 0020 09E0     		b	.L77
+ 1816              	.L79:
+ 244:tasks/rs485.c **** 	{
+ 245:tasks/rs485.c **** 	*dsn = *buf;
+ 1817              		.loc 1 245 9
+ 1818 0022 7B68     		ldr	r3, [r7, #4]
+ 1819 0024 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 1820              		.loc 1 245 7
+ 1821 0026 3B68     		ldr	r3, [r7]
+ 1822 0028 1A70     		strb	r2, [r3]
+ 246:tasks/rs485.c **** 	dsn++;
+ 1823              		.loc 1 246 5
+ 1824 002a 3B68     		ldr	r3, [r7]
+ 1825 002c 0133     		adds	r3, r3, #1
+ 1826 002e 3B60     		str	r3, [r7]
+ 247:tasks/rs485.c **** 	buf++;
+ 1827              		.loc 1 247 5
+ 1828 0030 7B68     		ldr	r3, [r7, #4]
+ 1829 0032 0133     		adds	r3, r3, #1
+ 1830 0034 7B60     		str	r3, [r7, #4]
+ 1831              	.L77:
+ 243:tasks/rs485.c **** 	{
+ 1832              		.loc 1 243 12
+ 1833 0036 7B68     		ldr	r3, [r7, #4]
+ 1834 0038 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 243:tasks/rs485.c **** 	{
+ 1835              		.loc 1 243 11
+ 1836 003a 002B     		cmp	r3, #0
+ 1837 003c 03D0     		beq	.L78
+ 243:tasks/rs485.c **** 	{
+ 1838              		.loc 1 243 20 discriminator 1
+ 1839 003e 7B68     		ldr	r3, [r7, #4]
+ 1840 0040 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 243:tasks/rs485.c **** 	{
+ 1841              		.loc 1 243 17 discriminator 1
+ 1842 0042 292B     		cmp	r3, #41
+ 1843 0044 EDD1     		bne	.L79
+ 1844              	.L78:
+ 248:tasks/rs485.c **** 	}
+ 249:tasks/rs485.c ****     *dsn = 0;
+ 1845              		.loc 1 249 10
+ 1846 0046 3B68     		ldr	r3, [r7]
+ 1847 0048 0022     		movs	r2, #0
+ 1848 004a 1A70     		strb	r2, [r3]
+ 250:tasks/rs485.c ****     return buf;
+ 1849              		.loc 1 250 12
+ 1850 004c 7B68     		ldr	r3, [r7, #4]
+ 251:tasks/rs485.c ****     }
+ 1851              		.loc 1 251 5
+ 1852 004e 1846     		mov	r0, r3
+ 1853 0050 0C37     		adds	r7, r7, #12
+ 1854              	.LCFI54:
+ 1855              		.cfi_def_cfa_offset 4
+ 1856 0052 BD46     		mov	sp, r7
+ 1857              	.LCFI55:
+ 1858              		.cfi_def_cfa_register 13
+ 1859              		@ sp needed
+ 1860 0054 80BC     		pop	{r7}
+ 1861              	.LCFI56:
+ 1862              		.cfi_restore 7
+ 1863              		.cfi_def_cfa_offset 0
+ 1864 0056 7047     		bx	lr
+ 1865              		.cfi_endproc
+ 1866              	.LFE40:
+ 1868              		.section	.rodata
+ 1869              		.align	2
+ 1870              	.LC0:
+ 1871 0000 00       		.ascii	"\000"
+ 1872 0001 000000   		.align	2
+ 1873              	.LC1:
+ 1874 0004 44415445 		.ascii	"DATE_\000"
+ 1874      5F00
+ 1875 000a 0000     		.align	2
+ 1876              	.LC2:
+ 1877 000c 54494D45 		.ascii	"TIME_\000"
+ 1877      5F00
+ 1878 0012 0000     		.align	2
+ 1879              	.LC3:
+ 1880 0014 534E554D 		.ascii	"SNUMB\000"
+ 1880      4200
+ 1881 001a 0000     		.align	2
+ 1882              	.LC4:
+ 1883 001c 45543050 		.ascii	"ET0PE\000"
+ 1883      4500
+ 1884 0022 0000     		.align	2
+ 1885              	.LC5:
+ 1886 0024 504F5750 		.ascii	"POWPP\000"
+ 1886      5000
+ 1887 002a 0000     		.align	2
+ 1888              	.LC6:
+ 1889 002c 564F4C54 		.ascii	"VOLTA\000"
+ 1889      4100
+ 1890 0032 0000     		.align	2
+ 1891              	.LC7:
+ 1892 0034 43555252 		.ascii	"CURRE\000"
+ 1892      4500
+ 1893 003a 0000     		.align	2
+ 1894              	.LC8:
+ 1895 003c 46524551 		.ascii	"FREQU\000"
+ 1895      5500
+ 1896              		.section	.text.AskConunter,"ax",%progbits
+ 1897              		.align	1
+ 1898              		.global	AskConunter
+ 1899              		.syntax unified
+ 1900              		.thumb
+ 1901              		.thumb_func
+ 1903              	AskConunter:
+ 1904              	.LFB41:
+ 252:tasks/rs485.c **** bool AskConunter()
+ 253:tasks/rs485.c ****     {
+ 1905              		.loc 1 253 5
+ 1906              		.cfi_startproc
+ 1907              		@ args = 0, pretend = 0, frame = 8
+ 1908              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1909 0000 90B5     		push	{r4, r7, lr}
+ 1910              	.LCFI57:
+ 1911              		.cfi_def_cfa_offset 12
+ 1912              		.cfi_offset 4, -12
+ 1913              		.cfi_offset 7, -8
+ 1914              		.cfi_offset 14, -4
+ 1915 0002 83B0     		sub	sp, sp, #12
+ 1916              	.LCFI58:
+ 1917              		.cfi_def_cfa_offset 24
+ 1918 0004 00AF     		add	r7, sp, #0
+ 1919              	.LCFI59:
+ 1920              		.cfi_def_cfa_register 7
+ 254:tasks/rs485.c **** 	MakeiFixUIP();
+ 1921              		.loc 1 254 2
+ 1922 0006 7B4B     		ldr	r3, .L96
+ 1923 0008 9847     		blx	r3
+ 1924              	.LVL83:
+ 255:tasks/rs485.c ****     char *pxBuf;
+ 256:tasks/rs485.c ****     char *tmpbuffX;
+ 257:tasks/rs485.c ****     // Find Device
+ 258:tasks/rs485.c ****     rs485size = iecProcReqPacket(rs485buf, "", 10);
+ 1925              		.loc 1 258 17
+ 1926 000a 0A22     		movs	r2, #10
+ 1927 000c 7A49     		ldr	r1, .L96+4
+ 1928 000e 7B48     		ldr	r0, .L96+8
+ 1929 0010 7B4B     		ldr	r3, .L96+12
+ 1930 0012 9847     		blx	r3
+ 1931              	.LVL84:
+ 1932 0014 0346     		mov	r3, r0
+ 1933              		.loc 1 258 15
+ 1934 0016 DAB2     		uxtb	r2, r3
+ 1935 0018 7A4B     		ldr	r3, .L96+16
+ 1936 001a 1A70     		strb	r2, [r3]
+ 259:tasks/rs485.c ****     if (!SendReseive())
+ 1937              		.loc 1 259 10
+ 1938 001c 7A4B     		ldr	r3, .L96+20
+ 1939 001e 9847     		blx	r3
+ 1940              	.LVL85:
+ 1941 0020 0346     		mov	r3, r0
+ 1942              		.loc 1 259 9
+ 1943 0022 83F00103 		eor	r3, r3, #1
+ 1944 0026 DBB2     		uxtb	r3, r3
+ 1945              		.loc 1 259 8
+ 1946 0028 002B     		cmp	r3, #0
+ 1947 002a 01D0     		beq	.L82
+ 260:tasks/rs485.c ****     	return false;
+ 1948              		.loc 1 260 13
+ 1949 002c 0023     		movs	r3, #0
+ 1950 002e 58E1     		b	.L83
+ 1951              	.L82:
+ 261:tasks/rs485.c ****     uint8 boolX = iecIndProc(rs485buf, &id);
+ 1952              		.loc 1 261 19
+ 1953 0030 7649     		ldr	r1, .L96+24
+ 1954 0032 7248     		ldr	r0, .L96+8
+ 1955 0034 764B     		ldr	r3, .L96+28
+ 1956 0036 9847     		blx	r3
+ 1957              	.LVL86:
+ 1958 0038 0346     		mov	r3, r0
+ 1959              		.loc 1 261 11
+ 1960 003a FB71     		strb	r3, [r7, #7]
+ 262:tasks/rs485.c ****     if (false==boolX)
+ 1961              		.loc 1 262 8
+ 1962 003c FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 1963 003e 002B     		cmp	r3, #0
+ 1964 0040 01D1     		bne	.L84
+ 263:tasks/rs485.c ****     {
+ 264:tasks/rs485.c ****     	return false;
+ 1965              		.loc 1 264 13
+ 1966 0042 0023     		movs	r3, #0
+ 1967 0044 4DE1     		b	.L83
+ 1968              	.L84:
+ 265:tasks/rs485.c ****     }
+ 266:tasks/rs485.c **** 
+ 267:tasks/rs485.c ****     // Password & security
+ 268:tasks/rs485.c **** 
+ 269:tasks/rs485.c **** 	rs485size = iecOptionsAckPacket(rs485buf, '0', '5', '1');
+ 1969              		.loc 1 269 14
+ 1970 0046 3123     		movs	r3, #49
+ 1971 0048 3522     		movs	r2, #53
+ 1972 004a 3021     		movs	r1, #48
+ 1973 004c 6B48     		ldr	r0, .L96+8
+ 1974 004e 714C     		ldr	r4, .L96+32
+ 1975 0050 A047     		blx	r4
+ 1976              	.LVL87:
+ 1977 0052 0346     		mov	r3, r0
+ 1978              		.loc 1 269 12
+ 1979 0054 DAB2     		uxtb	r2, r3
+ 1980 0056 6B4B     		ldr	r3, .L96+16
+ 1981 0058 1A70     		strb	r2, [r3]
+ 270:tasks/rs485.c **** 	if (!SendReseive())
+ 1982              		.loc 1 270 7
+ 1983 005a 6B4B     		ldr	r3, .L96+20
+ 1984 005c 9847     		blx	r3
+ 1985              	.LVL88:
+ 1986 005e 0346     		mov	r3, r0
+ 1987              		.loc 1 270 6
+ 1988 0060 83F00103 		eor	r3, r3, #1
+ 1989 0064 DBB2     		uxtb	r3, r3
+ 1990              		.loc 1 270 5
+ 1991 0066 002B     		cmp	r3, #0
+ 1992 0068 01D0     		beq	.L85
+ 271:tasks/rs485.c **** 		return false;
+ 1993              		.loc 1 271 10
+ 1994 006a 0023     		movs	r3, #0
+ 1995 006c 39E1     		b	.L83
+ 1996              	.L85:
+ 272:tasks/rs485.c **** 
+ 273:tasks/rs485.c **** 	boolX = iecProcAddrAnswer(rs485buf, &RAM.strings[0][0], 128);
+ 1997              		.loc 1 273 10
+ 1998 006e 8022     		movs	r2, #128
+ 1999 0070 6949     		ldr	r1, .L96+36
+ 2000 0072 6248     		ldr	r0, .L96+8
+ 2001 0074 694B     		ldr	r3, .L96+40
+ 2002 0076 9847     		blx	r3
+ 2003              	.LVL89:
+ 2004 0078 0346     		mov	r3, r0
+ 2005              		.loc 1 273 8
+ 2006 007a FB71     		strb	r3, [r7, #7]
+ 274:tasks/rs485.c **** 	if (false==boolX)
+ 2007              		.loc 1 274 5
+ 2008 007c FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 2009 007e 002B     		cmp	r3, #0
+ 2010 0080 01D1     		bne	.L86
+ 275:tasks/rs485.c **** 	{
+ 276:tasks/rs485.c **** 		return false;
+ 2011              		.loc 1 276 10
+ 2012 0082 0023     		movs	r3, #0
+ 2013 0084 2DE1     		b	.L83
+ 2014              	.L86:
+ 277:tasks/rs485.c **** 	}
+ 278:tasks/rs485.c **** 
+ 279:tasks/rs485.c ****     if (!AskParam("DATE_", tmpbuff))
+ 2015              		.loc 1 279 10
+ 2016 0086 6649     		ldr	r1, .L96+44
+ 2017 0088 6648     		ldr	r0, .L96+48
+ 2018 008a 674B     		ldr	r3, .L96+52
+ 2019 008c 9847     		blx	r3
+ 2020              	.LVL90:
+ 2021 008e 0346     		mov	r3, r0
+ 2022              		.loc 1 279 9
+ 2023 0090 83F00103 		eor	r3, r3, #1
+ 2024 0094 DBB2     		uxtb	r3, r3
+ 2025              		.loc 1 279 8
+ 2026 0096 002B     		cmp	r3, #0
+ 2027 0098 01D0     		beq	.L87
+ 280:tasks/rs485.c ****     		return false;
+ 2028              		.loc 1 280 14
+ 2029 009a 0023     		movs	r3, #0
+ 2030 009c 21E1     		b	.L83
+ 2031              	.L87:
+ 281:tasks/rs485.c ****     ParseAnswer(tmpbuff, &RAM.strings[1][0]);
+ 2032              		.loc 1 281 5
+ 2033 009e 6349     		ldr	r1, .L96+56
+ 2034 00a0 5F48     		ldr	r0, .L96+44
+ 2035 00a2 634B     		ldr	r3, .L96+60
+ 2036 00a4 9847     		blx	r3
+ 2037              	.LVL91:
+ 282:tasks/rs485.c **** 
+ 283:tasks/rs485.c ****     if (!AskParam("TIME_", tmpbuff))
+ 2038              		.loc 1 283 10
+ 2039 00a6 5E49     		ldr	r1, .L96+44
+ 2040 00a8 6248     		ldr	r0, .L96+64
+ 2041 00aa 5F4B     		ldr	r3, .L96+52
+ 2042 00ac 9847     		blx	r3
+ 2043              	.LVL92:
+ 2044 00ae 0346     		mov	r3, r0
+ 2045              		.loc 1 283 9
+ 2046 00b0 83F00103 		eor	r3, r3, #1
+ 2047 00b4 DBB2     		uxtb	r3, r3
+ 2048              		.loc 1 283 8
+ 2049 00b6 002B     		cmp	r3, #0
+ 2050 00b8 01D0     		beq	.L88
+ 284:tasks/rs485.c ****     		return false;
+ 2051              		.loc 1 284 14
+ 2052 00ba 0023     		movs	r3, #0
+ 2053 00bc 11E1     		b	.L83
+ 2054              	.L88:
+ 285:tasks/rs485.c ****     ParseAnswer(tmpbuff, &RAM.strings[2][0]);
+ 2055              		.loc 1 285 5
+ 2056 00be 5E49     		ldr	r1, .L96+68
+ 2057 00c0 5748     		ldr	r0, .L96+44
+ 2058 00c2 5B4B     		ldr	r3, .L96+60
+ 2059 00c4 9847     		blx	r3
+ 2060              	.LVL93:
+ 286:tasks/rs485.c **** 
+ 287:tasks/rs485.c **** 
+ 288:tasks/rs485.c **** 	if (!AskParam("SNUMB", tmpbuff))
+ 2061              		.loc 1 288 7
+ 2062 00c6 5649     		ldr	r1, .L96+44
+ 2063 00c8 5C48     		ldr	r0, .L96+72
+ 2064 00ca 574B     		ldr	r3, .L96+52
+ 2065 00cc 9847     		blx	r3
+ 2066              	.LVL94:
+ 2067 00ce 0346     		mov	r3, r0
+ 2068              		.loc 1 288 6
+ 2069 00d0 83F00103 		eor	r3, r3, #1
+ 2070 00d4 DBB2     		uxtb	r3, r3
+ 2071              		.loc 1 288 5
+ 2072 00d6 002B     		cmp	r3, #0
+ 2073 00d8 01D0     		beq	.L89
+ 289:tasks/rs485.c **** 			return false;
+ 2074              		.loc 1 289 11
+ 2075 00da 0023     		movs	r3, #0
+ 2076 00dc 01E1     		b	.L83
+ 2077              	.L89:
+ 290:tasks/rs485.c **** 	ParseAnswer(tmpbuff, &RAM.strings[3][0]);
+ 2078              		.loc 1 290 2
+ 2079 00de 5849     		ldr	r1, .L96+76
+ 2080 00e0 4F48     		ldr	r0, .L96+44
+ 2081 00e2 534B     		ldr	r3, .L96+60
+ 2082 00e4 9847     		blx	r3
+ 2083              	.LVL95:
+ 291:tasks/rs485.c **** 
+ 292:tasks/rs485.c ****     if (!AskParam("ET0PE", tmpbuff))
+ 2084              		.loc 1 292 10
+ 2085 00e6 4E49     		ldr	r1, .L96+44
+ 2086 00e8 5648     		ldr	r0, .L96+80
+ 2087 00ea 4F4B     		ldr	r3, .L96+52
+ 2088 00ec 9847     		blx	r3
+ 2089              	.LVL96:
+ 2090 00ee 0346     		mov	r3, r0
+ 2091              		.loc 1 292 9
+ 2092 00f0 83F00103 		eor	r3, r3, #1
+ 2093 00f4 DBB2     		uxtb	r3, r3
+ 2094              		.loc 1 292 8
+ 2095 00f6 002B     		cmp	r3, #0
+ 2096 00f8 01D0     		beq	.L90
+ 293:tasks/rs485.c ****     		return false;
+ 2097              		.loc 1 293 14
+ 2098 00fa 0023     		movs	r3, #0
+ 2099 00fc F1E0     		b	.L83
+ 2100              	.L90:
+ 294:tasks/rs485.c ****     ParseAnswer(tmpbuff, &RAM.strings[4][0]);
+ 2101              		.loc 1 294 5
+ 2102 00fe 5249     		ldr	r1, .L96+84
+ 2103 0100 4748     		ldr	r0, .L96+44
+ 2104 0102 4B4B     		ldr	r3, .L96+60
+ 2105 0104 9847     		blx	r3
+ 2106              	.LVL97:
+ 295:tasks/rs485.c **** 
+ 296:tasks/rs485.c ****     if (!AskParam("POWPP", tmpbuff))
+ 2107              		.loc 1 296 10
+ 2108 0106 4649     		ldr	r1, .L96+44
+ 2109 0108 5048     		ldr	r0, .L96+88
+ 2110 010a 474B     		ldr	r3, .L96+52
+ 2111 010c 9847     		blx	r3
+ 2112              	.LVL98:
+ 2113 010e 0346     		mov	r3, r0
+ 2114              		.loc 1 296 9
+ 2115 0110 83F00103 		eor	r3, r3, #1
+ 2116 0114 DBB2     		uxtb	r3, r3
+ 2117              		.loc 1 296 8
+ 2118 0116 002B     		cmp	r3, #0
+ 2119 0118 01D0     		beq	.L91
+ 297:tasks/rs485.c ****     		return false;
+ 2120              		.loc 1 297 14
+ 2121 011a 0023     		movs	r3, #0
+ 2122 011c E1E0     		b	.L83
+ 2123              	.L91:
+ 298:tasks/rs485.c ****     pxBuf = tmpbuff;
+ 2124              		.loc 1 298 11
+ 2125 011e 404B     		ldr	r3, .L96+44
+ 2126 0120 3B60     		str	r3, [r7]
+ 299:tasks/rs485.c ****     pxBuf = ParseAnswer(pxBuf, &RAM.strings[5][0]);
+ 2127              		.loc 1 299 13
+ 2128 0122 4B49     		ldr	r1, .L96+92
+ 2129 0124 3868     		ldr	r0, [r7]
+ 2130 0126 424B     		ldr	r3, .L96+60
+ 2131 0128 9847     		blx	r3
+ 2132              	.LVL99:
+ 2133 012a 3860     		str	r0, [r7]
+ 300:tasks/rs485.c ****     pxBuf = ParseAnswer(pxBuf, &RAM.strings[6][0]);
+ 2134              		.loc 1 300 13
+ 2135 012c 4949     		ldr	r1, .L96+96
+ 2136 012e 3868     		ldr	r0, [r7]
+ 2137 0130 3F4B     		ldr	r3, .L96+60
+ 2138 0132 9847     		blx	r3
+ 2139              	.LVL100:
+ 2140 0134 3860     		str	r0, [r7]
+ 301:tasks/rs485.c ****     pxBuf = ParseAnswer(pxBuf, &RAM.strings[7][0]);
+ 2141              		.loc 1 301 13
+ 2142 0136 4849     		ldr	r1, .L96+100
+ 2143 0138 3868     		ldr	r0, [r7]
+ 2144 013a 3D4B     		ldr	r3, .L96+60
+ 2145 013c 9847     		blx	r3
+ 2146              	.LVL101:
+ 2147 013e 3860     		str	r0, [r7]
+ 302:tasks/rs485.c **** 
+ 303:tasks/rs485.c ****     if (!AskParam("VOLTA", tmpbuff))
+ 2148              		.loc 1 303 10
+ 2149 0140 3749     		ldr	r1, .L96+44
+ 2150 0142 4648     		ldr	r0, .L96+104
+ 2151 0144 384B     		ldr	r3, .L96+52
+ 2152 0146 9847     		blx	r3
+ 2153              	.LVL102:
+ 2154 0148 0346     		mov	r3, r0
+ 2155              		.loc 1 303 9
+ 2156 014a 83F00103 		eor	r3, r3, #1
+ 2157 014e DBB2     		uxtb	r3, r3
+ 2158              		.loc 1 303 8
+ 2159 0150 002B     		cmp	r3, #0
+ 2160 0152 01D0     		beq	.L92
+ 304:tasks/rs485.c ****     		return false;
+ 2161              		.loc 1 304 14
+ 2162 0154 0023     		movs	r3, #0
+ 2163 0156 C4E0     		b	.L83
+ 2164              	.L92:
+ 305:tasks/rs485.c ****     pxBuf = tmpbuff;
+ 2165              		.loc 1 305 11
+ 2166 0158 314B     		ldr	r3, .L96+44
+ 2167 015a 3B60     		str	r3, [r7]
+ 306:tasks/rs485.c ****     pxBuf = ParseAnswer(pxBuf, &RAM.strings[8][0]);
+ 2168              		.loc 1 306 13
+ 2169 015c 4049     		ldr	r1, .L96+108
+ 2170 015e 3868     		ldr	r0, [r7]
+ 2171 0160 334B     		ldr	r3, .L96+60
+ 2172 0162 9847     		blx	r3
+ 2173              	.LVL103:
+ 2174 0164 3860     		str	r0, [r7]
+ 307:tasks/rs485.c ****     pxBuf = ParseAnswer(pxBuf, &RAM.strings[9][0]);
+ 2175              		.loc 1 307 13
+ 2176 0166 3F49     		ldr	r1, .L96+112
+ 2177 0168 3868     		ldr	r0, [r7]
+ 2178 016a 314B     		ldr	r3, .L96+60
+ 2179 016c 9847     		blx	r3
+ 2180              	.LVL104:
+ 2181 016e 3860     		str	r0, [r7]
+ 308:tasks/rs485.c ****     pxBuf = ParseAnswer(pxBuf, &RAM.strings[10][0]);
+ 2182              		.loc 1 308 13
+ 2183 0170 3D49     		ldr	r1, .L96+116
+ 2184 0172 3868     		ldr	r0, [r7]
+ 2185 0174 2E4B     		ldr	r3, .L96+60
+ 2186 0176 9847     		blx	r3
+ 2187              	.LVL105:
+ 2188 0178 3860     		str	r0, [r7]
+ 309:tasks/rs485.c **** 
+ 310:tasks/rs485.c ****     if (!AskParam("CURRE", tmpbuff))
+ 2189              		.loc 1 310 10
+ 2190 017a 2949     		ldr	r1, .L96+44
+ 2191 017c 3B48     		ldr	r0, .L96+120
+ 2192 017e 2A4B     		ldr	r3, .L96+52
+ 2193 0180 9847     		blx	r3
+ 2194              	.LVL106:
+ 2195 0182 0346     		mov	r3, r0
+ 2196              		.loc 1 310 9
+ 2197 0184 83F00103 		eor	r3, r3, #1
+ 2198 0188 DBB2     		uxtb	r3, r3
+ 2199              		.loc 1 310 8
+ 2200 018a 002B     		cmp	r3, #0
+ 2201 018c 01D0     		beq	.L93
+ 311:tasks/rs485.c ****     		return false;
+ 2202              		.loc 1 311 14
+ 2203 018e 0023     		movs	r3, #0
+ 2204 0190 A7E0     		b	.L83
+ 2205              	.L93:
+ 312:tasks/rs485.c ****     pxBuf = tmpbuff;
+ 2206              		.loc 1 312 11
+ 2207 0192 234B     		ldr	r3, .L96+44
+ 2208 0194 3B60     		str	r3, [r7]
+ 313:tasks/rs485.c ****     pxBuf = ParseAnswer(pxBuf, &RAM.strings[11][0]);
+ 2209              		.loc 1 313 13
+ 2210 0196 3649     		ldr	r1, .L96+124
+ 2211 0198 3868     		ldr	r0, [r7]
+ 2212 019a 254B     		ldr	r3, .L96+60
+ 2213 019c 9847     		blx	r3
+ 2214              	.LVL107:
+ 2215 019e 3860     		str	r0, [r7]
+ 314:tasks/rs485.c ****     pxBuf = ParseAnswer(pxBuf, &RAM.strings[12][0]);
+ 2216              		.loc 1 314 13
+ 2217 01a0 3449     		ldr	r1, .L96+128
+ 2218 01a2 3868     		ldr	r0, [r7]
+ 2219 01a4 224B     		ldr	r3, .L96+60
+ 2220 01a6 9847     		blx	r3
+ 2221              	.LVL108:
+ 2222 01a8 3860     		str	r0, [r7]
+ 315:tasks/rs485.c ****     pxBuf = ParseAnswer(pxBuf, &RAM.strings[13][0]);
+ 2223              		.loc 1 315 13
+ 2224 01aa 3349     		ldr	r1, .L96+132
+ 2225 01ac 3868     		ldr	r0, [r7]
+ 2226 01ae 204B     		ldr	r3, .L96+60
+ 2227 01b0 9847     		blx	r3
+ 2228              	.LVL109:
+ 2229 01b2 3860     		str	r0, [r7]
+ 316:tasks/rs485.c **** 
+ 317:tasks/rs485.c ****     if (!AskParam("FREQU", tmpbuff))
+ 2230              		.loc 1 317 10
+ 2231 01b4 1A49     		ldr	r1, .L96+44
+ 2232 01b6 3148     		ldr	r0, .L96+136
+ 2233 01b8 1B4B     		ldr	r3, .L96+52
+ 2234 01ba 9847     		blx	r3
+ 2235              	.LVL110:
+ 2236 01bc 0346     		mov	r3, r0
+ 2237              		.loc 1 317 9
+ 2238 01be 83F00103 		eor	r3, r3, #1
+ 2239 01c2 DBB2     		uxtb	r3, r3
+ 2240              		.loc 1 317 8
+ 2241 01c4 002B     		cmp	r3, #0
+ 2242 01c6 01D0     		beq	.L94
+ 318:tasks/rs485.c ****     		return false;
+ 2243              		.loc 1 318 14
+ 2244 01c8 0023     		movs	r3, #0
+ 2245 01ca 8AE0     		b	.L83
+ 2246              	.L94:
+ 319:tasks/rs485.c ****     pxBuf = tmpbuff;
+ 2247              		.loc 1 319 11
+ 2248 01cc 144B     		ldr	r3, .L96+44
+ 2249 01ce 3B60     		str	r3, [r7]
+ 320:tasks/rs485.c ****     pxBuf = ParseAnswer(pxBuf, &RAM.strings[14][0]);
+ 2250              		.loc 1 320 13
+ 2251 01d0 2B49     		ldr	r1, .L96+140
+ 2252 01d2 3868     		ldr	r0, [r7]
+ 2253 01d4 164B     		ldr	r3, .L96+60
+ 2254 01d6 9847     		blx	r3
+ 2255              	.LVL111:
+ 2256 01d8 3860     		str	r0, [r7]
+ 321:tasks/rs485.c **** 
+ 322:tasks/rs485.c ****     if (!AskParam("ET0PE", tmpbuff))
+ 2257              		.loc 1 322 10
+ 2258 01da 1149     		ldr	r1, .L96+44
+ 2259 01dc 1948     		ldr	r0, .L96+80
+ 2260 01de 124B     		ldr	r3, .L96+52
+ 2261 01e0 9847     		blx	r3
+ 2262              	.LVL112:
+ 2263 01e2 0346     		mov	r3, r0
+ 2264              		.loc 1 322 9
+ 2265 01e4 83F00103 		eor	r3, r3, #1
+ 2266 01e8 DBB2     		uxtb	r3, r3
+ 2267              		.loc 1 322 8
+ 2268 01ea 002B     		cmp	r3, #0
+ 2269 01ec 4AD0     		beq	.L95
+ 323:tasks/rs485.c ****     		return false;
+ 2270              		.loc 1 323 14
+ 2271 01ee 0023     		movs	r3, #0
+ 2272 01f0 77E0     		b	.L83
+ 2273              	.L97:
+ 2274 01f2 00BF     		.align	2
+ 2275              	.L96:
+ 2276 01f4 00000000 		.word	MakeiFixUIP
+ 2277 01f8 00000000 		.word	.LC0
+ 2278 01fc 00000000 		.word	rs485buf
+ 2279 0200 00000000 		.word	iecProcReqPacket
+ 2280 0204 00000000 		.word	rs485size
+ 2281 0208 00000000 		.word	SendReseive
+ 2282 020c 00000000 		.word	id
+ 2283 0210 00000000 		.word	iecIndProc
+ 2284 0214 00000000 		.word	iecOptionsAckPacket
+ 2285 0218 10040000 		.word	RAM+1040
+ 2286 021c 00000000 		.word	iecProcAddrAnswer
+ 2287 0220 00000000 		.word	tmpbuff
+ 2288 0224 04000000 		.word	.LC1
+ 2289 0228 00000000 		.word	AskParam
+ 2290 022c 20040000 		.word	RAM+1056
+ 2291 0230 00000000 		.word	ParseAnswer
+ 2292 0234 0C000000 		.word	.LC2
+ 2293 0238 30040000 		.word	RAM+1072
+ 2294 023c 14000000 		.word	.LC3
+ 2295 0240 40040000 		.word	RAM+1088
+ 2296 0244 1C000000 		.word	.LC4
+ 2297 0248 50040000 		.word	RAM+1104
+ 2298 024c 24000000 		.word	.LC5
+ 2299 0250 60040000 		.word	RAM+1120
+ 2300 0254 70040000 		.word	RAM+1136
+ 2301 0258 80040000 		.word	RAM+1152
+ 2302 025c 2C000000 		.word	.LC6
+ 2303 0260 90040000 		.word	RAM+1168
+ 2304 0264 A0040000 		.word	RAM+1184
+ 2305 0268 B0040000 		.word	RAM+1200
+ 2306 026c 34000000 		.word	.LC7
+ 2307 0270 C0040000 		.word	RAM+1216
+ 2308 0274 D0040000 		.word	RAM+1232
+ 2309 0278 E0040000 		.word	RAM+1248
+ 2310 027c 3C000000 		.word	.LC8
+ 2311 0280 F0040000 		.word	RAM+1264
+ 2312              	.L95:
+ 324:tasks/rs485.c ****     ParseAnswer(tmpbuff, &RAM.strings[15][0]);
+ 2313              		.loc 1 324 5
+ 2314 0284 1949     		ldr	r1, .L98
+ 2315 0286 1A48     		ldr	r0, .L98+4
+ 2316 0288 1A4B     		ldr	r3, .L98+8
+ 2317 028a 9847     		blx	r3
+ 2318              	.LVL113:
+ 325:tasks/rs485.c **** 
+ 326:tasks/rs485.c **** 
+ 327:tasks/rs485.c ****     /*GetDateStringLM(tmpbuffX);
+ 328:tasks/rs485.c ****     if (!AskParamArg("ENMPE", tmpbuff,tmpbuffX))
+ 329:tasks/rs485.c ****          	return false;
+ 330:tasks/rs485.c ****     ParseAnswer(tmpbuff, &RAM.strings[16][0]);
+ 331:tasks/rs485.c **** 
+ 332:tasks/rs485.c ****     GetDateStringLD(tmpbuffX);
+ 333:tasks/rs485.c ****     if (!AskParamArg("ENDPE", tmpbuff,tmpbuffX))
+ 334:tasks/rs485.c ****           	return false;
+ 335:tasks/rs485.c ****     ParseAnswer(tmpbuff, &RAM.strings[17][0]);*/
+ 336:tasks/rs485.c **** 
+ 337:tasks/rs485.c ****     MakeiFixUIP();
+ 2319              		.loc 1 337 5
+ 2320 028c 1A4B     		ldr	r3, .L98+12
+ 2321 028e 9847     		blx	r3
+ 2322              	.LVL114:
+ 338:tasks/rs485.c **** 
+ 339:tasks/rs485.c ****     rs485size = iecProcExitPacket(rs485buf);
+ 2323              		.loc 1 339 17
+ 2324 0290 1A48     		ldr	r0, .L98+16
+ 2325 0292 1B4B     		ldr	r3, .L98+20
+ 2326 0294 9847     		blx	r3
+ 2327              	.LVL115:
+ 2328 0296 0346     		mov	r3, r0
+ 2329              		.loc 1 339 15
+ 2330 0298 DAB2     		uxtb	r2, r3
+ 2331 029a 1A4B     		ldr	r3, .L98+24
+ 2332 029c 1A70     		strb	r2, [r3]
+ 340:tasks/rs485.c ****     GPIO_SetBits(GPIOC, GPIO_Pin_12);
+ 2333              		.loc 1 340 5
+ 2334 029e 4FF48051 		mov	r1, #4096
+ 2335 02a2 1948     		ldr	r0, .L98+28
+ 2336 02a4 194B     		ldr	r3, .L98+32
+ 2337 02a6 9847     		blx	r3
+ 2338              	.LVL116:
+ 341:tasks/rs485.c ****     vTaskDelay(5);
+ 2339              		.loc 1 341 5
+ 2340 02a8 0520     		movs	r0, #5
+ 2341 02aa 194B     		ldr	r3, .L98+36
+ 2342 02ac 9847     		blx	r3
+ 2343              	.LVL117:
+ 342:tasks/rs485.c ****     processBuffer8to7(rs485buf,rs485size);
+ 2344              		.loc 1 342 5
+ 2345 02ae 154B     		ldr	r3, .L98+24
+ 2346 02b0 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 2347 02b2 9BB2     		uxth	r3, r3
+ 2348 02b4 1946     		mov	r1, r3
+ 2349 02b6 1148     		ldr	r0, .L98+16
+ 2350 02b8 164B     		ldr	r3, .L98+40
+ 2351 02ba 9847     		blx	r3
+ 2352              	.LVL118:
+ 343:tasks/rs485.c ****     uart3Write ((uint8*) rs485buf, rs485size);
+ 2353              		.loc 1 343 5
+ 2354 02bc 114B     		ldr	r3, .L98+24
+ 2355 02be 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 2356 02c0 1946     		mov	r1, r3
+ 2357 02c2 0E48     		ldr	r0, .L98+16
+ 2358 02c4 144B     		ldr	r3, .L98+44
+ 2359 02c6 9847     		blx	r3
+ 2360              	.LVL119:
+ 344:tasks/rs485.c ****     vTaskDelay(10);
+ 2361              		.loc 1 344 5
+ 2362 02c8 0A20     		movs	r0, #10
+ 2363 02ca 114B     		ldr	r3, .L98+36
+ 2364 02cc 9847     		blx	r3
+ 2365              	.LVL120:
+ 345:tasks/rs485.c ****     GPIO_ResetBits(GPIOC, GPIO_Pin_12);
+ 2366              		.loc 1 345 5
+ 2367 02ce 4FF48051 		mov	r1, #4096
+ 2368 02d2 0D48     		ldr	r0, .L98+28
+ 2369 02d4 114B     		ldr	r3, .L98+48
+ 2370 02d6 9847     		blx	r3
+ 2371              	.LVL121:
+ 346:tasks/rs485.c ****     vTaskDelay(500);
+ 2372              		.loc 1 346 5
+ 2373 02d8 4FF4FA70 		mov	r0, #500
+ 2374 02dc 0C4B     		ldr	r3, .L98+36
+ 2375 02de 9847     		blx	r3
+ 2376              	.LVL122:
+ 347:tasks/rs485.c **** 
+ 348:tasks/rs485.c ****     return true;
+ 2377              		.loc 1 348 12
+ 2378 02e0 0123     		movs	r3, #1
+ 2379              	.L83:
+ 349:tasks/rs485.c ****     }
+ 2380              		.loc 1 349 5
+ 2381 02e2 1846     		mov	r0, r3
+ 2382 02e4 0C37     		adds	r7, r7, #12
+ 2383              	.LCFI60:
+ 2384              		.cfi_def_cfa_offset 12
+ 2385 02e6 BD46     		mov	sp, r7
+ 2386              	.LCFI61:
+ 2387              		.cfi_def_cfa_register 13
+ 2388              		@ sp needed
+ 2389 02e8 90BD     		pop	{r4, r7, pc}
+ 2390              	.L99:
+ 2391 02ea 00BF     		.align	2
+ 2392              	.L98:
+ 2393 02ec 00050000 		.word	RAM+1280
+ 2394 02f0 00000000 		.word	tmpbuff
+ 2395 02f4 00000000 		.word	ParseAnswer
+ 2396 02f8 00000000 		.word	MakeiFixUIP
+ 2397 02fc 00000000 		.word	rs485buf
+ 2398 0300 00000000 		.word	iecProcExitPacket
+ 2399 0304 00000000 		.word	rs485size
+ 2400 0308 00100140 		.word	1073811456
+ 2401 030c 00000000 		.word	GPIO_SetBits
+ 2402 0310 00000000 		.word	vTaskDelay
+ 2403 0314 00000000 		.word	processBuffer8to7
+ 2404 0318 00000000 		.word	uart3Write
+ 2405 031c 00000000 		.word	GPIO_ResetBits
+ 2406              		.cfi_endproc
+ 2407              	.LFE41:
+ 2409              		.section	.text.SendReseive318,"ax",%progbits
+ 2410              		.align	1
+ 2411              		.global	SendReseive318
+ 2412              		.syntax unified
+ 2413              		.thumb
+ 2414              		.thumb_func
+ 2416              	SendReseive318:
+ 2417              	.LFB42:
+ 350:tasks/rs485.c **** 
+ 351:tasks/rs485.c **** //------------------------------------------
+ 352:tasks/rs485.c **** bool SendReseive318(uint8* buffer, uint16 buffersize)
+ 353:tasks/rs485.c **** {
+ 2418              		.loc 1 353 1
+ 2419              		.cfi_startproc
+ 2420              		@ args = 0, pretend = 0, frame = 16
+ 2421              		@ frame_needed = 1, uses_anonymous_args = 0
+ 2422 0000 80B5     		push	{r7, lr}
+ 2423              	.LCFI62:
+ 2424              		.cfi_def_cfa_offset 8
+ 2425              		.cfi_offset 7, -8
+ 2426              		.cfi_offset 14, -4
+ 2427 0002 84B0     		sub	sp, sp, #16
+ 2428              	.LCFI63:
+ 2429              		.cfi_def_cfa_offset 24
+ 2430 0004 00AF     		add	r7, sp, #0
+ 2431              	.LCFI64:
+ 2432              		.cfi_def_cfa_register 7
+ 2433 0006 7860     		str	r0, [r7, #4]
+ 2434 0008 0B46     		mov	r3, r1
+ 2435 000a 7B80     		strh	r3, [r7, #2]	@ movhi
+ 354:tasks/rs485.c **** 	//int bufsize318 = 0;
+ 355:tasks/rs485.c **** 	//uint8 buffer318[bufsize318];
+ 356:tasks/rs485.c **** 	int exit_counter = 0;
+ 2436              		.loc 1 356 6
+ 2437 000c 0023     		movs	r3, #0
+ 2438 000e FB60     		str	r3, [r7, #12]
+ 357:tasks/rs485.c **** 	rs485size = 0;
+ 2439              		.loc 1 357 12
+ 2440 0010 1B4B     		ldr	r3, .L104
+ 2441 0012 0022     		movs	r2, #0
+ 2442 0014 1A70     		strb	r2, [r3]
+ 358:tasks/rs485.c **** 
+ 359:tasks/rs485.c **** 		/*while(exit_counter++ <5)
+ 360:tasks/rs485.c **** 		{*/
+ 361:tasks/rs485.c **** 		if  (rs485size == 0)
+ 2443              		.loc 1 361 18
+ 2444 0016 1A4B     		ldr	r3, .L104
+ 2445 0018 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 2446              		.loc 1 361 7
+ 2447 001a 002B     		cmp	r3, #0
+ 2448 001c 2CD1     		bne	.L101
+ 362:tasks/rs485.c **** 		{
+ 363:tasks/rs485.c **** 
+ 364:tasks/rs485.c **** 			GPIO_SetBits(GPIOC, GPIO_Pin_12);
+ 2449              		.loc 1 364 4
+ 2450 001e 4FF48051 		mov	r1, #4096
+ 2451 0022 1848     		ldr	r0, .L104+4
+ 2452 0024 184B     		ldr	r3, .L104+8
+ 2453 0026 9847     		blx	r3
+ 2454              	.LVL123:
+ 365:tasks/rs485.c **** 			vTaskDelay(5);
+ 2455              		.loc 1 365 4
+ 2456 0028 0520     		movs	r0, #5
+ 2457 002a 184B     		ldr	r3, .L104+12
+ 2458 002c 9847     		blx	r3
+ 2459              	.LVL124:
+ 366:tasks/rs485.c **** 
+ 367:tasks/rs485.c **** 		    uart3Write (buffer, buffersize);
+ 2460              		.loc 1 367 7
+ 2461 002e 7B88     		ldrh	r3, [r7, #2]
+ 2462 0030 1946     		mov	r1, r3
+ 2463 0032 7868     		ldr	r0, [r7, #4]
+ 2464 0034 164B     		ldr	r3, .L104+16
+ 2465 0036 9847     		blx	r3
+ 2466              	.LVL125:
+ 368:tasks/rs485.c **** 
+ 369:tasks/rs485.c **** 		    vTaskDelay(30);
+ 2467              		.loc 1 369 7
+ 2468 0038 1E20     		movs	r0, #30
+ 2469 003a 144B     		ldr	r3, .L104+12
+ 2470 003c 9847     		blx	r3
+ 2471              	.LVL126:
+ 370:tasks/rs485.c **** 
+ 371:tasks/rs485.c **** 		    //AT91F_PIO_ClearOutput(AT91C_BASE_PIOA, LED_485);
+ 372:tasks/rs485.c **** 
+ 373:tasks/rs485.c **** 		    GPIO_ResetBits(GPIOC, GPIO_Pin_12);
+ 2472              		.loc 1 373 7
+ 2473 003e 4FF48051 		mov	r1, #4096
+ 2474 0042 1048     		ldr	r0, .L104+4
+ 2475 0044 134B     		ldr	r3, .L104+20
+ 2476 0046 9847     		blx	r3
+ 2477              	.LVL127:
+ 374:tasks/rs485.c **** 
+ 375:tasks/rs485.c **** 		    vTaskDelay(100);
+ 2478              		.loc 1 375 7
+ 2479 0048 6420     		movs	r0, #100
+ 2480 004a 104B     		ldr	r3, .L104+12
+ 2481 004c 9847     		blx	r3
+ 2482              	.LVL128:
+ 376:tasks/rs485.c **** 
+ 377:tasks/rs485.c **** 			rs485size = uart3Read((uint8*) rs485buf, 256/*, 3000*/);
+ 2483              		.loc 1 377 16
+ 2484 004e 4FF48071 		mov	r1, #256
+ 2485 0052 1148     		ldr	r0, .L104+24
+ 2486 0054 114B     		ldr	r3, .L104+28
+ 2487 0056 9847     		blx	r3
+ 2488              	.LVL129:
+ 2489 0058 0346     		mov	r3, r0
+ 2490              		.loc 1 377 14
+ 2491 005a DAB2     		uxtb	r2, r3
+ 2492 005c 084B     		ldr	r3, .L104
+ 2493 005e 1A70     		strb	r2, [r3]
+ 378:tasks/rs485.c **** 
+ 379:tasks/rs485.c **** 
+ 380:tasks/rs485.c **** 		   if (rs485size != 0)
+ 2494              		.loc 1 380 20
+ 2495 0060 074B     		ldr	r3, .L104
+ 2496 0062 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 2497              		.loc 1 380 9
+ 2498 0064 002B     		cmp	r3, #0
+ 2499 0066 01D0     		beq	.L102
+ 381:tasks/rs485.c **** 		   {  //vTaskDelay(200);
+ 382:tasks/rs485.c **** 			   return true;
+ 2500              		.loc 1 382 14
+ 2501 0068 0123     		movs	r3, #1
+ 2502 006a 05E0     		b	.L100
+ 2503              	.L102:
+ 383:tasks/rs485.c **** 		   	   }
+ 384:tasks/rs485.c **** 		   else
+ 385:tasks/rs485.c **** 			   {	vTaskDelay(2500);
+ 2504              		.loc 1 385 9
+ 2505 006c 40F6C410 		movw	r0, #2500
+ 2506 0070 064B     		ldr	r3, .L104+12
+ 2507 0072 9847     		blx	r3
+ 2508              	.LVL130:
+ 386:tasks/rs485.c **** 			   	   return false;
+ 2509              		.loc 1 386 18
+ 2510 0074 0023     		movs	r3, #0
+ 2511 0076 FFE7     		b	.L100
+ 2512              	.L101:
+ 2513              	.L100:
+ 387:tasks/rs485.c **** 			   }
+ 388:tasks/rs485.c **** 			}
+ 389:tasks/rs485.c **** 
+ 390:tasks/rs485.c **** 
+ 391:tasks/rs485.c **** }
+ 2514              		.loc 1 391 1
+ 2515 0078 1846     		mov	r0, r3
+ 2516 007a 1037     		adds	r7, r7, #16
+ 2517              	.LCFI65:
+ 2518              		.cfi_def_cfa_offset 8
+ 2519 007c BD46     		mov	sp, r7
+ 2520              	.LCFI66:
+ 2521              		.cfi_def_cfa_register 13
+ 2522              		@ sp needed
+ 2523 007e 80BD     		pop	{r7, pc}
+ 2524              	.L105:
+ 2525              		.align	2
+ 2526              	.L104:
+ 2527 0080 00000000 		.word	rs485size
+ 2528 0084 00100140 		.word	1073811456
+ 2529 0088 00000000 		.word	GPIO_SetBits
+ 2530 008c 00000000 		.word	vTaskDelay
+ 2531 0090 00000000 		.word	uart3Write
+ 2532 0094 00000000 		.word	GPIO_ResetBits
+ 2533 0098 00000000 		.word	rs485buf
+ 2534 009c 00000000 		.word	uart3Read
+ 2535              		.cfi_endproc
+ 2536              	.LFE42:
+ 2538              		.section	.text.AskConunter318,"ax",%progbits
+ 2539              		.align	1
+ 2540              		.global	AskConunter318
+ 2541              		.syntax unified
+ 2542              		.thumb
+ 2543              		.thumb_func
+ 2545              	AskConunter318:
+ 2546              	.LFB43:
+ 392:tasks/rs485.c **** 
+ 393:tasks/rs485.c **** 
+ 394:tasks/rs485.c **** bool AskConunter318()
+ 395:tasks/rs485.c **** {
+ 2547              		.loc 1 395 1
+ 2548              		.cfi_startproc
+ 2549              		@ args = 0, pretend = 0, frame = 16
+ 2550              		@ frame_needed = 1, uses_anonymous_args = 0
+ 2551 0000 80B5     		push	{r7, lr}
+ 2552              	.LCFI67:
+ 2553              		.cfi_def_cfa_offset 8
+ 2554              		.cfi_offset 7, -8
+ 2555              		.cfi_offset 14, -4
+ 2556 0002 84B0     		sub	sp, sp, #16
+ 2557              	.LCFI68:
+ 2558              		.cfi_def_cfa_offset 24
+ 2559 0004 00AF     		add	r7, sp, #0
+ 2560              	.LCFI69:
+ 2561              		.cfi_def_cfa_register 7
+ 396:tasks/rs485.c **** 	FLASHMEM *pxConfig = (FLASHMEM*) DEVICE_FLASHMEM_LOCATION;
+ 2562              		.loc 1 396 12
+ 2563 0006 8A4B     		ldr	r3, .L121
+ 2564 0008 BB60     		str	r3, [r7, #8]
+ 397:tasks/rs485.c **** 	uint8* buffer318;
+ 398:tasks/rs485.c **** 	uint16 buffersize318;
+ 399:tasks/rs485.c **** 
+ 400:tasks/rs485.c **** 	//MakeiFixUIP();
+ 401:tasks/rs485.c **** 
+ 402:tasks/rs485.c **** 	MeterNumber = pxConfig->devcfg.MeterNum;
+ 2565              		.loc 1 402 32
+ 2566 000a BB68     		ldr	r3, [r7, #8]
+ 2567 000c D3F82231 		ldr	r3, [r3, #290]	@ unaligned
+ 2568              		.loc 1 402 14
+ 2569 0010 884A     		ldr	r2, .L121+4
+ 2570 0012 1360     		str	r3, [r2]
+ 2571              	.LBB7:
+ 403:tasks/rs485.c **** 
+ 404:tasks/rs485.c **** 	for(int i=0;i<6;i++)
+ 2572              		.loc 1 404 10
+ 2573 0014 0023     		movs	r3, #0
+ 2574 0016 FB60     		str	r3, [r7, #12]
+ 2575              		.loc 1 404 2
+ 2576 0018 09E0     		b	.L107
+ 2577              	.L108:
+ 405:tasks/rs485.c **** 					{
+ 406:tasks/rs485.c **** 				    RAM.strings[0][i] = '7';
+ 2578              		.loc 1 406 27 discriminator 3
+ 2579 001a 874A     		ldr	r2, .L121+8
+ 2580 001c FB68     		ldr	r3, [r7, #12]
+ 2581 001e 1344     		add	r3, r3, r2
+ 2582 0020 03F58263 		add	r3, r3, #1040
+ 2583 0024 3722     		movs	r2, #55
+ 2584 0026 1A70     		strb	r2, [r3]
+ 404:tasks/rs485.c **** 					{
+ 2585              		.loc 1 404 19 discriminator 3
+ 2586 0028 FB68     		ldr	r3, [r7, #12]
+ 2587 002a 0133     		adds	r3, r3, #1
+ 2588 002c FB60     		str	r3, [r7, #12]
+ 2589              	.L107:
+ 404:tasks/rs485.c **** 					{
+ 2590              		.loc 1 404 2 discriminator 1
+ 2591 002e FB68     		ldr	r3, [r7, #12]
+ 2592 0030 052B     		cmp	r3, #5
+ 2593 0032 F2DD     		ble	.L108
+ 2594              	.LBE7:
+ 407:tasks/rs485.c **** 					}
+ 408:tasks/rs485.c **** 
+ 409:tasks/rs485.c **** /*	buffersize318 = AskNum(rs485buf,MeterNumber);
+ 410:tasks/rs485.c **** 	if (!SendReseive318(rs485buf, buffersize318))
+ 411:tasks/rs485.c **** 		return false;
+ 412:tasks/rs485.c **** 
+ 413:tasks/rs485.c **** 	ParseAnswerNum(rs485buf, &RAM.strings[3][0]);*/
+ 414:tasks/rs485.c **** 
+ 415:tasks/rs485.c **** 	itoa1(MeterNumber, &RAM.strings[3][0]); //серийный номер счетчика
+ 2595              		.loc 1 415 2
+ 2596 0034 7F4B     		ldr	r3, .L121+4
+ 2597 0036 1B68     		ldr	r3, [r3]
+ 2598 0038 8049     		ldr	r1, .L121+12
+ 2599 003a 1846     		mov	r0, r3
+ 2600 003c 804B     		ldr	r3, .L121+16
+ 2601 003e 9847     		blx	r3
+ 2602              	.LVL131:
+ 416:tasks/rs485.c **** 
+ 417:tasks/rs485.c **** 
+ 418:tasks/rs485.c **** 	buffersize318 = AskTime(rs485buf,MeterNumber);
+ 2603              		.loc 1 418 18
+ 2604 0040 7C4B     		ldr	r3, .L121+4
+ 2605 0042 1B68     		ldr	r3, [r3]
+ 2606 0044 1946     		mov	r1, r3
+ 2607 0046 7F48     		ldr	r0, .L121+20
+ 2608 0048 7F4B     		ldr	r3, .L121+24
+ 2609 004a 9847     		blx	r3
+ 2610              	.LVL132:
+ 2611 004c 0346     		mov	r3, r0
+ 2612 004e FB80     		strh	r3, [r7, #6]	@ movhi
+ 419:tasks/rs485.c **** 		if (!SendReseive318(rs485buf, buffersize318))
+ 2613              		.loc 1 419 8
+ 2614 0050 FB88     		ldrh	r3, [r7, #6]
+ 2615 0052 1946     		mov	r1, r3
+ 2616 0054 7B48     		ldr	r0, .L121+20
+ 2617 0056 7D4B     		ldr	r3, .L121+28
+ 2618 0058 9847     		blx	r3
+ 2619              	.LVL133:
+ 2620 005a 0346     		mov	r3, r0
+ 2621              		.loc 1 419 7
+ 2622 005c 83F00103 		eor	r3, r3, #1
+ 2623 0060 DBB2     		uxtb	r3, r3
+ 2624              		.loc 1 419 6
+ 2625 0062 002B     		cmp	r3, #0
+ 2626 0064 01D0     		beq	.L109
+ 420:tasks/rs485.c **** 				return false;
+ 2627              		.loc 1 420 12
+ 2628 0066 0023     		movs	r3, #0
+ 2629 0068 44E1     		b	.L110
+ 2630              	.L109:
+ 421:tasks/rs485.c **** 
+ 422:tasks/rs485.c **** 	ParseAnswerData(rs485buf, &RAM.strings[1][0], &RAM.strings[2][0]);
+ 2631              		.loc 1 422 2
+ 2632 006a 794A     		ldr	r2, .L121+32
+ 2633 006c 7949     		ldr	r1, .L121+36
+ 2634 006e 7548     		ldr	r0, .L121+20
+ 2635 0070 794B     		ldr	r3, .L121+40
+ 2636 0072 9847     		blx	r3
+ 2637              	.LVL134:
+ 423:tasks/rs485.c **** //
+ 424:tasks/rs485.c **** 	buffersize318 = AskVoltA(rs485buf,MeterNumber);
+ 2638              		.loc 1 424 18
+ 2639 0074 6F4B     		ldr	r3, .L121+4
+ 2640 0076 1B68     		ldr	r3, [r3]
+ 2641 0078 1946     		mov	r1, r3
+ 2642 007a 7248     		ldr	r0, .L121+20
+ 2643 007c 774B     		ldr	r3, .L121+44
+ 2644 007e 9847     		blx	r3
+ 2645              	.LVL135:
+ 2646 0080 0346     		mov	r3, r0
+ 2647              		.loc 1 424 16
+ 2648 0082 FB80     		strh	r3, [r7, #6]	@ movhi
+ 425:tasks/rs485.c **** 	if (!SendReseive318(rs485buf, buffersize318))
+ 2649              		.loc 1 425 7
+ 2650 0084 FB88     		ldrh	r3, [r7, #6]
+ 2651 0086 1946     		mov	r1, r3
+ 2652 0088 6E48     		ldr	r0, .L121+20
+ 2653 008a 704B     		ldr	r3, .L121+28
+ 2654 008c 9847     		blx	r3
+ 2655              	.LVL136:
+ 2656 008e 0346     		mov	r3, r0
+ 2657              		.loc 1 425 6
+ 2658 0090 83F00103 		eor	r3, r3, #1
+ 2659 0094 DBB2     		uxtb	r3, r3
+ 2660              		.loc 1 425 5
+ 2661 0096 002B     		cmp	r3, #0
+ 2662 0098 01D0     		beq	.L111
+ 426:tasks/rs485.c **** 			return false;
+ 2663              		.loc 1 426 11
+ 2664 009a 0023     		movs	r3, #0
+ 2665 009c 2AE1     		b	.L110
+ 2666              	.L111:
+ 427:tasks/rs485.c **** 
+ 428:tasks/rs485.c **** 	ParseAnswerVolt(rs485buf, &RAM.strings[8][0]);
+ 2667              		.loc 1 428 2
+ 2668 009e 7049     		ldr	r1, .L121+48
+ 2669 00a0 6848     		ldr	r0, .L121+20
+ 2670 00a2 704B     		ldr	r3, .L121+52
+ 2671 00a4 9847     		blx	r3
+ 2672              	.LVL137:
+ 429:tasks/rs485.c **** 
+ 430:tasks/rs485.c **** 	buffersize318 = AskVoltB(rs485buf,MeterNumber);
+ 2673              		.loc 1 430 18
+ 2674 00a6 634B     		ldr	r3, .L121+4
+ 2675 00a8 1B68     		ldr	r3, [r3]
+ 2676 00aa 1946     		mov	r1, r3
+ 2677 00ac 6548     		ldr	r0, .L121+20
+ 2678 00ae 6E4B     		ldr	r3, .L121+56
+ 2679 00b0 9847     		blx	r3
+ 2680              	.LVL138:
+ 2681 00b2 0346     		mov	r3, r0
+ 2682              		.loc 1 430 16
+ 2683 00b4 FB80     		strh	r3, [r7, #6]	@ movhi
+ 431:tasks/rs485.c **** 	if (!SendReseive318(rs485buf, buffersize318))
+ 2684              		.loc 1 431 7
+ 2685 00b6 FB88     		ldrh	r3, [r7, #6]
+ 2686 00b8 1946     		mov	r1, r3
+ 2687 00ba 6248     		ldr	r0, .L121+20
+ 2688 00bc 634B     		ldr	r3, .L121+28
+ 2689 00be 9847     		blx	r3
+ 2690              	.LVL139:
+ 2691 00c0 0346     		mov	r3, r0
+ 2692              		.loc 1 431 6
+ 2693 00c2 83F00103 		eor	r3, r3, #1
+ 2694 00c6 DBB2     		uxtb	r3, r3
+ 2695              		.loc 1 431 5
+ 2696 00c8 002B     		cmp	r3, #0
+ 2697 00ca 01D0     		beq	.L112
+ 432:tasks/rs485.c **** 			return false;
+ 2698              		.loc 1 432 11
+ 2699 00cc 0023     		movs	r3, #0
+ 2700 00ce 11E1     		b	.L110
+ 2701              	.L112:
+ 433:tasks/rs485.c **** 
+ 434:tasks/rs485.c **** 	ParseAnswerVolt(rs485buf, &RAM.strings[9][0]);
+ 2702              		.loc 1 434 2
+ 2703 00d0 6649     		ldr	r1, .L121+60
+ 2704 00d2 5C48     		ldr	r0, .L121+20
+ 2705 00d4 634B     		ldr	r3, .L121+52
+ 2706 00d6 9847     		blx	r3
+ 2707              	.LVL140:
+ 435:tasks/rs485.c **** 
+ 436:tasks/rs485.c **** 	buffersize318 = AskVoltC(rs485buf,MeterNumber);
+ 2708              		.loc 1 436 18
+ 2709 00d8 564B     		ldr	r3, .L121+4
+ 2710 00da 1B68     		ldr	r3, [r3]
+ 2711 00dc 1946     		mov	r1, r3
+ 2712 00de 5948     		ldr	r0, .L121+20
+ 2713 00e0 634B     		ldr	r3, .L121+64
+ 2714 00e2 9847     		blx	r3
+ 2715              	.LVL141:
+ 2716 00e4 0346     		mov	r3, r0
+ 2717              		.loc 1 436 16
+ 2718 00e6 FB80     		strh	r3, [r7, #6]	@ movhi
+ 437:tasks/rs485.c **** 	if (!SendReseive318(rs485buf, buffersize318))
+ 2719              		.loc 1 437 7
+ 2720 00e8 FB88     		ldrh	r3, [r7, #6]
+ 2721 00ea 1946     		mov	r1, r3
+ 2722 00ec 5548     		ldr	r0, .L121+20
+ 2723 00ee 574B     		ldr	r3, .L121+28
+ 2724 00f0 9847     		blx	r3
+ 2725              	.LVL142:
+ 2726 00f2 0346     		mov	r3, r0
+ 2727              		.loc 1 437 6
+ 2728 00f4 83F00103 		eor	r3, r3, #1
+ 2729 00f8 DBB2     		uxtb	r3, r3
+ 2730              		.loc 1 437 5
+ 2731 00fa 002B     		cmp	r3, #0
+ 2732 00fc 01D0     		beq	.L113
+ 438:tasks/rs485.c **** 			return false;
+ 2733              		.loc 1 438 11
+ 2734 00fe 0023     		movs	r3, #0
+ 2735 0100 F8E0     		b	.L110
+ 2736              	.L113:
+ 439:tasks/rs485.c **** 
+ 440:tasks/rs485.c **** 	ParseAnswerVolt(rs485buf,  &RAM.strings[10][0]);
+ 2737              		.loc 1 440 2
+ 2738 0102 5C49     		ldr	r1, .L121+68
+ 2739 0104 4F48     		ldr	r0, .L121+20
+ 2740 0106 574B     		ldr	r3, .L121+52
+ 2741 0108 9847     		blx	r3
+ 2742              	.LVL143:
+ 441:tasks/rs485.c **** //
+ 442:tasks/rs485.c **** 	buffersize318 = AskCurA(rs485buf,MeterNumber);
+ 2743              		.loc 1 442 18
+ 2744 010a 4A4B     		ldr	r3, .L121+4
+ 2745 010c 1B68     		ldr	r3, [r3]
+ 2746 010e 1946     		mov	r1, r3
+ 2747 0110 4C48     		ldr	r0, .L121+20
+ 2748 0112 594B     		ldr	r3, .L121+72
+ 2749 0114 9847     		blx	r3
+ 2750              	.LVL144:
+ 2751 0116 0346     		mov	r3, r0
+ 2752              		.loc 1 442 16
+ 2753 0118 FB80     		strh	r3, [r7, #6]	@ movhi
+ 443:tasks/rs485.c **** 	if (!SendReseive318(rs485buf, buffersize318))
+ 2754              		.loc 1 443 7
+ 2755 011a FB88     		ldrh	r3, [r7, #6]
+ 2756 011c 1946     		mov	r1, r3
+ 2757 011e 4948     		ldr	r0, .L121+20
+ 2758 0120 4A4B     		ldr	r3, .L121+28
+ 2759 0122 9847     		blx	r3
+ 2760              	.LVL145:
+ 2761 0124 0346     		mov	r3, r0
+ 2762              		.loc 1 443 6
+ 2763 0126 83F00103 		eor	r3, r3, #1
+ 2764 012a DBB2     		uxtb	r3, r3
+ 2765              		.loc 1 443 5
+ 2766 012c 002B     		cmp	r3, #0
+ 2767 012e 01D0     		beq	.L114
+ 444:tasks/rs485.c **** 			return false;
+ 2768              		.loc 1 444 11
+ 2769 0130 0023     		movs	r3, #0
+ 2770 0132 DFE0     		b	.L110
+ 2771              	.L114:
+ 445:tasks/rs485.c **** 
+ 446:tasks/rs485.c **** 	ParseAnswerCur(rs485buf, &RAM.strings[11][0]);
+ 2772              		.loc 1 446 2
+ 2773 0134 5149     		ldr	r1, .L121+76
+ 2774 0136 4348     		ldr	r0, .L121+20
+ 2775 0138 514B     		ldr	r3, .L121+80
+ 2776 013a 9847     		blx	r3
+ 2777              	.LVL146:
+ 447:tasks/rs485.c **** 
+ 448:tasks/rs485.c **** 	buffersize318 = AskCurB(rs485buf,MeterNumber);
+ 2778              		.loc 1 448 18
+ 2779 013c 3D4B     		ldr	r3, .L121+4
+ 2780 013e 1B68     		ldr	r3, [r3]
+ 2781 0140 1946     		mov	r1, r3
+ 2782 0142 4048     		ldr	r0, .L121+20
+ 2783 0144 4F4B     		ldr	r3, .L121+84
+ 2784 0146 9847     		blx	r3
+ 2785              	.LVL147:
+ 2786 0148 0346     		mov	r3, r0
+ 2787              		.loc 1 448 16
+ 2788 014a FB80     		strh	r3, [r7, #6]	@ movhi
+ 449:tasks/rs485.c **** 	if (!SendReseive318(rs485buf, buffersize318))
+ 2789              		.loc 1 449 7
+ 2790 014c FB88     		ldrh	r3, [r7, #6]
+ 2791 014e 1946     		mov	r1, r3
+ 2792 0150 3C48     		ldr	r0, .L121+20
+ 2793 0152 3E4B     		ldr	r3, .L121+28
+ 2794 0154 9847     		blx	r3
+ 2795              	.LVL148:
+ 2796 0156 0346     		mov	r3, r0
+ 2797              		.loc 1 449 6
+ 2798 0158 83F00103 		eor	r3, r3, #1
+ 2799 015c DBB2     		uxtb	r3, r3
+ 2800              		.loc 1 449 5
+ 2801 015e 002B     		cmp	r3, #0
+ 2802 0160 01D0     		beq	.L115
+ 450:tasks/rs485.c **** 			return false;
+ 2803              		.loc 1 450 11
+ 2804 0162 0023     		movs	r3, #0
+ 2805 0164 C6E0     		b	.L110
+ 2806              	.L115:
+ 451:tasks/rs485.c **** 
+ 452:tasks/rs485.c **** 	ParseAnswerCur(rs485buf, &RAM.strings[12][0]);
+ 2807              		.loc 1 452 2
+ 2808 0166 4849     		ldr	r1, .L121+88
+ 2809 0168 3648     		ldr	r0, .L121+20
+ 2810 016a 454B     		ldr	r3, .L121+80
+ 2811 016c 9847     		blx	r3
+ 2812              	.LVL149:
+ 453:tasks/rs485.c **** 
+ 454:tasks/rs485.c **** 	buffersize318 = AskCurC(rs485buf,MeterNumber);
+ 2813              		.loc 1 454 18
+ 2814 016e 314B     		ldr	r3, .L121+4
+ 2815 0170 1B68     		ldr	r3, [r3]
+ 2816 0172 1946     		mov	r1, r3
+ 2817 0174 3348     		ldr	r0, .L121+20
+ 2818 0176 454B     		ldr	r3, .L121+92
+ 2819 0178 9847     		blx	r3
+ 2820              	.LVL150:
+ 2821 017a 0346     		mov	r3, r0
+ 2822              		.loc 1 454 16
+ 2823 017c FB80     		strh	r3, [r7, #6]	@ movhi
+ 455:tasks/rs485.c **** 	if (!SendReseive318(rs485buf, buffersize318))
+ 2824              		.loc 1 455 7
+ 2825 017e FB88     		ldrh	r3, [r7, #6]
+ 2826 0180 1946     		mov	r1, r3
+ 2827 0182 3048     		ldr	r0, .L121+20
+ 2828 0184 314B     		ldr	r3, .L121+28
+ 2829 0186 9847     		blx	r3
+ 2830              	.LVL151:
+ 2831 0188 0346     		mov	r3, r0
+ 2832              		.loc 1 455 6
+ 2833 018a 83F00103 		eor	r3, r3, #1
+ 2834 018e DBB2     		uxtb	r3, r3
+ 2835              		.loc 1 455 5
+ 2836 0190 002B     		cmp	r3, #0
+ 2837 0192 01D0     		beq	.L116
+ 456:tasks/rs485.c **** 			return false;
+ 2838              		.loc 1 456 11
+ 2839 0194 0023     		movs	r3, #0
+ 2840 0196 ADE0     		b	.L110
+ 2841              	.L116:
+ 457:tasks/rs485.c **** 
+ 458:tasks/rs485.c **** 	ParseAnswerCur(rs485buf,  &RAM.strings[13][0]);
+ 2842              		.loc 1 458 2
+ 2843 0198 3D49     		ldr	r1, .L121+96
+ 2844 019a 2A48     		ldr	r0, .L121+20
+ 2845 019c 384B     		ldr	r3, .L121+80
+ 2846 019e 9847     		blx	r3
+ 2847              	.LVL152:
+ 459:tasks/rs485.c **** 
+ 460:tasks/rs485.c **** //
+ 461:tasks/rs485.c **** 	buffersize318 = AskPowA(rs485buf,MeterNumber);
+ 2848              		.loc 1 461 18
+ 2849 01a0 244B     		ldr	r3, .L121+4
+ 2850 01a2 1B68     		ldr	r3, [r3]
+ 2851 01a4 1946     		mov	r1, r3
+ 2852 01a6 2748     		ldr	r0, .L121+20
+ 2853 01a8 3A4B     		ldr	r3, .L121+100
+ 2854 01aa 9847     		blx	r3
+ 2855              	.LVL153:
+ 2856 01ac 0346     		mov	r3, r0
+ 2857              		.loc 1 461 16
+ 2858 01ae FB80     		strh	r3, [r7, #6]	@ movhi
+ 462:tasks/rs485.c **** 	if (!SendReseive318(rs485buf, buffersize318))
+ 2859              		.loc 1 462 7
+ 2860 01b0 FB88     		ldrh	r3, [r7, #6]
+ 2861 01b2 1946     		mov	r1, r3
+ 2862 01b4 2348     		ldr	r0, .L121+20
+ 2863 01b6 254B     		ldr	r3, .L121+28
+ 2864 01b8 9847     		blx	r3
+ 2865              	.LVL154:
+ 2866 01ba 0346     		mov	r3, r0
+ 2867              		.loc 1 462 6
+ 2868 01bc 83F00103 		eor	r3, r3, #1
+ 2869 01c0 DBB2     		uxtb	r3, r3
+ 2870              		.loc 1 462 5
+ 2871 01c2 002B     		cmp	r3, #0
+ 2872 01c4 01D0     		beq	.L117
+ 463:tasks/rs485.c **** 			return false;
+ 2873              		.loc 1 463 11
+ 2874 01c6 0023     		movs	r3, #0
+ 2875 01c8 94E0     		b	.L110
+ 2876              	.L117:
+ 464:tasks/rs485.c **** 
+ 465:tasks/rs485.c **** 	ParseAnswerPow(rs485buf, &RAM.strings[5][0]);
+ 2877              		.loc 1 465 2
+ 2878 01ca 3349     		ldr	r1, .L121+104
+ 2879 01cc 1D48     		ldr	r0, .L121+20
+ 2880 01ce 334B     		ldr	r3, .L121+108
+ 2881 01d0 9847     		blx	r3
+ 2882              	.LVL155:
+ 466:tasks/rs485.c **** 
+ 467:tasks/rs485.c **** 	buffersize318 = AskPowB(rs485buf,MeterNumber);
+ 2883              		.loc 1 467 18
+ 2884 01d2 184B     		ldr	r3, .L121+4
+ 2885 01d4 1B68     		ldr	r3, [r3]
+ 2886 01d6 1946     		mov	r1, r3
+ 2887 01d8 1A48     		ldr	r0, .L121+20
+ 2888 01da 314B     		ldr	r3, .L121+112
+ 2889 01dc 9847     		blx	r3
+ 2890              	.LVL156:
+ 2891 01de 0346     		mov	r3, r0
+ 2892              		.loc 1 467 16
+ 2893 01e0 FB80     		strh	r3, [r7, #6]	@ movhi
+ 468:tasks/rs485.c **** 	if (!SendReseive318(rs485buf, buffersize318))
+ 2894              		.loc 1 468 7
+ 2895 01e2 FB88     		ldrh	r3, [r7, #6]
+ 2896 01e4 1946     		mov	r1, r3
+ 2897 01e6 1748     		ldr	r0, .L121+20
+ 2898 01e8 184B     		ldr	r3, .L121+28
+ 2899 01ea 9847     		blx	r3
+ 2900              	.LVL157:
+ 2901 01ec 0346     		mov	r3, r0
+ 2902              		.loc 1 468 6
+ 2903 01ee 83F00103 		eor	r3, r3, #1
+ 2904 01f2 DBB2     		uxtb	r3, r3
+ 2905              		.loc 1 468 5
+ 2906 01f4 002B     		cmp	r3, #0
+ 2907 01f6 01D0     		beq	.L118
+ 469:tasks/rs485.c **** 			return false;
+ 2908              		.loc 1 469 11
+ 2909 01f8 0023     		movs	r3, #0
+ 2910 01fa 7BE0     		b	.L110
+ 2911              	.L118:
+ 470:tasks/rs485.c **** 
+ 471:tasks/rs485.c **** 	ParseAnswerPow(rs485buf, &RAM.strings[6][0]);
+ 2912              		.loc 1 471 2
+ 2913 01fc 2949     		ldr	r1, .L121+116
+ 2914 01fe 1148     		ldr	r0, .L121+20
+ 2915 0200 264B     		ldr	r3, .L121+108
+ 2916 0202 9847     		blx	r3
+ 2917              	.LVL158:
+ 472:tasks/rs485.c **** 
+ 473:tasks/rs485.c **** 	buffersize318 = AskPowC(rs485buf,MeterNumber);
+ 2918              		.loc 1 473 18
+ 2919 0204 0B4B     		ldr	r3, .L121+4
+ 2920 0206 1B68     		ldr	r3, [r3]
+ 2921 0208 1946     		mov	r1, r3
+ 2922 020a 0E48     		ldr	r0, .L121+20
+ 2923 020c 264B     		ldr	r3, .L121+120
+ 2924 020e 9847     		blx	r3
+ 2925              	.LVL159:
+ 2926 0210 0346     		mov	r3, r0
+ 2927              		.loc 1 473 16
+ 2928 0212 FB80     		strh	r3, [r7, #6]	@ movhi
+ 474:tasks/rs485.c **** 	if (!SendReseive318(rs485buf, buffersize318))
+ 2929              		.loc 1 474 7
+ 2930 0214 FB88     		ldrh	r3, [r7, #6]
+ 2931 0216 1946     		mov	r1, r3
+ 2932 0218 0A48     		ldr	r0, .L121+20
+ 2933 021a 0C4B     		ldr	r3, .L121+28
+ 2934 021c 9847     		blx	r3
+ 2935              	.LVL160:
+ 2936 021e 0346     		mov	r3, r0
+ 2937              		.loc 1 474 6
+ 2938 0220 83F00103 		eor	r3, r3, #1
+ 2939 0224 DBB2     		uxtb	r3, r3
+ 2940              		.loc 1 474 5
+ 2941 0226 002B     		cmp	r3, #0
+ 2942 0228 40D0     		beq	.L119
+ 475:tasks/rs485.c **** 			return false;
+ 2943              		.loc 1 475 11
+ 2944 022a 0023     		movs	r3, #0
+ 2945 022c 62E0     		b	.L110
+ 2946              	.L122:
+ 2947 022e 00BF     		.align	2
+ 2948              	.L121:
+ 2949 0230 00B00208 		.word	134393856
+ 2950 0234 00000000 		.word	MeterNumber
+ 2951 0238 00000000 		.word	RAM
+ 2952 023c 40040000 		.word	RAM+1088
+ 2953 0240 00000000 		.word	itoa1
+ 2954 0244 00000000 		.word	rs485buf
+ 2955 0248 00000000 		.word	AskTime
+ 2956 024c 00000000 		.word	SendReseive318
+ 2957 0250 30040000 		.word	RAM+1072
+ 2958 0254 20040000 		.word	RAM+1056
+ 2959 0258 00000000 		.word	ParseAnswerData
+ 2960 025c 00000000 		.word	AskVoltA
+ 2961 0260 90040000 		.word	RAM+1168
+ 2962 0264 00000000 		.word	ParseAnswerVolt
+ 2963 0268 00000000 		.word	AskVoltB
+ 2964 026c A0040000 		.word	RAM+1184
+ 2965 0270 00000000 		.word	AskVoltC
+ 2966 0274 B0040000 		.word	RAM+1200
+ 2967 0278 00000000 		.word	AskCurA
+ 2968 027c C0040000 		.word	RAM+1216
+ 2969 0280 00000000 		.word	ParseAnswerCur
+ 2970 0284 00000000 		.word	AskCurB
+ 2971 0288 D0040000 		.word	RAM+1232
+ 2972 028c 00000000 		.word	AskCurC
+ 2973 0290 E0040000 		.word	RAM+1248
+ 2974 0294 00000000 		.word	AskPowA
+ 2975 0298 60040000 		.word	RAM+1120
+ 2976 029c 00000000 		.word	ParseAnswerPow
+ 2977 02a0 00000000 		.word	AskPowB
+ 2978 02a4 70040000 		.word	RAM+1136
+ 2979 02a8 00000000 		.word	AskPowC
+ 2980              	.L119:
+ 476:tasks/rs485.c **** 
+ 477:tasks/rs485.c **** 	ParseAnswerPow(rs485buf, &RAM.strings[7][0]);
+ 2981              		.loc 1 477 2
+ 2982 02ac 1349     		ldr	r1, .L123
+ 2983 02ae 1448     		ldr	r0, .L123+4
+ 2984 02b0 144B     		ldr	r3, .L123+8
+ 2985 02b2 9847     		blx	r3
+ 2986              	.LVL161:
+ 478:tasks/rs485.c **** //
+ 479:tasks/rs485.c **** 
+ 480:tasks/rs485.c **** 	buffersize318 = AskEnerge(rs485buf,MeterNumber);
+ 2987              		.loc 1 480 18
+ 2988 02b4 144B     		ldr	r3, .L123+12
+ 2989 02b6 1B68     		ldr	r3, [r3]
+ 2990 02b8 1946     		mov	r1, r3
+ 2991 02ba 1148     		ldr	r0, .L123+4
+ 2992 02bc 134B     		ldr	r3, .L123+16
+ 2993 02be 9847     		blx	r3
+ 2994              	.LVL162:
+ 2995 02c0 0346     		mov	r3, r0
+ 2996 02c2 FB80     		strh	r3, [r7, #6]	@ movhi
+ 481:tasks/rs485.c **** 	if (!SendReseive318(rs485buf, buffersize318))
+ 2997              		.loc 1 481 7
+ 2998 02c4 FB88     		ldrh	r3, [r7, #6]
+ 2999 02c6 1946     		mov	r1, r3
+ 3000 02c8 0D48     		ldr	r0, .L123+4
+ 3001 02ca 114B     		ldr	r3, .L123+20
+ 3002 02cc 9847     		blx	r3
+ 3003              	.LVL163:
+ 3004 02ce 0346     		mov	r3, r0
+ 3005              		.loc 1 481 6
+ 3006 02d0 83F00103 		eor	r3, r3, #1
+ 3007 02d4 DBB2     		uxtb	r3, r3
+ 3008              		.loc 1 481 5
+ 3009 02d6 002B     		cmp	r3, #0
+ 3010 02d8 01D0     		beq	.L120
+ 482:tasks/rs485.c **** 			return false;
+ 3011              		.loc 1 482 11
+ 3012 02da 0023     		movs	r3, #0
+ 3013 02dc 0AE0     		b	.L110
+ 3014              	.L120:
+ 483:tasks/rs485.c **** 
+ 484:tasks/rs485.c **** 	ParseAnswerEnerge(rs485buf,  &RAM.strings[15][0]);
+ 3015              		.loc 1 484 2
+ 3016 02de 0D49     		ldr	r1, .L123+24
+ 3017 02e0 0748     		ldr	r0, .L123+4
+ 3018 02e2 0D4B     		ldr	r3, .L123+28
+ 3019 02e4 9847     		blx	r3
+ 3020              	.LVL164:
+ 485:tasks/rs485.c **** 	ParseAnswerEnerge(rs485buf,  &RAM.strings[4][0]);
+ 3021              		.loc 1 485 2
+ 3022 02e6 0D49     		ldr	r1, .L123+32
+ 3023 02e8 0548     		ldr	r0, .L123+4
+ 3024 02ea 0B4B     		ldr	r3, .L123+28
+ 3025 02ec 9847     		blx	r3
+ 3026              	.LVL165:
+ 486:tasks/rs485.c **** 
+ 487:tasks/rs485.c **** 	MakeiFixUIP();
+ 3027              		.loc 1 487 2
+ 3028 02ee 0C4B     		ldr	r3, .L123+36
+ 3029 02f0 9847     		blx	r3
+ 3030              	.LVL166:
+ 488:tasks/rs485.c **** 	return true;
+ 3031              		.loc 1 488 9
+ 3032 02f2 0123     		movs	r3, #1
+ 3033              	.L110:
+ 489:tasks/rs485.c **** }
+ 3034              		.loc 1 489 1
+ 3035 02f4 1846     		mov	r0, r3
+ 3036 02f6 1037     		adds	r7, r7, #16
+ 3037              	.LCFI70:
+ 3038              		.cfi_def_cfa_offset 8
+ 3039 02f8 BD46     		mov	sp, r7
+ 3040              	.LCFI71:
+ 3041              		.cfi_def_cfa_register 13
+ 3042              		@ sp needed
+ 3043 02fa 80BD     		pop	{r7, pc}
+ 3044              	.L124:
+ 3045              		.align	2
+ 3046              	.L123:
+ 3047 02fc 80040000 		.word	RAM+1152
+ 3048 0300 00000000 		.word	rs485buf
+ 3049 0304 00000000 		.word	ParseAnswerPow
+ 3050 0308 00000000 		.word	MeterNumber
+ 3051 030c 00000000 		.word	AskEnerge
+ 3052 0310 00000000 		.word	SendReseive318
+ 3053 0314 00050000 		.word	RAM+1280
+ 3054 0318 00000000 		.word	ParseAnswerEnerge
+ 3055 031c 50040000 		.word	RAM+1104
+ 3056 0320 00000000 		.word	MakeiFixUIP
+ 3057              		.cfi_endproc
+ 3058              	.LFE43:
+ 3060              		.section	.text.vRs485Task,"ax",%progbits
+ 3061              		.align	1
+ 3062              		.global	vRs485Task
+ 3063              		.syntax unified
+ 3064              		.thumb
+ 3065              		.thumb_func
+ 3067              	vRs485Task:
+ 3068              	.LFB44:
+ 490:tasks/rs485.c **** 
+ 491:tasks/rs485.c **** 
+ 492:tasks/rs485.c **** void vRs485Task(void *pvParameters)
+ 493:tasks/rs485.c **** {
+ 3069              		.loc 1 493 1
+ 3070              		.cfi_startproc
+ 3071              		@ args = 0, pretend = 0, frame = 40
+ 3072              		@ frame_needed = 1, uses_anonymous_args = 0
+ 3073 0000 2DE9B043 		push	{r4, r5, r7, r8, r9, lr}
+ 3074              	.LCFI72:
+ 3075              		.cfi_def_cfa_offset 24
+ 3076              		.cfi_offset 4, -24
+ 3077              		.cfi_offset 5, -20
+ 3078              		.cfi_offset 7, -16
+ 3079              		.cfi_offset 8, -12
+ 3080              		.cfi_offset 9, -8
+ 3081              		.cfi_offset 14, -4
+ 3082 0004 8AB0     		sub	sp, sp, #40
+ 3083              	.LCFI73:
+ 3084              		.cfi_def_cfa_offset 64
+ 3085 0006 00AF     		add	r7, sp, #0
+ 3086              	.LCFI74:
+ 3087              		.cfi_def_cfa_register 7
+ 3088 0008 7860     		str	r0, [r7, #4]
+ 494:tasks/rs485.c **** 	FLASHMEM *pxConfig = (FLASHMEM*) DEVICE_FLASHMEM_LOCATION;
+ 3089              		.loc 1 494 12
+ 3090 000a 974B     		ldr	r3, .L153
+ 3091 000c BB61     		str	r3, [r7, #24]
+ 495:tasks/rs485.c **** 	//vTaskDelay(500);
+ 496:tasks/rs485.c **** 	int bufsize = 512;
+ 3092              		.loc 1 496 6
+ 3093 000e 4FF40073 		mov	r3, #512
+ 3094 0012 7B61     		str	r3, [r7, #20]
+ 497:tasks/rs485.c **** 	uint8 buffer[bufsize];
+ 3095              		.loc 1 497 2
+ 3096 0014 7969     		ldr	r1, [r7, #20]
+ 3097              		.loc 1 497 8
+ 3098 0016 4B1E     		subs	r3, r1, #1
+ 3099 0018 3B61     		str	r3, [r7, #16]
+ 3100 001a 0A46     		mov	r2, r1
+ 3101 001c 0023     		movs	r3, #0
+ 3102 001e 9046     		mov	r8, r2
+ 3103 0020 9946     		mov	r9, r3
+ 3104 0022 4FF00002 		mov	r2, #0
+ 3105 0026 4FF00003 		mov	r3, #0
+ 3106 002a 4FEAC903 		lsl	r3, r9, #3
+ 3107 002e 43EA5873 		orr	r3, r3, r8, lsr #29
+ 3108 0032 4FEAC802 		lsl	r2, r8, #3
+ 3109 0036 0A46     		mov	r2, r1
+ 3110 0038 0023     		movs	r3, #0
+ 3111 003a 1446     		mov	r4, r2
+ 3112 003c 1D46     		mov	r5, r3
+ 3113 003e 4FF00002 		mov	r2, #0
+ 3114 0042 4FF00003 		mov	r3, #0
+ 3115 0046 EB00     		lsls	r3, r5, #3
+ 3116 0048 43EA5473 		orr	r3, r3, r4, lsr #29
+ 3117 004c E200     		lsls	r2, r4, #3
+ 3118 004e 0B46     		mov	r3, r1
+ 3119 0050 0733     		adds	r3, r3, #7
+ 3120 0052 DB08     		lsrs	r3, r3, #3
+ 3121 0054 DB00     		lsls	r3, r3, #3
+ 3122 0056 ADEB030D 		sub	sp, sp, r3
+ 3123 005a 6B46     		mov	r3, sp
+ 3124 005c 0033     		adds	r3, r3, #0
+ 3125 005e FB60     		str	r3, [r7, #12]
+ 498:tasks/rs485.c **** 	int MeterType = 0;
+ 3126              		.loc 1 498 6
+ 3127 0060 0023     		movs	r3, #0
+ 3128 0062 7B62     		str	r3, [r7, #36]
+ 499:tasks/rs485.c **** 	/*GPIO_InitTypeDef GPIO_InitStructure;
+ 500:tasks/rs485.c **** 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;
+ 501:tasks/rs485.c **** 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
+ 502:tasks/rs485.c **** 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+ 503:tasks/rs485.c **** 	GPIO_Init(GPIOC, &GPIO_InitStructure);*/
+ 504:tasks/rs485.c **** 
+ 505:tasks/rs485.c **** 	MeterType = pxConfig->devcfg.MeterType;
+ 3129              		.loc 1 505 30
+ 3130 0064 BB69     		ldr	r3, [r7, #24]
+ 3131 0066 B3F82031 		ldrh	r3, [r3, #288]	@ unaligned
+ 3132 006a 9BB2     		uxth	r3, r3
+ 3133              		.loc 1 505 12
+ 3134 006c 7B62     		str	r3, [r7, #36]
+ 506:tasks/rs485.c **** 
+ 507:tasks/rs485.c **** 	if ((MeterType == 1)||(MeterType == 0xFFFF)) // CE301BY
+ 3135              		.loc 1 507 5
+ 3136 006e 7B6A     		ldr	r3, [r7, #36]
+ 3137 0070 012B     		cmp	r3, #1
+ 3138 0072 04D0     		beq	.L126
+ 3139              		.loc 1 507 22 discriminator 1
+ 3140 0074 7B6A     		ldr	r3, [r7, #36]
+ 3141 0076 4FF6FF72 		movw	r2, #65535
+ 3142 007a 9342     		cmp	r3, r2
+ 3143 007c 04D1     		bne	.L127
+ 3144              	.L126:
+ 508:tasks/rs485.c **** 	{
+ 509:tasks/rs485.c **** 		/*uart3Init(4800);*/uart3Init(9600);
+ 3145              		.loc 1 509 23
+ 3146 007e 4FF41650 		mov	r0, #9600
+ 3147 0082 7A4B     		ldr	r3, .L153+4
+ 3148 0084 9847     		blx	r3
+ 3149              	.LVL167:
+ 3150 0086 1AE0     		b	.L128
+ 3151              	.L127:
+ 510:tasks/rs485.c **** 	} else
+ 511:tasks/rs485.c **** 		if (MeterType == 2) // CE318BY
+ 3152              		.loc 1 511 6
+ 3153 0088 7B6A     		ldr	r3, [r7, #36]
+ 3154 008a 022B     		cmp	r3, #2
+ 3155 008c 14D1     		bne	.L129
+ 3156              	.LBB8:
+ 512:tasks/rs485.c **** 			{
+ 513:tasks/rs485.c **** 			for(int i=0;i<6;i++)
+ 3157              		.loc 1 513 12
+ 3158 008e 0023     		movs	r3, #0
+ 3159 0090 3B62     		str	r3, [r7, #32]
+ 3160              		.loc 1 513 4
+ 3161 0092 09E0     		b	.L130
+ 3162              	.L131:
+ 514:tasks/rs485.c **** 				{
+ 515:tasks/rs485.c **** 			    RAM.strings[0][i] = '7';
+ 3163              		.loc 1 515 26 discriminator 3
+ 3164 0094 764A     		ldr	r2, .L153+8
+ 3165 0096 3B6A     		ldr	r3, [r7, #32]
+ 3166 0098 1344     		add	r3, r3, r2
+ 3167 009a 03F58263 		add	r3, r3, #1040
+ 3168 009e 3722     		movs	r2, #55
+ 3169 00a0 1A70     		strb	r2, [r3]
+ 513:tasks/rs485.c **** 				{
+ 3170              		.loc 1 513 21 discriminator 3
+ 3171 00a2 3B6A     		ldr	r3, [r7, #32]
+ 3172 00a4 0133     		adds	r3, r3, #1
+ 3173 00a6 3B62     		str	r3, [r7, #32]
+ 3174              	.L130:
+ 513:tasks/rs485.c **** 				{
+ 3175              		.loc 1 513 4 discriminator 1
+ 3176 00a8 3B6A     		ldr	r3, [r7, #32]
+ 3177 00aa 052B     		cmp	r3, #5
+ 3178 00ac F2DD     		ble	.L131
+ 3179              	.LBE8:
+ 516:tasks/rs485.c **** 				}
+ 517:tasks/rs485.c **** 				uart3Init(4800);
+ 3180              		.loc 1 517 5
+ 3181 00ae 4FF49650 		mov	r0, #4800
+ 3182 00b2 6E4B     		ldr	r3, .L153+4
+ 3183 00b4 9847     		blx	r3
+ 3184              	.LVL168:
+ 3185 00b6 02E0     		b	.L128
+ 3186              	.L129:
+ 518:tasks/rs485.c **** 			}
+ 519:tasks/rs485.c **** 		else
+ 520:tasks/rs485.c **** 		{
+ 521:tasks/rs485.c **** 			USART_DeInit(UART4);
+ 3187              		.loc 1 521 4
+ 3188 00b8 6E48     		ldr	r0, .L153+12
+ 3189 00ba 6F4B     		ldr	r3, .L153+16
+ 3190 00bc 9847     		blx	r3
+ 3191              	.LVL169:
+ 3192              	.L128:
+ 522:tasks/rs485.c **** 		}
+ 523:tasks/rs485.c **** 
+ 524:tasks/rs485.c **** 	//xComPortHandle porthandle =  xSerialPortInitMinimal(9600,1024);
+ 525:tasks/rs485.c **** 	/*buffer[0]='W';
+ 526:tasks/rs485.c **** 	buffer[1]='A';
+ 527:tasks/rs485.c **** 	buffer[2]='R';
+ 528:tasks/rs485.c **** 	buffer[3]='E';
+ 529:tasks/rs485.c **** 	buffer[4]='F';*/
+ 530:tasks/rs485.c **** 
+ 531:tasks/rs485.c **** 	GPIO_ResetBits(GPIOC, GPIO_Pin_12);
+ 3193              		.loc 1 531 2
+ 3194 00be 4FF48051 		mov	r1, #4096
+ 3195 00c2 6E48     		ldr	r0, .L153+20
+ 3196 00c4 6E4B     		ldr	r3, .L153+24
+ 3197 00c6 9847     		blx	r3
+ 3198              	.LVL170:
+ 532:tasks/rs485.c **** 	int heapSize = 0;
+ 3199              		.loc 1 532 6
+ 3200 00c8 0023     		movs	r3, #0
+ 3201 00ca BB60     		str	r3, [r7, #8]
+ 3202              	.L151:
+ 533:tasks/rs485.c **** 
+ 534:tasks/rs485.c **** 		while (1)
+ 535:tasks/rs485.c **** 			{
+ 536:tasks/rs485.c **** 
+ 537:tasks/rs485.c **** 			heapSize = xPortGetFreeHeapSize();
+ 3203              		.loc 1 537 15
+ 3204 00cc 6D4B     		ldr	r3, .L153+28
+ 3205 00ce 9847     		blx	r3
+ 3206              	.LVL171:
+ 3207 00d0 0346     		mov	r3, r0
+ 3208              		.loc 1 537 13
+ 3209 00d2 BB60     		str	r3, [r7, #8]
+ 538:tasks/rs485.c **** 			heapSize +=0;
+ 539:tasks/rs485.c **** 
+ 540:tasks/rs485.c **** 
+ 541:tasks/rs485.c **** 			while ((pxConfig->devcfg.MeterType == 1)||(pxConfig->devcfg.MeterType == 0xFFFF)) // CE301BY
+ 3210              		.loc 1 541 10
+ 3211 00d4 55E0     		b	.L132
+ 3212              	.L137:
+ 542:tasks/rs485.c **** 				{
+ 543:tasks/rs485.c **** 
+ 544:tasks/rs485.c **** 				IWDG_ReloadCounter();
+ 3213              		.loc 1 544 5
+ 3214 00d6 6C4B     		ldr	r3, .L153+32
+ 3215 00d8 9847     		blx	r3
+ 3216              	.LVL172:
+ 545:tasks/rs485.c **** 
+ 546:tasks/rs485.c **** 				if (MeterType != pxConfig->devcfg.MeterType) //если поменялась конфигурация
+ 3217              		.loc 1 546 38
+ 3218 00da BB69     		ldr	r3, [r7, #24]
+ 3219 00dc B3F82031 		ldrh	r3, [r3, #288]	@ unaligned
+ 3220 00e0 9BB2     		uxth	r3, r3
+ 3221 00e2 1A46     		mov	r2, r3
+ 3222              		.loc 1 546 8
+ 3223 00e4 7B6A     		ldr	r3, [r7, #36]
+ 3224 00e6 9342     		cmp	r3, r2
+ 3225 00e8 18D0     		beq	.L133
+ 547:tasks/rs485.c **** 							{
+ 548:tasks/rs485.c **** 								MeterType = pxConfig->devcfg.MeterType;
+ 3226              		.loc 1 548 37
+ 3227 00ea BB69     		ldr	r3, [r7, #24]
+ 3228 00ec B3F82031 		ldrh	r3, [r3, #288]	@ unaligned
+ 3229 00f0 9BB2     		uxth	r3, r3
+ 3230              		.loc 1 548 19
+ 3231 00f2 7B62     		str	r3, [r7, #36]
+ 549:tasks/rs485.c **** 
+ 550:tasks/rs485.c **** 									if ((MeterType == 1)||(MeterType == 0xFFFF)) // CE301BY
+ 3232              		.loc 1 550 13
+ 3233 00f4 7B6A     		ldr	r3, [r7, #36]
+ 3234 00f6 012B     		cmp	r3, #1
+ 3235 00f8 05D0     		beq	.L134
+ 3236              		.loc 1 550 30 discriminator 1
+ 3237 00fa 7B6A     		ldr	r3, [r7, #36]
+ 3238 00fc 4FF6FF72 		movw	r2, #65535
+ 3239 0100 9342     		cmp	r3, r2
+ 3240 0102 40F08880 		bne	.L138
+ 3241              	.L134:
+ 551:tasks/rs485.c **** 									{
+ 552:tasks/rs485.c **** 										ClearUIPData();
+ 3242              		.loc 1 552 11
+ 3243 0106 614B     		ldr	r3, .L153+36
+ 3244 0108 9847     		blx	r3
+ 3245              	.LVL173:
+ 553:tasks/rs485.c **** 
+ 554:tasks/rs485.c **** 										/*uart3Init(4800);*/uart3Init(9600);
+ 3246              		.loc 1 554 31
+ 3247 010a 4FF41650 		mov	r0, #9600
+ 3248 010e 574B     		ldr	r3, .L153+4
+ 3249 0110 9847     		blx	r3
+ 3250              	.LVL174:
+ 555:tasks/rs485.c **** 
+ 556:tasks/rs485.c **** 									}
+ 557:tasks/rs485.c **** 										else break;
+ 558:tasks/rs485.c **** 									GPIO_ResetBits(GPIOC, GPIO_Pin_12);
+ 3251              		.loc 1 558 10
+ 3252 0112 4FF48051 		mov	r1, #4096
+ 3253 0116 5948     		ldr	r0, .L153+20
+ 3254 0118 594B     		ldr	r3, .L153+24
+ 3255 011a 9847     		blx	r3
+ 3256              	.LVL175:
+ 3257              	.L133:
+ 559:tasks/rs485.c **** 
+ 560:tasks/rs485.c **** 							}
+ 561:tasks/rs485.c **** 				if (AskConunter())
+ 3258              		.loc 1 561 9
+ 3259 011c 5C4B     		ldr	r3, .L153+40
+ 3260 011e 9847     		blx	r3
+ 3261              	.LVL176:
+ 3262 0120 0346     		mov	r3, r0
+ 3263              		.loc 1 561 8
+ 3264 0122 002B     		cmp	r3, #0
+ 3265 0124 03D0     		beq	.L136
+ 562:tasks/rs485.c **** 			    	{
+ 563:tasks/rs485.c **** 					vTaskDelay(100);
+ 3266              		.loc 1 563 6
+ 3267 0126 6420     		movs	r0, #100
+ 3268 0128 5A4B     		ldr	r3, .L153+44
+ 3269 012a 9847     		blx	r3
+ 3270              	.LVL177:
+ 3271 012c 29E0     		b	.L132
+ 3272              	.L136:
+ 564:tasks/rs485.c **** 
+ 565:tasks/rs485.c **** 			    	}
+ 566:tasks/rs485.c **** 				else
+ 567:tasks/rs485.c **** 					{
+ 568:tasks/rs485.c **** 				//ClearUIPData();
+ 569:tasks/rs485.c **** 					IWDG_ReloadCounter();
+ 3273              		.loc 1 569 6
+ 3274 012e 564B     		ldr	r3, .L153+32
+ 3275 0130 9847     		blx	r3
+ 3276              	.LVL178:
+ 570:tasks/rs485.c **** 					rs485size = iecProcExitPacket(rs485buf);
+ 3277              		.loc 1 570 18
+ 3278 0132 5948     		ldr	r0, .L153+48
+ 3279 0134 594B     		ldr	r3, .L153+52
+ 3280 0136 9847     		blx	r3
+ 3281              	.LVL179:
+ 3282 0138 0346     		mov	r3, r0
+ 3283              		.loc 1 570 16
+ 3284 013a DAB2     		uxtb	r2, r3
+ 3285 013c 584B     		ldr	r3, .L153+56
+ 3286 013e 1A70     		strb	r2, [r3]
+ 571:tasks/rs485.c **** 					GPIO_SetBits(GPIOC, GPIO_Pin_12);
+ 3287              		.loc 1 571 6
+ 3288 0140 4FF48051 		mov	r1, #4096
+ 3289 0144 4D48     		ldr	r0, .L153+20
+ 3290 0146 574B     		ldr	r3, .L153+60
+ 3291 0148 9847     		blx	r3
+ 3292              	.LVL180:
+ 572:tasks/rs485.c **** 					vTaskDelay(5);
+ 3293              		.loc 1 572 6
+ 3294 014a 0520     		movs	r0, #5
+ 3295 014c 514B     		ldr	r3, .L153+44
+ 3296 014e 9847     		blx	r3
+ 3297              	.LVL181:
+ 573:tasks/rs485.c **** 					processBuffer8to7(rs485buf,rs485size);
+ 3298              		.loc 1 573 6
+ 3299 0150 534B     		ldr	r3, .L153+56
+ 3300 0152 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 3301 0154 9BB2     		uxth	r3, r3
+ 3302 0156 1946     		mov	r1, r3
+ 3303 0158 4F48     		ldr	r0, .L153+48
+ 3304 015a 534B     		ldr	r3, .L153+64
+ 3305 015c 9847     		blx	r3
+ 3306              	.LVL182:
+ 574:tasks/rs485.c **** 					uart3Write ((uint8*) rs485buf, rs485size);
+ 3307              		.loc 1 574 6
+ 3308 015e 504B     		ldr	r3, .L153+56
+ 3309 0160 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 3310 0162 1946     		mov	r1, r3
+ 3311 0164 4C48     		ldr	r0, .L153+48
+ 3312 0166 514B     		ldr	r3, .L153+68
+ 3313 0168 9847     		blx	r3
+ 3314              	.LVL183:
+ 575:tasks/rs485.c **** 					vTaskDelay(30);
+ 3315              		.loc 1 575 6
+ 3316 016a 1E20     		movs	r0, #30
+ 3317 016c 494B     		ldr	r3, .L153+44
+ 3318 016e 9847     		blx	r3
+ 3319              	.LVL184:
+ 576:tasks/rs485.c **** 					GPIO_ResetBits(GPIOC, GPIO_Pin_12);
+ 3320              		.loc 1 576 6
+ 3321 0170 4FF48051 		mov	r1, #4096
+ 3322 0174 4148     		ldr	r0, .L153+20
+ 3323 0176 424B     		ldr	r3, .L153+24
+ 3324 0178 9847     		blx	r3
+ 3325              	.LVL185:
+ 577:tasks/rs485.c **** 					vTaskDelay(500);
+ 3326              		.loc 1 577 6
+ 3327 017a 4FF4FA70 		mov	r0, #500
+ 3328 017e 454B     		ldr	r3, .L153+44
+ 3329 0180 9847     		blx	r3
+ 3330              	.LVL186:
+ 3331              	.L132:
+ 541:tasks/rs485.c **** 				{
+ 3332              		.loc 1 541 28
+ 3333 0182 BB69     		ldr	r3, [r7, #24]
+ 3334 0184 B3F82031 		ldrh	r3, [r3, #288]	@ unaligned
+ 3335 0188 9BB2     		uxth	r3, r3
+ 541:tasks/rs485.c **** 				{
+ 3336              		.loc 1 541 10
+ 3337 018a 012B     		cmp	r3, #1
+ 3338 018c A3D0     		beq	.L137
+ 541:tasks/rs485.c **** 				{
+ 3339              		.loc 1 541 63 discriminator 1
+ 3340 018e BB69     		ldr	r3, [r7, #24]
+ 3341 0190 B3F82031 		ldrh	r3, [r3, #288]	@ unaligned
+ 3342 0194 9BB2     		uxth	r3, r3
+ 541:tasks/rs485.c **** 				{
+ 3343              		.loc 1 541 44 discriminator 1
+ 3344 0196 4FF6FF72 		movw	r2, #65535
+ 3345 019a 9342     		cmp	r3, r2
+ 3346 019c 9BD0     		beq	.L137
+ 578:tasks/rs485.c **** 					}
+ 579:tasks/rs485.c **** 				}
+ 580:tasks/rs485.c **** 
+ 581:tasks/rs485.c **** 					while (pxConfig->devcfg.MeterType == 2) // CE318BY
+ 3347              		.loc 1 581 12
+ 3348 019e 3AE0     		b	.L138
+ 3349              	.L146:
+ 582:tasks/rs485.c **** 									{
+ 583:tasks/rs485.c **** 						IWDG_ReloadCounter();
+ 3350              		.loc 1 583 7
+ 3351 01a0 394B     		ldr	r3, .L153+32
+ 3352 01a2 9847     		blx	r3
+ 3353              	.LVL187:
+ 584:tasks/rs485.c **** 
+ 585:tasks/rs485.c **** 						if (MeterType != pxConfig->devcfg.MeterType) //если поменялась конфигурация
+ 3354              		.loc 1 585 40
+ 3355 01a4 BB69     		ldr	r3, [r7, #24]
+ 3356 01a6 B3F82031 		ldrh	r3, [r3, #288]	@ unaligned
+ 3357 01aa 9BB2     		uxth	r3, r3
+ 3358 01ac 1A46     		mov	r2, r3
+ 3359              		.loc 1 585 10
+ 3360 01ae 7B6A     		ldr	r3, [r7, #36]
+ 3361 01b0 9342     		cmp	r3, r2
+ 3362 01b2 22D0     		beq	.L139
+ 586:tasks/rs485.c **** 									{
+ 587:tasks/rs485.c **** 										MeterType = pxConfig->devcfg.MeterType;
+ 3363              		.loc 1 587 39
+ 3364 01b4 BB69     		ldr	r3, [r7, #24]
+ 3365 01b6 B3F82031 		ldrh	r3, [r3, #288]	@ unaligned
+ 3366 01ba 9BB2     		uxth	r3, r3
+ 3367              		.loc 1 587 21
+ 3368 01bc 7B62     		str	r3, [r7, #36]
+ 588:tasks/rs485.c **** 
+ 589:tasks/rs485.c **** 												if (MeterType == 2) // CE318BY
+ 3369              		.loc 1 589 16
+ 3370 01be 7B6A     		ldr	r3, [r7, #36]
+ 3371 01c0 022B     		cmp	r3, #2
+ 3372 01c2 2FD1     		bne	.L152
+ 590:tasks/rs485.c **** 													{
+ 591:tasks/rs485.c **** 													    ClearUIPData();
+ 3373              		.loc 1 591 18
+ 3374 01c4 314B     		ldr	r3, .L153+36
+ 3375 01c6 9847     		blx	r3
+ 3376              	.LVL188:
+ 3377              	.LBB9:
+ 592:tasks/rs485.c **** 													    for(int i=0;i<6;i++)
+ 3378              		.loc 1 592 26
+ 3379 01c8 0023     		movs	r3, #0
+ 3380 01ca FB61     		str	r3, [r7, #28]
+ 3381              		.loc 1 592 18
+ 3382 01cc 09E0     		b	.L141
+ 3383              	.L142:
+ 593:tasks/rs485.c **** 													    				{
+ 594:tasks/rs485.c **** 													    			    RAM.strings[0][i] = '7';
+ 3384              		.loc 1 594 43 discriminator 3
+ 3385 01ce 284A     		ldr	r2, .L153+8
+ 3386 01d0 FB69     		ldr	r3, [r7, #28]
+ 3387 01d2 1344     		add	r3, r3, r2
+ 3388 01d4 03F58263 		add	r3, r3, #1040
+ 3389 01d8 3722     		movs	r2, #55
+ 3390 01da 1A70     		strb	r2, [r3]
+ 592:tasks/rs485.c **** 													    for(int i=0;i<6;i++)
+ 3391              		.loc 1 592 35 discriminator 3
+ 3392 01dc FB69     		ldr	r3, [r7, #28]
+ 3393 01de 0133     		adds	r3, r3, #1
+ 3394 01e0 FB61     		str	r3, [r7, #28]
+ 3395              	.L141:
+ 592:tasks/rs485.c **** 													    for(int i=0;i<6;i++)
+ 3396              		.loc 1 592 18 discriminator 1
+ 3397 01e2 FB69     		ldr	r3, [r7, #28]
+ 3398 01e4 052B     		cmp	r3, #5
+ 3399 01e6 F2DD     		ble	.L142
+ 3400              	.LBE9:
+ 595:tasks/rs485.c **** 													    				}
+ 596:tasks/rs485.c **** 														uart3Init(4800);
+ 3401              		.loc 1 596 15
+ 3402 01e8 4FF49650 		mov	r0, #4800
+ 3403 01ec 1F4B     		ldr	r3, .L153+4
+ 3404 01ee 9847     		blx	r3
+ 3405              	.LVL189:
+ 597:tasks/rs485.c **** 													}
+ 598:tasks/rs485.c **** 												else break;
+ 599:tasks/rs485.c **** 											GPIO_ResetBits(GPIOC, GPIO_Pin_12);
+ 3406              		.loc 1 599 12
+ 3407 01f0 4FF48051 		mov	r1, #4096
+ 3408 01f4 2148     		ldr	r0, .L153+20
+ 3409 01f6 224B     		ldr	r3, .L153+24
+ 3410 01f8 9847     		blx	r3
+ 3411              	.LVL190:
+ 3412              	.L139:
+ 600:tasks/rs485.c **** 									}
+ 601:tasks/rs485.c **** 										if (AskConunter318())
+ 3413              		.loc 1 601 15
+ 3414 01fa 2D4B     		ldr	r3, .L153+72
+ 3415 01fc 9847     		blx	r3
+ 3416              	.LVL191:
+ 3417 01fe 0346     		mov	r3, r0
+ 3418              		.loc 1 601 14
+ 3419 0200 002B     		cmp	r3, #0
+ 3420 0202 04D0     		beq	.L145
+ 602:tasks/rs485.c **** 									    	{
+ 603:tasks/rs485.c **** 											vTaskDelay(1000);
+ 3421              		.loc 1 603 12
+ 3422 0204 4FF47A70 		mov	r0, #1000
+ 3423 0208 224B     		ldr	r3, .L153+44
+ 3424 020a 9847     		blx	r3
+ 3425              	.LVL192:
+ 3426 020c 03E0     		b	.L138
+ 3427              	.L145:
+ 604:tasks/rs485.c **** 									    	}else
+ 605:tasks/rs485.c **** 									    	{vTaskDelay(1000);}
+ 3428              		.loc 1 605 16
+ 3429 020e 4FF47A70 		mov	r0, #1000
+ 3430 0212 204B     		ldr	r3, .L153+44
+ 3431 0214 9847     		blx	r3
+ 3432              	.LVL193:
+ 3433              	.L138:
+ 581:tasks/rs485.c **** 									{
+ 3434              		.loc 1 581 29
+ 3435 0216 BB69     		ldr	r3, [r7, #24]
+ 3436 0218 B3F82031 		ldrh	r3, [r3, #288]	@ unaligned
+ 3437 021c 9BB2     		uxth	r3, r3
+ 581:tasks/rs485.c **** 									{
+ 3438              		.loc 1 581 12
+ 3439 021e 022B     		cmp	r3, #2
+ 3440 0220 BED0     		beq	.L146
+ 3441 0222 13E0     		b	.L147
+ 3442              	.L152:
+ 598:tasks/rs485.c **** 											GPIO_ResetBits(GPIOC, GPIO_Pin_12);
+ 3443              		.loc 1 598 13
+ 3444 0224 00BF     		nop
+ 606:tasks/rs485.c **** 
+ 607:tasks/rs485.c **** 									}
+ 608:tasks/rs485.c **** 			while ((pxConfig->devcfg.MeterType != 1)&&(pxConfig->devcfg.MeterType != 2)) // CE318BY
+ 3445              		.loc 1 608 10
+ 3446 0226 11E0     		b	.L147
+ 3447              	.L150:
+ 609:tasks/rs485.c **** 				{
+ 610:tasks/rs485.c **** 				if (MeterType != pxConfig->devcfg.MeterType) //если поменялась конфигурация
+ 3448              		.loc 1 610 38
+ 3449 0228 BB69     		ldr	r3, [r7, #24]
+ 3450 022a B3F82031 		ldrh	r3, [r3, #288]	@ unaligned
+ 3451 022e 9BB2     		uxth	r3, r3
+ 3452 0230 1A46     		mov	r2, r3
+ 3453              		.loc 1 610 8
+ 3454 0232 7B6A     		ldr	r3, [r7, #36]
+ 3455 0234 9342     		cmp	r3, r2
+ 3456 0236 06D0     		beq	.L148
+ 611:tasks/rs485.c **** 												{
+ 612:tasks/rs485.c **** 													MeterType = pxConfig->devcfg.MeterType;
+ 3457              		.loc 1 612 42
+ 3458 0238 BB69     		ldr	r3, [r7, #24]
+ 3459 023a B3F82031 		ldrh	r3, [r3, #288]	@ unaligned
+ 3460 023e 9BB2     		uxth	r3, r3
+ 3461              		.loc 1 612 24
+ 3462 0240 7B62     		str	r3, [r7, #36]
+ 613:tasks/rs485.c **** 													ClearUIPData();
+ 3463              		.loc 1 613 14
+ 3464 0242 124B     		ldr	r3, .L153+36
+ 3465 0244 9847     		blx	r3
+ 3466              	.LVL194:
+ 3467              	.L148:
+ 614:tasks/rs485.c **** 												}
+ 615:tasks/rs485.c **** 
+ 616:tasks/rs485.c **** 				vTaskDelay(10);
+ 3468              		.loc 1 616 5
+ 3469 0246 0A20     		movs	r0, #10
+ 3470 0248 124B     		ldr	r3, .L153+44
+ 3471 024a 9847     		blx	r3
+ 3472              	.LVL195:
+ 3473              	.L147:
+ 608:tasks/rs485.c **** 				{
+ 3474              		.loc 1 608 28
+ 3475 024c BB69     		ldr	r3, [r7, #24]
+ 3476 024e B3F82031 		ldrh	r3, [r3, #288]	@ unaligned
+ 3477 0252 9BB2     		uxth	r3, r3
+ 608:tasks/rs485.c **** 				{
+ 3478              		.loc 1 608 10
+ 3479 0254 012B     		cmp	r3, #1
+ 3480 0256 3FF439AF 		beq	.L151
+ 608:tasks/rs485.c **** 				{
+ 3481              		.loc 1 608 63 discriminator 1
+ 3482 025a BB69     		ldr	r3, [r7, #24]
+ 3483 025c B3F82031 		ldrh	r3, [r3, #288]	@ unaligned
+ 3484 0260 9BB2     		uxth	r3, r3
+ 608:tasks/rs485.c **** 				{
+ 3485              		.loc 1 608 44 discriminator 1
+ 3486 0262 022B     		cmp	r3, #2
+ 3487 0264 E0D1     		bne	.L150
+ 537:tasks/rs485.c **** 			heapSize +=0;
+ 3488              		.loc 1 537 13
+ 3489 0266 31E7     		b	.L151
+ 3490              	.L154:
+ 3491              		.align	2
+ 3492              	.L153:
+ 3493 0268 00B00208 		.word	134393856
+ 3494 026c 00000000 		.word	uart3Init
+ 3495 0270 00000000 		.word	RAM
+ 3496 0274 004C0040 		.word	1073761280
+ 3497 0278 00000000 		.word	USART_DeInit
+ 3498 027c 00100140 		.word	1073811456
+ 3499 0280 00000000 		.word	GPIO_ResetBits
+ 3500 0284 00000000 		.word	xPortGetFreeHeapSize
+ 3501 0288 00000000 		.word	IWDG_ReloadCounter
+ 3502 028c 00000000 		.word	ClearUIPData
+ 3503 0290 00000000 		.word	AskConunter
+ 3504 0294 00000000 		.word	vTaskDelay
+ 3505 0298 00000000 		.word	rs485buf
+ 3506 029c 00000000 		.word	iecProcExitPacket
+ 3507 02a0 00000000 		.word	rs485size
+ 3508 02a4 00000000 		.word	GPIO_SetBits
+ 3509 02a8 00000000 		.word	processBuffer8to7
+ 3510 02ac 00000000 		.word	uart3Write
+ 3511 02b0 00000000 		.word	AskConunter318
+ 3512              		.cfi_endproc
+ 3513              	.LFE44:
+ 3515              		.text
+ 3516              	.Letext0:
+ 3517              		.file 2 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 3518              		.file 3 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 3519              		.file 4 "common/lib.stm32/CMSIS/Core/CM3/stm32f10x.h"
+ 3520              		.file 5 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_usart.h"
+ 3521              		.file 6 "common/rtos/common/utils/typedef.h"
+ 3522              		.file 7 "./src/usermemory.h"
+ 3523              		.file 8 "./src/iec61107.h"
+ 3524              		.file 9 "common/rtos/common/utils/rvnet.h"
+ 3525              		.file 10 "common/lib.stm32/uart.h"
+ 3526              		.file 11 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_gpio.h"
+ 3527              		.file 12 "common/rtos/include/portable.h"
+ 3528              		.file 13 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_iwdg.h"
+ 3529              		.file 14 "common/rtos/include/task.h"
+ 3530              		.file 15 "./src/smp_protocol.h"
+ 3531              		.file 16 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\
+DEFINED SYMBOLS
+                            *ABS*:00000000 rs485.c
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:22     .bss.rs485buf:00000000 rs485buf
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:19     .bss.rs485buf:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:29     .bss.tmpbuff:00000000 tmpbuff
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:26     .bss.tmpbuff:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:35     .bss.rs485size:00000000 rs485size
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:36     .bss.rs485size:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:42     .bss.id:00000000 id
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:39     .bss.id:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:49     .bss.MeterNumber:00000000 MeterNumber
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:46     .bss.MeterNumber:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:52     .text.ClearUIPData:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:58     .text.ClearUIPData:00000000 ClearUIPData
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:148    .text.ClearUIPData:0000005c $d
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:153    .text.ClearBuffer:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:159    .text.ClearBuffer:00000000 ClearBuffer
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:219    .text.ClearBuffer:00000034 $d
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:227    .text.ConvertUIP:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:233    .text.ConvertUIP:00000000 ConvertUIP
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:295    .text.ConvertUIP:00000044 $d
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:307    .text.new_atof:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:313    .text.new_atof:00000000 new_atof
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:614    .text.new_atof:000001b8 $d
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:625    .text.MakeiFixUIP:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:631    .text.MakeiFixUIP:00000000 MakeiFixUIP
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:1075   .text.MakeiFixUIP:000002a8 $d
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:1100   .text.MakeiFixUIP:00000308 $t
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:1128   .text.MakeiFixUIP:00000330 $d
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:1141   .bss.USART_InitStructure:00000000 USART_InitStructure
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:1138   .bss.USART_InitStructure:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:1144   .text.processBuffer7to8:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:1150   .text.processBuffer7to8:00000000 processBuffer7to8
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:1222   .text.processBuffer8to7:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:1228   .text.processBuffer8to7:00000000 processBuffer8to7
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:1401   .text.SendReseive:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:1407   .text.SendReseive:00000000 SendReseive
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:1556   .text.SendReseive:000000b0 $d
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:1570   .text.AskParam:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:1576   .text.AskParam:00000000 AskParam
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:1660   .text.AskParam:00000058 $d
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:1669   .text.AskParamArg:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:1675   .text.AskParamArg:00000000 AskParamArg
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:1762   .text.AskParamArg:0000005c $d
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:1771   .text.ParseAnswer:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:1777   .text.ParseAnswer:00000000 ParseAnswer
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:1869   .rodata:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:1897   .text.AskConunter:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:1903   .text.AskConunter:00000000 AskConunter
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:2276   .text.AskConunter:000001f4 $d
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:2314   .text.AskConunter:00000284 $t
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:2393   .text.AskConunter:000002ec $d
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:2410   .text.SendReseive318:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:2416   .text.SendReseive318:00000000 SendReseive318
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:2527   .text.SendReseive318:00000080 $d
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:2539   .text.AskConunter318:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:2545   .text.AskConunter318:00000000 AskConunter318
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:2949   .text.AskConunter318:00000230 $d
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:2982   .text.AskConunter318:000002ac $t
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:3047   .text.AskConunter318:000002fc $d
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:3061   .text.vRs485Task:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:3067   .text.vRs485Task:00000000 vRs485Task
+C:\Users\Admin\AppData\Local\Temp\cciJbAAS.s:3493   .text.vRs485Task:00000268 $d
+
+UNDEFINED SYMBOLS
+RAM
+__aeabi_ddiv
+__aeabi_dmul
+__aeabi_d2uiz
+atof
+__aeabi_i2d
+__aeabi_dadd
+GPIO_SetBits
+vTaskDelay
+uart3Write
+GPIO_ResetBits
+uart3Read
+iecProcVarReqPacket
+iecProcVarAnswerPacket
+iecProcVarReqPacketArg
+iecProcReqPacket
+iecIndProc
+iecOptionsAckPacket
+iecProcAddrAnswer
+iecProcExitPacket
+itoa1
+AskTime
+ParseAnswerData
+AskVoltA
+ParseAnswerVolt
+AskVoltB
+AskVoltC
+AskCurA
+ParseAnswerCur
+AskCurB
+AskCurC
+AskPowA
+ParseAnswerPow
+AskPowB
+AskPowC
+AskEnerge
+ParseAnswerEnerge
+uart3Init
+USART_DeInit
+xPortGetFreeHeapSize
+IWDG_ReloadCounter

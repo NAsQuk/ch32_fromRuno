@@ -1,0 +1,521 @@
+   1              		.cpu cortex-m3
+   2              		.arch armv7-m
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"stm32f10x_iwdg.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.section	.text.IWDG_WriteAccessCmd,"ax",%progbits
+  18              		.align	1
+  19              		.global	IWDG_WriteAccessCmd
+  20              		.syntax unified
+  21              		.thumb
+  22              		.thumb_func
+  24              	IWDG_WriteAccessCmd:
+  25              	.LFB27:
+  26              		.file 1 "common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c"
+   1:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** /**
+   2:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   ******************************************************************************
+   3:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @file    stm32f10x_iwdg.c
+   4:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @author  MCD Application Team
+   5:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @version V3.1.2
+   6:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @date    09/28/2009
+   7:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @brief   This file provides all the IWDG firmware functions.
+   8:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   ******************************************************************************
+   9:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @copy
+  10:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   *
+  11:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * THE PRESENT FIRMWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING CUSTOMERS
+  12:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER FOR THEM TO SAVE
+  13:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * TIME. AS A RESULT, STMICROELECTRONICS SHALL NOT BE HELD LIABLE FOR ANY
+  14:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES WITH RESPECT TO ANY CLAIMS ARISING
+  15:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * FROM THE CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE
+  16:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
+  17:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   *
+  18:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * <h2><center>&copy; COPYRIGHT 2009 STMicroelectronics</center></h2>
+  19:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   */ 
+  20:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** 
+  21:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** /* Includes ------------------------------------------------------------------*/
+  22:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** #include "stm32f10x_iwdg.h"
+  23:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** 
+  24:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** /** @addtogroup STM32F10x_StdPeriph_Driver
+  25:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @{
+  26:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   */
+  27:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** 
+  28:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** /** @defgroup IWDG 
+  29:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @brief IWDG driver modules
+  30:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @{
+  31:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   */ 
+  32:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** 
+  33:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** /** @defgroup IWDG_Private_TypesDefinitions
+  34:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @{
+  35:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   */
+  36:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** 
+  37:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** /**
+  38:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @}
+  39:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   */
+  40:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** 
+  41:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** /** @defgroup IWDG_Private_Defines
+  42:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @{
+  43:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   */ 
+  44:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** 
+  45:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** /* ---------------------- IWDG registers bit mask ----------------------------*/
+  46:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** 
+  47:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** /* KR register bit mask */
+  48:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** #define KR_KEY_Reload    ((uint16_t)0xAAAA)
+  49:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** #define KR_KEY_Enable    ((uint16_t)0xCCCC)
+  50:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** 
+  51:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** /**
+  52:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @}
+  53:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   */ 
+  54:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** 
+  55:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** /** @defgroup IWDG_Private_Macros
+  56:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @{
+  57:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   */
+  58:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** 
+  59:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** /**
+  60:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @}
+  61:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   */
+  62:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** 
+  63:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** /** @defgroup IWDG_Private_Variables
+  64:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @{
+  65:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   */
+  66:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** 
+  67:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** /**
+  68:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @}
+  69:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   */
+  70:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** 
+  71:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** /** @defgroup IWDG_Private_FunctionPrototypes
+  72:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @{
+  73:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   */
+  74:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** 
+  75:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** /**
+  76:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @}
+  77:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   */
+  78:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** 
+  79:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** /** @defgroup IWDG_Private_Functions
+  80:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @{
+  81:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   */
+  82:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** 
+  83:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** /**
+  84:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @brief  Enables or disables write access to IWDG_PR and IWDG_RLR registers.
+  85:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @param  IWDG_WriteAccess: new state of write access to IWDG_PR and IWDG_RLR registers.
+  86:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   *   This parameter can be one of the following values:
+  87:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   *     @arg IWDG_WriteAccess_Enable: Enable write access to IWDG_PR and IWDG_RLR registers
+  88:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   *     @arg IWDG_WriteAccess_Disable: Disable write access to IWDG_PR and IWDG_RLR registers
+  89:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @retval None
+  90:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   */
+  91:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** void IWDG_WriteAccessCmd(uint16_t IWDG_WriteAccess)
+  92:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** {
+  27              		.loc 1 92 1
+  28              		.cfi_startproc
+  29              		@ args = 0, pretend = 0, frame = 8
+  30              		@ frame_needed = 1, uses_anonymous_args = 0
+  31              		@ link register save eliminated.
+  32 0000 80B4     		push	{r7}
+  33              	.LCFI0:
+  34              		.cfi_def_cfa_offset 4
+  35              		.cfi_offset 7, -4
+  36 0002 83B0     		sub	sp, sp, #12
+  37              	.LCFI1:
+  38              		.cfi_def_cfa_offset 16
+  39 0004 00AF     		add	r7, sp, #0
+  40              	.LCFI2:
+  41              		.cfi_def_cfa_register 7
+  42 0006 0346     		mov	r3, r0
+  43 0008 FB80     		strh	r3, [r7, #6]	@ movhi
+  93:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   /* Check the parameters */
+  94:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   assert_param(IS_IWDG_WRITE_ACCESS(IWDG_WriteAccess));
+  95:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   IWDG->KR = IWDG_WriteAccess;
+  44              		.loc 1 95 7
+  45 000a 044A     		ldr	r2, .L2
+  46              		.loc 1 95 12
+  47 000c FB88     		ldrh	r3, [r7, #6]
+  48 000e 1360     		str	r3, [r2]
+  96:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** }
+  49              		.loc 1 96 1
+  50 0010 00BF     		nop
+  51 0012 0C37     		adds	r7, r7, #12
+  52              	.LCFI3:
+  53              		.cfi_def_cfa_offset 4
+  54 0014 BD46     		mov	sp, r7
+  55              	.LCFI4:
+  56              		.cfi_def_cfa_register 13
+  57              		@ sp needed
+  58 0016 80BC     		pop	{r7}
+  59              	.LCFI5:
+  60              		.cfi_restore 7
+  61              		.cfi_def_cfa_offset 0
+  62 0018 7047     		bx	lr
+  63              	.L3:
+  64 001a 00BF     		.align	2
+  65              	.L2:
+  66 001c 00300040 		.word	1073754112
+  67              		.cfi_endproc
+  68              	.LFE27:
+  70              		.section	.text.IWDG_SetPrescaler,"ax",%progbits
+  71              		.align	1
+  72              		.global	IWDG_SetPrescaler
+  73              		.syntax unified
+  74              		.thumb
+  75              		.thumb_func
+  77              	IWDG_SetPrescaler:
+  78              	.LFB28:
+  97:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** 
+  98:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** /**
+  99:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @brief  Sets IWDG Prescaler value.
+ 100:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @param  IWDG_Prescaler: specifies the IWDG Prescaler value.
+ 101:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   *   This parameter can be one of the following values:
+ 102:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   *     @arg IWDG_Prescaler_4: IWDG prescaler set to 4
+ 103:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   *     @arg IWDG_Prescaler_8: IWDG prescaler set to 8
+ 104:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   *     @arg IWDG_Prescaler_16: IWDG prescaler set to 16
+ 105:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   *     @arg IWDG_Prescaler_32: IWDG prescaler set to 32
+ 106:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   *     @arg IWDG_Prescaler_64: IWDG prescaler set to 64
+ 107:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   *     @arg IWDG_Prescaler_128: IWDG prescaler set to 128
+ 108:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   *     @arg IWDG_Prescaler_256: IWDG prescaler set to 256
+ 109:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @retval None
+ 110:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   */
+ 111:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** void IWDG_SetPrescaler(uint8_t IWDG_Prescaler)
+ 112:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** {
+  79              		.loc 1 112 1
+  80              		.cfi_startproc
+  81              		@ args = 0, pretend = 0, frame = 8
+  82              		@ frame_needed = 1, uses_anonymous_args = 0
+  83              		@ link register save eliminated.
+  84 0000 80B4     		push	{r7}
+  85              	.LCFI6:
+  86              		.cfi_def_cfa_offset 4
+  87              		.cfi_offset 7, -4
+  88 0002 83B0     		sub	sp, sp, #12
+  89              	.LCFI7:
+  90              		.cfi_def_cfa_offset 16
+  91 0004 00AF     		add	r7, sp, #0
+  92              	.LCFI8:
+  93              		.cfi_def_cfa_register 7
+  94 0006 0346     		mov	r3, r0
+  95 0008 FB71     		strb	r3, [r7, #7]
+ 113:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   /* Check the parameters */
+ 114:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   assert_param(IS_IWDG_PRESCALER(IWDG_Prescaler));
+ 115:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   IWDG->PR = IWDG_Prescaler;
+  96              		.loc 1 115 7
+  97 000a 044A     		ldr	r2, .L5
+  98              		.loc 1 115 12
+  99 000c FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 100 000e 5360     		str	r3, [r2, #4]
+ 116:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** }
+ 101              		.loc 1 116 1
+ 102 0010 00BF     		nop
+ 103 0012 0C37     		adds	r7, r7, #12
+ 104              	.LCFI9:
+ 105              		.cfi_def_cfa_offset 4
+ 106 0014 BD46     		mov	sp, r7
+ 107              	.LCFI10:
+ 108              		.cfi_def_cfa_register 13
+ 109              		@ sp needed
+ 110 0016 80BC     		pop	{r7}
+ 111              	.LCFI11:
+ 112              		.cfi_restore 7
+ 113              		.cfi_def_cfa_offset 0
+ 114 0018 7047     		bx	lr
+ 115              	.L6:
+ 116 001a 00BF     		.align	2
+ 117              	.L5:
+ 118 001c 00300040 		.word	1073754112
+ 119              		.cfi_endproc
+ 120              	.LFE28:
+ 122              		.section	.text.IWDG_SetReload,"ax",%progbits
+ 123              		.align	1
+ 124              		.global	IWDG_SetReload
+ 125              		.syntax unified
+ 126              		.thumb
+ 127              		.thumb_func
+ 129              	IWDG_SetReload:
+ 130              	.LFB29:
+ 117:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** 
+ 118:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** /**
+ 119:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @brief  Sets IWDG Reload value.
+ 120:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @param  Reload: specifies the IWDG Reload value.
+ 121:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   *   This parameter must be a number between 0 and 0x0FFF.
+ 122:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @retval None
+ 123:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   */
+ 124:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** void IWDG_SetReload(uint16_t Reload)
+ 125:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** {
+ 131              		.loc 1 125 1
+ 132              		.cfi_startproc
+ 133              		@ args = 0, pretend = 0, frame = 8
+ 134              		@ frame_needed = 1, uses_anonymous_args = 0
+ 135              		@ link register save eliminated.
+ 136 0000 80B4     		push	{r7}
+ 137              	.LCFI12:
+ 138              		.cfi_def_cfa_offset 4
+ 139              		.cfi_offset 7, -4
+ 140 0002 83B0     		sub	sp, sp, #12
+ 141              	.LCFI13:
+ 142              		.cfi_def_cfa_offset 16
+ 143 0004 00AF     		add	r7, sp, #0
+ 144              	.LCFI14:
+ 145              		.cfi_def_cfa_register 7
+ 146 0006 0346     		mov	r3, r0
+ 147 0008 FB80     		strh	r3, [r7, #6]	@ movhi
+ 126:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   /* Check the parameters */
+ 127:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   assert_param(IS_IWDG_RELOAD(Reload));
+ 128:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   IWDG->RLR = Reload;
+ 148              		.loc 1 128 7
+ 149 000a 044A     		ldr	r2, .L8
+ 150              		.loc 1 128 13
+ 151 000c FB88     		ldrh	r3, [r7, #6]
+ 152 000e 9360     		str	r3, [r2, #8]
+ 129:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** }
+ 153              		.loc 1 129 1
+ 154 0010 00BF     		nop
+ 155 0012 0C37     		adds	r7, r7, #12
+ 156              	.LCFI15:
+ 157              		.cfi_def_cfa_offset 4
+ 158 0014 BD46     		mov	sp, r7
+ 159              	.LCFI16:
+ 160              		.cfi_def_cfa_register 13
+ 161              		@ sp needed
+ 162 0016 80BC     		pop	{r7}
+ 163              	.LCFI17:
+ 164              		.cfi_restore 7
+ 165              		.cfi_def_cfa_offset 0
+ 166 0018 7047     		bx	lr
+ 167              	.L9:
+ 168 001a 00BF     		.align	2
+ 169              	.L8:
+ 170 001c 00300040 		.word	1073754112
+ 171              		.cfi_endproc
+ 172              	.LFE29:
+ 174              		.section	.text.IWDG_ReloadCounter,"ax",%progbits
+ 175              		.align	1
+ 176              		.global	IWDG_ReloadCounter
+ 177              		.syntax unified
+ 178              		.thumb
+ 179              		.thumb_func
+ 181              	IWDG_ReloadCounter:
+ 182              	.LFB30:
+ 130:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** 
+ 131:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** /**
+ 132:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @brief  Reloads IWDG counter with value defined in the reload register
+ 133:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   *   (write access to IWDG_PR and IWDG_RLR registers disabled).
+ 134:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @param  None
+ 135:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @retval None
+ 136:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   */
+ 137:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** void IWDG_ReloadCounter(void)
+ 138:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** {
+ 183              		.loc 1 138 1
+ 184              		.cfi_startproc
+ 185              		@ args = 0, pretend = 0, frame = 0
+ 186              		@ frame_needed = 1, uses_anonymous_args = 0
+ 187              		@ link register save eliminated.
+ 188 0000 80B4     		push	{r7}
+ 189              	.LCFI18:
+ 190              		.cfi_def_cfa_offset 4
+ 191              		.cfi_offset 7, -4
+ 192 0002 00AF     		add	r7, sp, #0
+ 193              	.LCFI19:
+ 194              		.cfi_def_cfa_register 7
+ 139:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   IWDG->KR = KR_KEY_Reload;
+ 195              		.loc 1 139 7
+ 196 0004 034B     		ldr	r3, .L11
+ 197              		.loc 1 139 12
+ 198 0006 4AF6AA22 		movw	r2, #43690
+ 199 000a 1A60     		str	r2, [r3]
+ 140:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** }
+ 200              		.loc 1 140 1
+ 201 000c 00BF     		nop
+ 202 000e BD46     		mov	sp, r7
+ 203              	.LCFI20:
+ 204              		.cfi_def_cfa_register 13
+ 205              		@ sp needed
+ 206 0010 80BC     		pop	{r7}
+ 207              	.LCFI21:
+ 208              		.cfi_restore 7
+ 209              		.cfi_def_cfa_offset 0
+ 210 0012 7047     		bx	lr
+ 211              	.L12:
+ 212              		.align	2
+ 213              	.L11:
+ 214 0014 00300040 		.word	1073754112
+ 215              		.cfi_endproc
+ 216              	.LFE30:
+ 218              		.section	.text.IWDG_Enable,"ax",%progbits
+ 219              		.align	1
+ 220              		.global	IWDG_Enable
+ 221              		.syntax unified
+ 222              		.thumb
+ 223              		.thumb_func
+ 225              	IWDG_Enable:
+ 226              	.LFB31:
+ 141:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** 
+ 142:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** /**
+ 143:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @brief  Enables IWDG (write access to IWDG_PR and IWDG_RLR registers disabled).
+ 144:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @param  None
+ 145:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @retval None
+ 146:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   */
+ 147:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** void IWDG_Enable(void)
+ 148:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** {
+ 227              		.loc 1 148 1
+ 228              		.cfi_startproc
+ 229              		@ args = 0, pretend = 0, frame = 0
+ 230              		@ frame_needed = 1, uses_anonymous_args = 0
+ 231              		@ link register save eliminated.
+ 232 0000 80B4     		push	{r7}
+ 233              	.LCFI22:
+ 234              		.cfi_def_cfa_offset 4
+ 235              		.cfi_offset 7, -4
+ 236 0002 00AF     		add	r7, sp, #0
+ 237              	.LCFI23:
+ 238              		.cfi_def_cfa_register 7
+ 149:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   IWDG->KR = KR_KEY_Enable;
+ 239              		.loc 1 149 7
+ 240 0004 034B     		ldr	r3, .L14
+ 241              		.loc 1 149 12
+ 242 0006 4CF6CC42 		movw	r2, #52428
+ 243 000a 1A60     		str	r2, [r3]
+ 150:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** }
+ 244              		.loc 1 150 1
+ 245 000c 00BF     		nop
+ 246 000e BD46     		mov	sp, r7
+ 247              	.LCFI24:
+ 248              		.cfi_def_cfa_register 13
+ 249              		@ sp needed
+ 250 0010 80BC     		pop	{r7}
+ 251              	.LCFI25:
+ 252              		.cfi_restore 7
+ 253              		.cfi_def_cfa_offset 0
+ 254 0012 7047     		bx	lr
+ 255              	.L15:
+ 256              		.align	2
+ 257              	.L14:
+ 258 0014 00300040 		.word	1073754112
+ 259              		.cfi_endproc
+ 260              	.LFE31:
+ 262              		.section	.text.IWDG_GetFlagStatus,"ax",%progbits
+ 263              		.align	1
+ 264              		.global	IWDG_GetFlagStatus
+ 265              		.syntax unified
+ 266              		.thumb
+ 267              		.thumb_func
+ 269              	IWDG_GetFlagStatus:
+ 270              	.LFB32:
+ 151:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** 
+ 152:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** /**
+ 153:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @brief  Checks whether the specified IWDG flag is set or not.
+ 154:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @param  IWDG_FLAG: specifies the flag to check.
+ 155:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   *   This parameter can be one of the following values:
+ 156:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   *     @arg IWDG_FLAG_PVU: Prescaler Value Update on going
+ 157:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   *     @arg IWDG_FLAG_RVU: Reload Value Update on going
+ 158:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   * @retval The new state of IWDG_FLAG (SET or RESET).
+ 159:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   */
+ 160:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** FlagStatus IWDG_GetFlagStatus(uint16_t IWDG_FLAG)
+ 161:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** {
+ 271              		.loc 1 161 1
+ 272              		.cfi_startproc
+ 273              		@ args = 0, pretend = 0, frame = 16
+ 274              		@ frame_needed = 1, uses_anonymous_args = 0
+ 275              		@ link register save eliminated.
+ 276 0000 80B4     		push	{r7}
+ 277              	.LCFI26:
+ 278              		.cfi_def_cfa_offset 4
+ 279              		.cfi_offset 7, -4
+ 280 0002 85B0     		sub	sp, sp, #20
+ 281              	.LCFI27:
+ 282              		.cfi_def_cfa_offset 24
+ 283 0004 00AF     		add	r7, sp, #0
+ 284              	.LCFI28:
+ 285              		.cfi_def_cfa_register 7
+ 286 0006 0346     		mov	r3, r0
+ 287 0008 FB80     		strh	r3, [r7, #6]	@ movhi
+ 162:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   FlagStatus bitstatus = RESET;
+ 288              		.loc 1 162 14
+ 289 000a 0023     		movs	r3, #0
+ 290 000c FB73     		strb	r3, [r7, #15]
+ 163:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   /* Check the parameters */
+ 164:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   assert_param(IS_IWDG_FLAG(IWDG_FLAG));
+ 165:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   if ((IWDG->SR & IWDG_FLAG) != (uint32_t)RESET)
+ 291              		.loc 1 165 12
+ 292 000e 084B     		ldr	r3, .L20
+ 293 0010 DA68     		ldr	r2, [r3, #12]
+ 294              		.loc 1 165 17
+ 295 0012 FB88     		ldrh	r3, [r7, #6]
+ 296 0014 1340     		ands	r3, r3, r2
+ 297              		.loc 1 165 6
+ 298 0016 002B     		cmp	r3, #0
+ 299 0018 02D0     		beq	.L17
+ 166:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   {
+ 167:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****     bitstatus = SET;
+ 300              		.loc 1 167 15
+ 301 001a 0123     		movs	r3, #1
+ 302 001c FB73     		strb	r3, [r7, #15]
+ 303 001e 01E0     		b	.L18
+ 304              	.L17:
+ 168:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   }
+ 169:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   else
+ 170:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   {
+ 171:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****     bitstatus = RESET;
+ 305              		.loc 1 171 15
+ 306 0020 0023     		movs	r3, #0
+ 307 0022 FB73     		strb	r3, [r7, #15]
+ 308              	.L18:
+ 172:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   }
+ 173:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   /* Return the flag status */
+ 174:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c ****   return bitstatus;
+ 309              		.loc 1 174 10
+ 310 0024 FB7B     		ldrb	r3, [r7, #15]	@ zero_extendqisi2
+ 175:common/lib.stm32/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c **** }
+ 311              		.loc 1 175 1
+ 312 0026 1846     		mov	r0, r3
+ 313 0028 1437     		adds	r7, r7, #20
+ 314              	.LCFI29:
+ 315              		.cfi_def_cfa_offset 4
+ 316 002a BD46     		mov	sp, r7
+ 317              	.LCFI30:
+ 318              		.cfi_def_cfa_register 13
+ 319              		@ sp needed
+ 320 002c 80BC     		pop	{r7}
+ 321              	.LCFI31:
+ 322              		.cfi_restore 7
+ 323              		.cfi_def_cfa_offset 0
+ 324 002e 7047     		bx	lr
+ 325              	.L21:
+ 326              		.align	2
+ 327              	.L20:
+ 328 0030 00300040 		.word	1073754112
+ 329              		.cfi_endproc
+ 330              	.LFE32:
+ 332              		.text
+ 333              	.Letext0:
+ 334              		.file 2 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 335              		.file 3 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 336              		.file 4 "common/lib.stm32/CMSIS/Core/CM3/stm32f10x.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 stm32f10x_iwdg.c
+C:\Users\Admin\AppData\Local\Temp\cc76MV3E.s:18     .text.IWDG_WriteAccessCmd:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc76MV3E.s:24     .text.IWDG_WriteAccessCmd:00000000 IWDG_WriteAccessCmd
+C:\Users\Admin\AppData\Local\Temp\cc76MV3E.s:66     .text.IWDG_WriteAccessCmd:0000001c $d
+C:\Users\Admin\AppData\Local\Temp\cc76MV3E.s:71     .text.IWDG_SetPrescaler:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc76MV3E.s:77     .text.IWDG_SetPrescaler:00000000 IWDG_SetPrescaler
+C:\Users\Admin\AppData\Local\Temp\cc76MV3E.s:118    .text.IWDG_SetPrescaler:0000001c $d
+C:\Users\Admin\AppData\Local\Temp\cc76MV3E.s:123    .text.IWDG_SetReload:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc76MV3E.s:129    .text.IWDG_SetReload:00000000 IWDG_SetReload
+C:\Users\Admin\AppData\Local\Temp\cc76MV3E.s:170    .text.IWDG_SetReload:0000001c $d
+C:\Users\Admin\AppData\Local\Temp\cc76MV3E.s:175    .text.IWDG_ReloadCounter:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc76MV3E.s:181    .text.IWDG_ReloadCounter:00000000 IWDG_ReloadCounter
+C:\Users\Admin\AppData\Local\Temp\cc76MV3E.s:214    .text.IWDG_ReloadCounter:00000014 $d
+C:\Users\Admin\AppData\Local\Temp\cc76MV3E.s:219    .text.IWDG_Enable:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc76MV3E.s:225    .text.IWDG_Enable:00000000 IWDG_Enable
+C:\Users\Admin\AppData\Local\Temp\cc76MV3E.s:258    .text.IWDG_Enable:00000014 $d
+C:\Users\Admin\AppData\Local\Temp\cc76MV3E.s:263    .text.IWDG_GetFlagStatus:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc76MV3E.s:269    .text.IWDG_GetFlagStatus:00000000 IWDG_GetFlagStatus
+C:\Users\Admin\AppData\Local\Temp\cc76MV3E.s:328    .text.IWDG_GetFlagStatus:00000030 $d
+
+NO UNDEFINED SYMBOLS

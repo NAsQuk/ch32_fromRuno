@@ -1,0 +1,1182 @@
+   1              		.cpu cortex-m3
+   2              		.arch armv7-m
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"gprscon.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.global	GprsIdleMSecCSQ
+  18              		.section	.bss.GprsIdleMSecCSQ,"aw",%nobits
+  19              		.align	2
+  22              	GprsIdleMSecCSQ:
+  23 0000 00000000 		.space	4
+  24              		.global	GprsConnectionsAttempt
+  25              		.section	.bss.GprsConnectionsAttempt,"aw",%nobits
+  26              		.align	2
+  29              	GprsConnectionsAttempt:
+  30 0000 00000000 		.space	4
+  31              		.global	gprssize
+  32              		.section	.bss.gprssize,"aw",%nobits
+  33              		.align	2
+  36              	gprssize:
+  37 0000 00000000 		.space	4
+  38              		.global	restart
+  39              		.section	.bss.restart,"aw",%nobits
+  42              	restart:
+  43 0000 00       		.space	1
+  44              		.global	FlagNoModem_Journal
+  45              		.section	.bss.FlagNoModem_Journal,"aw",%nobits
+  46              		.align	2
+  49              	FlagNoModem_Journal:
+  50 0000 00000000 		.space	4
+  51              		.global	gprsbuf
+  52              		.section	.bss.gprsbuf,"aw",%nobits
+  53              		.align	2
+  56              	gprsbuf:
+  57 0000 00000000 		.space	256
+  57      00000000 
+  57      00000000 
+  57      00000000 
+  57      00000000 
+  58              		.section	.text.GprsIdleIncMSec,"ax",%progbits
+  59              		.align	1
+  60              		.global	GprsIdleIncMSec
+  61              		.syntax unified
+  62              		.thumb
+  63              		.thumb_func
+  65              	GprsIdleIncMSec:
+  66              	.LFB27:
+  67              		.file 1 "tasks/gprscon.c"
+   1:tasks/gprscon.c **** #include <stdlib.h>
+   2:tasks/gprscon.c **** #include <stdarg.h>
+   3:tasks/gprscon.c **** 
+   4:tasks/gprscon.c **** #include "typedef.h"
+   5:tasks/gprscon.c **** #include "FreeRTOS.h"
+   6:tasks/gprscon.c **** #include "task.h"
+   7:tasks/gprscon.c **** #include "usart2.h"
+   8:tasks/gprscon.c **** #include "gprscon.h"
+   9:tasks/gprscon.c **** #include "rvnettcp.h"
+  10:tasks/gprscon.c **** #include "usermemory.h"
+  11:tasks/gprscon.c **** 
+  12:tasks/gprscon.c **** #include "board.h"
+  13:tasks/gprscon.c **** #include "modem.h"
+  14:tasks/gprscon.c **** #include "led.h"
+  15:tasks/gprscon.c **** 
+  16:tasks/gprscon.c **** #define MODEM_DISABLE { GPIO_SetBits(GPIOB, GPIO_Pin_0);}  //инверсия SW ON
+  17:tasks/gprscon.c **** #define  MODEM_ENABLE {GPIO_ResetBits(GPIOB, GPIO_Pin_0); }
+  18:tasks/gprscon.c **** 
+  19:tasks/gprscon.c **** //#define MODEM_DISABLE { GPIO_ResetBits(GPIOB, GPIO_Pin_0);}  //для старого корпуса (версия 4)
+  20:tasks/gprscon.c **** //#define  MODEM_ENABLE {GPIO_SetBits(GPIOB, GPIO_Pin_0); }
+  21:tasks/gprscon.c **** 
+  22:tasks/gprscon.c **** #define CSQ_TIMEOUT_MS		( 30000)
+  23:tasks/gprscon.c **** #define GPRS_IDLE_TIMEOUT_MS      ( 60*4*1000) // 4 min idle and restart
+  24:tasks/gprscon.c **** #define GPRS_BUF_SIZE      		   256
+  25:tasks/gprscon.c **** //extern int CountAnswer;
+  26:tasks/gprscon.c **** //extern uint8 sio_buf2[1024];
+  27:tasks/gprscon.c **** //extern volatile uint16 bufsize2;
+  28:tasks/gprscon.c **** 
+  29:tasks/gprscon.c **** uint32 GprsIdleMSecCSQ;
+  30:tasks/gprscon.c **** uint32 GprsConnectionsAttempt;
+  31:tasks/gprscon.c **** 
+  32:tasks/gprscon.c **** int gprssize;
+  33:tasks/gprscon.c **** bool restart;
+  34:tasks/gprscon.c **** int FlagNoModem_Journal;
+  35:tasks/gprscon.c **** uint8 gprsbuf[GPRS_BUF_SIZE];
+  36:tasks/gprscon.c **** 
+  37:tasks/gprscon.c **** void GprsIdleIncMSec() {
+  68              		.loc 1 37 24
+  69              		.cfi_startproc
+  70              		@ args = 0, pretend = 0, frame = 0
+  71              		@ frame_needed = 1, uses_anonymous_args = 0
+  72              		@ link register save eliminated.
+  73 0000 80B4     		push	{r7}
+  74              	.LCFI0:
+  75              		.cfi_def_cfa_offset 4
+  76              		.cfi_offset 7, -4
+  77 0002 00AF     		add	r7, sp, #0
+  78              	.LCFI1:
+  79              		.cfi_def_cfa_register 7
+  38:tasks/gprscon.c **** 	GprsIdleMSec++;
+  80              		.loc 1 38 14
+  81 0004 064B     		ldr	r3, .L2
+  82 0006 1B68     		ldr	r3, [r3]
+  83 0008 0133     		adds	r3, r3, #1
+  84 000a 054A     		ldr	r2, .L2
+  85 000c 1360     		str	r3, [r2]
+  39:tasks/gprscon.c **** 	GprsIdleMSecCSQ++;
+  86              		.loc 1 39 17
+  87 000e 054B     		ldr	r3, .L2+4
+  88 0010 1B68     		ldr	r3, [r3]
+  89 0012 0133     		adds	r3, r3, #1
+  90 0014 034A     		ldr	r2, .L2+4
+  91 0016 1360     		str	r3, [r2]
+  40:tasks/gprscon.c **** }
+  92              		.loc 1 40 1
+  93 0018 00BF     		nop
+  94 001a BD46     		mov	sp, r7
+  95              	.LCFI2:
+  96              		.cfi_def_cfa_register 13
+  97              		@ sp needed
+  98 001c 80BC     		pop	{r7}
+  99              	.LCFI3:
+ 100              		.cfi_restore 7
+ 101              		.cfi_def_cfa_offset 0
+ 102 001e 7047     		bx	lr
+ 103              	.L3:
+ 104              		.align	2
+ 105              	.L2:
+ 106 0020 00000000 		.word	GprsIdleMSec
+ 107 0024 00000000 		.word	GprsIdleMSecCSQ
+ 108              		.cfi_endproc
+ 109              	.LFE27:
+ 111              		.section	.rodata
+ 112              		.align	2
+ 113              	.LC0:
+ 114 0000 47534D3A 		.ascii	"GSM:\356\370\350\341\352\340 \340\344\340\357\362\345"
+ 114      EEF8E8E1 
+ 114      EAE020E0 
+ 114      E4E0EFF2 
+ 114      E5
+ 115 0011 F0E000   		.ascii	"\360\340\000"
+ 116              		.align	2
+ 117              	.LC1:
+ 118 0014 41542B51 		.ascii	"AT+QPOWD\015\012\000"
+ 118      504F5744 
+ 118      0D0A00
+ 119 001f 00       		.align	2
+ 120              	.LC2:
+ 121 0020 41542B51 		.ascii	"AT+QPOWD=0\015\012\000"
+ 121      504F5744 
+ 121      3D300D0A 
+ 121      00
+ 122 002d 000000   		.align	2
+ 123              	.LC3:
+ 124 0030 CEF8E8E1 		.ascii	"\316\370\350\341\352\340 \340\344\340\357\362\345\360"
+ 124      EAE020E0 
+ 124      E4E0EFF2 
+ 124      E5F0
+ 125 003e E000     		.ascii	"\340\000"
+ 126              		.section	.text.vGprsConTask,"ax",%progbits
+ 127              		.align	1
+ 128              		.global	vGprsConTask
+ 129              		.syntax unified
+ 130              		.thumb
+ 131              		.thumb_func
+ 133              	vGprsConTask:
+ 134              	.LFB28:
+  41:tasks/gprscon.c **** 
+  42:tasks/gprscon.c **** void vGprsConTask(void *pvParameters) {
+ 135              		.loc 1 42 39
+ 136              		.cfi_startproc
+ 137              		@ Naked Function: prologue and epilogue provided by programmer.
+ 138              		@ args = 0, pretend = 0, frame = 0
+ 139              		@ frame_needed = 1, uses_anonymous_args = 0
+  43:tasks/gprscon.c **** 	(void) pvParameters;
+  44:tasks/gprscon.c **** 
+  45:tasks/gprscon.c **** 	//vTaskDelay(500);
+  46:tasks/gprscon.c **** 	GprsConnectionsAttempt = 0;
+ 140              		.loc 1 46 25
+ 141 0000 924B     		ldr	r3, .L35
+ 142 0002 0022     		movs	r2, #0
+ 143 0004 1A60     		str	r2, [r3]
+ 144              	.L33:
+  47:tasks/gprscon.c **** 	int heapSize = 0;
+  48:tasks/gprscon.c **** 	while (1) {
+  49:tasks/gprscon.c **** 		GprsConnectionsAttempt++;
+ 145              		.loc 1 49 25
+ 146 0006 914B     		ldr	r3, .L35
+ 147 0008 1B68     		ldr	r3, [r3]
+ 148 000a 0133     		adds	r3, r3, #1
+ 149 000c 8F4A     		ldr	r2, .L35
+ 150 000e 1360     		str	r3, [r2]
+  50:tasks/gprscon.c **** 		LedConnect = 0;
+ 151              		.loc 1 50 14
+ 152 0010 8F4B     		ldr	r3, .L35+4
+ 153 0012 0022     		movs	r2, #0
+ 154 0014 1A70     		strb	r2, [r3]
+  51:tasks/gprscon.c **** 		/*if (LedSIM)
+  52:tasks/gprscon.c **** 		 {   LedAPN = 0;
+  53:tasks/gprscon.c **** 		 LedNoModem = 0;
+  54:tasks/gprscon.c **** 
+  55:tasks/gprscon.c **** 		 }*/
+  56:tasks/gprscon.c **** 		/*else if (LedAPN)
+  57:tasks/gprscon.c **** 		 {
+  58:tasks/gprscon.c **** 		 LedNoModem = 0;
+  59:tasks/gprscon.c **** 
+  60:tasks/gprscon.c **** 		 }*/
+  61:tasks/gprscon.c **** 		if ((LedNoModem) || (LedSIM) || (LedAPN)) {
+ 155              		.loc 1 61 7
+ 156 0016 8F4B     		ldr	r3, .L35+8
+ 157 0018 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 158              		.loc 1 61 6
+ 159 001a 002B     		cmp	r3, #0
+ 160 001c 07D1     		bne	.L5
+ 161              		.loc 1 61 20 discriminator 1
+ 162 001e 8E4B     		ldr	r3, .L35+12
+ 163 0020 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 164 0022 002B     		cmp	r3, #0
+ 165 0024 03D1     		bne	.L5
+ 166              		.loc 1 61 32 discriminator 2
+ 167 0026 8D4B     		ldr	r3, .L35+16
+ 168 0028 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 169 002a 002B     		cmp	r3, #0
+ 170 002c 23D0     		beq	.L6
+ 171              	.L5:
+  62:tasks/gprscon.c **** 			//LedNoModem = 1;
+  63:tasks/gprscon.c **** 			if (!LedNoModem_Journal) {
+ 172              		.loc 1 63 8
+ 173 002e 8C4B     		ldr	r3, .L35+20
+ 174 0030 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 175 0032 83F00103 		eor	r3, r3, #1
+ 176 0036 DBB2     		uxtb	r3, r3
+ 177              		.loc 1 63 7
+ 178 0038 002B     		cmp	r3, #0
+ 179 003a 05D0     		beq	.L7
+ 180              	.LBB2:
+  64:tasks/gprscon.c **** 				JrnlWrite("GSM:ошибка адаптера");
+ 181              		.loc 1 64 5
+ 182 003c 8948     		ldr	r0, .L35+24
+ 183 003e 8A4B     		ldr	r3, .L35+28
+ 184 0040 9847     		blx	r3
+ 185              	.LVL0:
+  65:tasks/gprscon.c **** 				LedNoModem_Journal = 1;
+ 186              		.loc 1 65 24
+ 187 0042 874B     		ldr	r3, .L35+20
+ 188 0044 0122     		movs	r2, #1
+ 189 0046 1A70     		strb	r2, [r3]
+ 190              	.L7:
+ 191              	.LBE2:
+  66:tasks/gprscon.c **** 
+  67:tasks/gprscon.c **** 			}
+  68:tasks/gprscon.c **** 
+  69:tasks/gprscon.c **** 			GprsIdleMSec = 0;
+ 192              		.loc 1 69 17
+ 193 0048 884B     		ldr	r3, .L35+32
+ 194 004a 0022     		movs	r2, #0
+ 195 004c 1A60     		str	r2, [r3]
+  70:tasks/gprscon.c **** 			LedNoModem = 0;
+ 196              		.loc 1 70 15
+ 197 004e 814B     		ldr	r3, .L35+8
+ 198 0050 0022     		movs	r2, #0
+ 199 0052 1A70     		strb	r2, [r3]
+  71:tasks/gprscon.c **** 			LedSIM = 0;
+ 200              		.loc 1 71 11
+ 201 0054 804B     		ldr	r3, .L35+12
+ 202 0056 0022     		movs	r2, #0
+ 203 0058 1A70     		strb	r2, [r3]
+  72:tasks/gprscon.c **** 			LedAPN = 0;
+ 204              		.loc 1 72 11
+ 205 005a 804B     		ldr	r3, .L35+16
+ 206 005c 0022     		movs	r2, #0
+ 207 005e 1A70     		strb	r2, [r3]
+  73:tasks/gprscon.c **** 
+  74:tasks/gprscon.c **** 			RAM.CSQ = 0;
+ 208              		.loc 1 74 12
+ 209 0060 834B     		ldr	r3, .L35+36
+ 210 0062 0022     		movs	r2, #0
+ 211 0064 83F83E20 		strb	r2, [r3, #62]
+ 212 0068 0022     		movs	r2, #0
+ 213 006a 83F83F20 		strb	r2, [r3, #63]
+  75:tasks/gprscon.c **** 			GprsIdleMSec = GPRS_IDLE_TIMEOUT_MS + 1;
+ 214              		.loc 1 75 17
+ 215 006e 7F4B     		ldr	r3, .L35+32
+ 216 0070 804A     		ldr	r2, .L35+40
+ 217 0072 1A60     		str	r2, [r3]
+ 218 0074 42E0     		b	.L8
+ 219              	.L6:
+  76:tasks/gprscon.c **** 			//MODEM_DISABLE;
+  77:tasks/gprscon.c **** 		} else {
+  78:tasks/gprscon.c **** 			//ModemInit();
+  79:tasks/gprscon.c **** 
+  80:tasks/gprscon.c **** 			if (!LedNoModem) {
+ 220              		.loc 1 80 8
+ 221 0076 774B     		ldr	r3, .L35+8
+ 222 0078 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 223 007a 83F00103 		eor	r3, r3, #1
+ 224 007e DBB2     		uxtb	r3, r3
+ 225              		.loc 1 80 7
+ 226 0080 002B     		cmp	r3, #0
+ 227 0082 01D0     		beq	.L9
+  81:tasks/gprscon.c **** 				ModemInit();
+ 228              		.loc 1 81 5
+ 229 0084 7C4B     		ldr	r3, .L35+44
+ 230 0086 9847     		blx	r3
+ 231              	.LVL1:
+ 232              	.L9:
+  82:tasks/gprscon.c **** 			}
+  83:tasks/gprscon.c **** 
+  84:tasks/gprscon.c **** 			if ((!LedSIM) && (!LedAPN) && (!LedNoModem)
+ 233              		.loc 1 84 9
+ 234 0088 734B     		ldr	r3, .L35+12
+ 235 008a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 236 008c 83F00103 		eor	r3, r3, #1
+ 237 0090 DBB2     		uxtb	r3, r3
+ 238              		.loc 1 84 7
+ 239 0092 002B     		cmp	r3, #0
+ 240 0094 1BD0     		beq	.L10
+ 241              		.loc 1 84 22 discriminator 1
+ 242 0096 714B     		ldr	r3, .L35+16
+ 243 0098 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 244 009a 83F00103 		eor	r3, r3, #1
+ 245 009e DBB2     		uxtb	r3, r3
+ 246              		.loc 1 84 18 discriminator 1
+ 247 00a0 002B     		cmp	r3, #0
+ 248 00a2 14D0     		beq	.L10
+ 249              		.loc 1 84 35 discriminator 2
+ 250 00a4 6B4B     		ldr	r3, .L35+8
+ 251 00a6 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 252 00a8 83F00103 		eor	r3, r3, #1
+ 253 00ac DBB2     		uxtb	r3, r3
+ 254              		.loc 1 84 31 discriminator 2
+ 255 00ae 002B     		cmp	r3, #0
+ 256 00b0 0DD0     		beq	.L10
+  85:tasks/gprscon.c **** 					&& (GprsIdleMSec < GPRS_IDLE_TIMEOUT_MS)) // если нет ошибок
+ 257              		.loc 1 85 23
+ 258 00b2 6E4B     		ldr	r3, .L35+32
+ 259 00b4 1B68     		ldr	r3, [r3]
+ 260              		.loc 1 85 6
+ 261 00b6 714A     		ldr	r2, .L35+48
+ 262 00b8 9342     		cmp	r3, r2
+ 263 00ba 08D8     		bhi	.L10
+  86:tasks/gprscon.c **** 					{
+  87:tasks/gprscon.c **** 				LedConnect = 1;
+ 264              		.loc 1 87 16
+ 265 00bc 644B     		ldr	r3, .L35+4
+ 266 00be 0122     		movs	r2, #1
+ 267 00c0 1A70     		strb	r2, [r3]
+  88:tasks/gprscon.c **** 				LedReg = 0;
+ 268              		.loc 1 88 12
+ 269 00c2 6F4B     		ldr	r3, .L35+52
+ 270 00c4 0022     		movs	r2, #0
+ 271 00c6 1A70     		strb	r2, [r3]
+  89:tasks/gprscon.c **** 				LedNoModem_Journal = 0;
+ 272              		.loc 1 89 24
+ 273 00c8 654B     		ldr	r3, .L35+20
+ 274 00ca 0022     		movs	r2, #0
+ 275 00cc 1A70     		strb	r2, [r3]
+ 276              	.L10:
+  90:tasks/gprscon.c **** 
+  91:tasks/gprscon.c **** 			}
+  92:tasks/gprscon.c **** 
+  93:tasks/gprscon.c **** 			if (LedReg) {
+ 277              		.loc 1 93 8
+ 278 00ce 6C4B     		ldr	r3, .L35+52
+ 279 00d0 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 280              		.loc 1 93 7
+ 281 00d2 002B     		cmp	r3, #0
+ 282 00d4 00F04D81 		beq	.L12
+  94:tasks/gprscon.c **** 				GprsIdleMSec = 0;
+ 283              		.loc 1 94 18
+ 284 00d8 644B     		ldr	r3, .L35+32
+ 285 00da 0022     		movs	r2, #0
+ 286 00dc 1A60     		str	r2, [r3]
+  95:tasks/gprscon.c **** 				LedNoModem = 0;
+ 287              		.loc 1 95 16
+ 288 00de 5D4B     		ldr	r3, .L35+8
+ 289 00e0 0022     		movs	r2, #0
+ 290 00e2 1A70     		strb	r2, [r3]
+  96:tasks/gprscon.c **** 
+  97:tasks/gprscon.c **** 				RAM.CSQ = 0;
+ 291              		.loc 1 97 13
+ 292 00e4 624B     		ldr	r3, .L35+36
+ 293 00e6 0022     		movs	r2, #0
+ 294 00e8 83F83E20 		strb	r2, [r3, #62]
+ 295 00ec 0022     		movs	r2, #0
+ 296 00ee 83F83F20 		strb	r2, [r3, #63]
+  98:tasks/gprscon.c **** 				MODEM_DISABLE
+ 297              		.loc 1 98 5
+ 298 00f2 0121     		movs	r1, #1
+ 299 00f4 6348     		ldr	r0, .L35+56
+ 300 00f6 644B     		ldr	r3, .L35+60
+ 301 00f8 9847     		blx	r3
+ 302              	.LVL2:
+  99:tasks/gprscon.c **** 				;
+ 100:tasks/gprscon.c **** 
+ 101:tasks/gprscon.c **** 				break;
+ 303              		.loc 1 101 5
+ 304 00fa A3E1     		b	.L34
+ 305              	.L8:
+ 102:tasks/gprscon.c **** 			}
+ 103:tasks/gprscon.c **** 
+ 104:tasks/gprscon.c **** 		}
+ 105:tasks/gprscon.c **** 		while ((!LedSIM) && (!LedAPN) && (!LedNoModem)) {
+ 306              		.loc 1 105 9
+ 307 00fc 39E1     		b	.L12
+ 308              	.L27:
+ 106:tasks/gprscon.c **** 
+ 107:tasks/gprscon.c **** 			if (GprsIdleMSec <= GPRS_IDLE_TIMEOUT_MS) //если есть обмены, всё хорошо
+ 309              		.loc 1 107 21
+ 310 00fe 5B4B     		ldr	r3, .L35+32
+ 311 0100 1B68     		ldr	r3, [r3]
+ 312              		.loc 1 107 7
+ 313 0102 624A     		ldr	r2, .L35+64
+ 314 0104 9342     		cmp	r3, r2
+ 315 0106 48D8     		bhi	.L13
+ 108:tasks/gprscon.c **** 			{
+ 109:tasks/gprscon.c **** 				BKP_WriteBackupRegister(BKP_DR7, 28);
+ 316              		.loc 1 109 5
+ 317 0108 1C21     		movs	r1, #28
+ 318 010a 1C20     		movs	r0, #28
+ 319 010c 604B     		ldr	r3, .L35+68
+ 320 010e 9847     		blx	r3
+ 321              	.LVL3:
+ 110:tasks/gprscon.c **** 				gprssize = ModemReceiveData(gprsbuf, GPRS_BUF_SIZE);
+ 322              		.loc 1 110 16
+ 323 0110 4FF48071 		mov	r1, #256
+ 324 0114 5F48     		ldr	r0, .L35+72
+ 325 0116 604B     		ldr	r3, .L35+76
+ 326 0118 9847     		blx	r3
+ 327              	.LVL4:
+ 328 011a 0346     		mov	r3, r0
+ 329              		.loc 1 110 14
+ 330 011c 5F4A     		ldr	r2, .L35+80
+ 331 011e 1360     		str	r3, [r2]
+ 111:tasks/gprscon.c **** 				heapSize = xPortGetFreeHeapSize();
+ 332              		.loc 1 111 16
+ 333 0120 5F4B     		ldr	r3, .L35+84
+ 334 0122 9847     		blx	r3
+ 335              	.LVL5:
+ 112:tasks/gprscon.c **** 				heapSize += 0;
+ 113:tasks/gprscon.c **** 
+ 114:tasks/gprscon.c **** 				if (gprssize != 0) {
+ 336              		.loc 1 114 18
+ 337 0124 5D4B     		ldr	r3, .L35+80
+ 338 0126 1B68     		ldr	r3, [r3]
+ 339              		.loc 1 114 8
+ 340 0128 002B     		cmp	r3, #0
+ 341 012a 36D0     		beq	.L13
+ 115:tasks/gprscon.c **** 					LedReceive = 1;
+ 342              		.loc 1 115 17
+ 343 012c 5D4B     		ldr	r3, .L35+88
+ 344 012e 0122     		movs	r2, #1
+ 345 0130 1A70     		strb	r2, [r3]
+ 116:tasks/gprscon.c **** 					gprssize = RVnetTcpSlaveProcess(gprsbuf, gprssize, 1);
+ 346              		.loc 1 116 17
+ 347 0132 5A4B     		ldr	r3, .L35+80
+ 348 0134 1B68     		ldr	r3, [r3]
+ 349 0136 DBB2     		uxtb	r3, r3
+ 350 0138 0122     		movs	r2, #1
+ 351 013a 1946     		mov	r1, r3
+ 352 013c 5548     		ldr	r0, .L35+72
+ 353 013e 5A4B     		ldr	r3, .L35+92
+ 354 0140 9847     		blx	r3
+ 355              	.LVL6:
+ 356 0142 0346     		mov	r3, r0
+ 357 0144 1A46     		mov	r2, r3
+ 358              		.loc 1 116 15
+ 359 0146 554B     		ldr	r3, .L35+80
+ 360 0148 1A60     		str	r2, [r3]
+ 117:tasks/gprscon.c **** 					if (DeviceID == 4) {
+ 361              		.loc 1 117 19
+ 362 014a 584B     		ldr	r3, .L35+96
+ 363 014c 1B68     		ldr	r3, [r3]
+ 364              		.loc 1 117 9
+ 365 014e 042B     		cmp	r3, #4
+ 366 0150 05D1     		bne	.L14
+ 118:tasks/gprscon.c **** 						gprsbuf[gprssize + 1] = '\r';
+ 367              		.loc 1 118 24
+ 368 0152 524B     		ldr	r3, .L35+80
+ 369 0154 1B68     		ldr	r3, [r3]
+ 370 0156 0133     		adds	r3, r3, #1
+ 371              		.loc 1 118 29
+ 372 0158 4E4A     		ldr	r2, .L35+72
+ 373 015a 0D21     		movs	r1, #13
+ 374 015c D154     		strb	r1, [r2, r3]
+ 375              	.L14:
+ 119:tasks/gprscon.c **** 					}
+ 120:tasks/gprscon.c **** 					heapSize = xPortGetFreeHeapSize();
+ 376              		.loc 1 120 17
+ 377 015e 504B     		ldr	r3, .L35+84
+ 378 0160 9847     		blx	r3
+ 379              	.LVL7:
+ 121:tasks/gprscon.c **** 					heapSize += 0;
+ 122:tasks/gprscon.c **** 					if (gprssize != 0) {
+ 380              		.loc 1 122 19
+ 381 0162 4E4B     		ldr	r3, .L35+80
+ 382 0164 1B68     		ldr	r3, [r3]
+ 383              		.loc 1 122 9
+ 384 0166 002B     		cmp	r3, #0
+ 385 0168 17D0     		beq	.L13
+ 123:tasks/gprscon.c **** 						LedSend = 1;
+ 386              		.loc 1 123 15
+ 387 016a 514B     		ldr	r3, .L35+100
+ 388 016c 0122     		movs	r2, #1
+ 389 016e 1A70     		strb	r2, [r3]
+ 124:tasks/gprscon.c **** 						ModemSendData(gprsbuf, gprssize, numRD);
+ 390              		.loc 1 124 7
+ 391 0170 4A4B     		ldr	r3, .L35+80
+ 392 0172 1B68     		ldr	r3, [r3]
+ 393 0174 DBB2     		uxtb	r3, r3
+ 394 0176 4F4A     		ldr	r2, .L35+104
+ 395 0178 1268     		ldr	r2, [r2]
+ 396 017a 1946     		mov	r1, r3
+ 397 017c 4548     		ldr	r0, .L35+72
+ 398 017e 4E4B     		ldr	r3, .L35+108
+ 399 0180 9847     		blx	r3
+ 400              	.LVL8:
+ 125:tasks/gprscon.c **** 						heapSize = xPortGetFreeHeapSize();
+ 401              		.loc 1 125 18
+ 402 0182 474B     		ldr	r3, .L35+84
+ 403 0184 9847     		blx	r3
+ 404              	.LVL9:
+ 126:tasks/gprscon.c **** 						heapSize += 0;
+ 127:tasks/gprscon.c **** 						portENTER_CRITICAL();
+ 405              		.loc 1 127 7
+ 406 0186 4D4B     		ldr	r3, .L35+112
+ 407 0188 9847     		blx	r3
+ 408              	.LVL10:
+ 128:tasks/gprscon.c **** 						{
+ 129:tasks/gprscon.c **** 							GprsIdleMSec = 0;
+ 409              		.loc 1 129 21
+ 410 018a 384B     		ldr	r3, .L35+32
+ 411 018c 0022     		movs	r2, #0
+ 412 018e 1A60     		str	r2, [r3]
+ 130:tasks/gprscon.c **** 							GprsIdleMSecCSQ = 0;
+ 413              		.loc 1 130 24
+ 414 0190 4B4B     		ldr	r3, .L35+116
+ 415 0192 0022     		movs	r2, #0
+ 416 0194 1A60     		str	r2, [r3]
+ 131:tasks/gprscon.c **** 
+ 132:tasks/gprscon.c **** 						}
+ 133:tasks/gprscon.c **** 						portEXIT_CRITICAL();
+ 417              		.loc 1 133 7
+ 418 0196 4B4B     		ldr	r3, .L35+120
+ 419 0198 9847     		blx	r3
+ 420              	.LVL11:
+ 421              	.L13:
+ 134:tasks/gprscon.c **** 					}
+ 135:tasks/gprscon.c **** 				}
+ 136:tasks/gprscon.c **** 			}
+ 137:tasks/gprscon.c **** 			if (GprsIdleMSec > GPRS_IDLE_TIMEOUT_MS) //перегрузка (если нет обменов больше 4 мин)
+ 422              		.loc 1 137 21
+ 423 019a 344B     		ldr	r3, .L35+32
+ 424 019c 1B68     		ldr	r3, [r3]
+ 425              		.loc 1 137 7
+ 426 019e 3B4A     		ldr	r2, .L35+64
+ 427 01a0 9342     		cmp	r3, r2
+ 428 01a2 40F2D880 		bls	.L15
+ 138:tasks/gprscon.c **** 			{
+ 139:tasks/gprscon.c **** 
+ 140:tasks/gprscon.c **** 				RAM.CSQ = 0;
+ 429              		.loc 1 140 13
+ 430 01a6 324B     		ldr	r3, .L35+36
+ 431 01a8 0022     		movs	r2, #0
+ 432 01aa 83F83E20 		strb	r2, [r3, #62]
+ 433 01ae 0022     		movs	r2, #0
+ 434 01b0 83F83F20 		strb	r2, [r3, #63]
+ 141:tasks/gprscon.c **** 
+ 142:tasks/gprscon.c **** 				GprsIdleMSec = 0;
+ 435              		.loc 1 142 18
+ 436 01b4 2D4B     		ldr	r3, .L35+32
+ 437 01b6 0022     		movs	r2, #0
+ 438 01b8 1A60     		str	r2, [r3]
+ 143:tasks/gprscon.c **** 				LedConnect = 0;
+ 439              		.loc 1 143 16
+ 440 01ba 254B     		ldr	r3, .L35+4
+ 441 01bc 0022     		movs	r2, #0
+ 442 01be 1A70     		strb	r2, [r3]
+ 144:tasks/gprscon.c **** 				LedReg = 0;
+ 443              		.loc 1 144 12
+ 444 01c0 2F4B     		ldr	r3, .L35+52
+ 445 01c2 0022     		movs	r2, #0
+ 446 01c4 1A70     		strb	r2, [r3]
+ 145:tasks/gprscon.c **** 
+ 146:tasks/gprscon.c **** 				if (DeviceID == 1) {
+ 447              		.loc 1 146 18
+ 448 01c6 394B     		ldr	r3, .L35+96
+ 449 01c8 1B68     		ldr	r3, [r3]
+ 450              		.loc 1 146 8
+ 451 01ca 012B     		cmp	r3, #1
+ 452 01cc 29D1     		bne	.L16
+ 147:tasks/gprscon.c **** 					//ATSTAT();
+ 148:tasks/gprscon.c **** 
+ 149:tasks/gprscon.c **** 					if (numRD > 0) {
+ 453              		.loc 1 149 16
+ 454 01ce 394B     		ldr	r3, .L35+104
+ 455 01d0 1B68     		ldr	r3, [r3]
+ 456              		.loc 1 149 9
+ 457 01d2 002B     		cmp	r3, #0
+ 458 01d4 1DDD     		ble	.L17
+ 150:tasks/gprscon.c **** 						if (!WaitClose(numRD))
+ 459              		.loc 1 150 12
+ 460 01d6 374B     		ldr	r3, .L35+104
+ 461 01d8 1B68     		ldr	r3, [r3]
+ 462 01da 1846     		mov	r0, r3
+ 463 01dc 3A4B     		ldr	r3, .L35+124
+ 464 01de 9847     		blx	r3
+ 465              	.LVL12:
+ 466 01e0 0346     		mov	r3, r0
+ 467              		.loc 1 150 11
+ 468 01e2 83F00103 		eor	r3, r3, #1
+ 469 01e6 DBB2     		uxtb	r3, r3
+ 470              		.loc 1 150 10
+ 471 01e8 002B     		cmp	r3, #0
+ 472 01ea 00D0     		beq	.L18
+ 151:tasks/gprscon.c **** 							continue;
+ 473              		.loc 1 151 8
+ 474 01ec C1E0     		b	.L12
+ 475              	.L18:
+ 152:tasks/gprscon.c **** 						numRD = 0;
+ 476              		.loc 1 152 13
+ 477 01ee 314B     		ldr	r3, .L35+104
+ 478 01f0 0022     		movs	r2, #0
+ 479 01f2 1A60     		str	r2, [r3]
+ 153:tasks/gprscon.c **** 						vTaskDelay(10);
+ 480              		.loc 1 153 7
+ 481 01f4 0A20     		movs	r0, #10
+ 482 01f6 354B     		ldr	r3, .L35+128
+ 483 01f8 9847     		blx	r3
+ 484              	.LVL13:
+ 154:tasks/gprscon.c **** 
+ 155:tasks/gprscon.c **** 						if (!WaitCloseServer())
+ 485              		.loc 1 155 12
+ 486 01fa 354B     		ldr	r3, .L35+132
+ 487 01fc 9847     		blx	r3
+ 488              	.LVL14:
+ 489 01fe 0346     		mov	r3, r0
+ 490              		.loc 1 155 11
+ 491 0200 83F00103 		eor	r3, r3, #1
+ 492 0204 DBB2     		uxtb	r3, r3
+ 493              		.loc 1 155 10
+ 494 0206 002B     		cmp	r3, #0
+ 495 0208 00D0     		beq	.L19
+ 156:tasks/gprscon.c **** 							continue;
+ 496              		.loc 1 156 8
+ 497 020a B2E0     		b	.L12
+ 498              	.L19:
+ 157:tasks/gprscon.c **** 						vTaskDelay(10);
+ 499              		.loc 1 157 7
+ 500 020c 0A20     		movs	r0, #10
+ 501 020e 2F4B     		ldr	r3, .L35+128
+ 502 0210 9847     		blx	r3
+ 503              	.LVL15:
+ 504              	.L17:
+ 158:tasks/gprscon.c **** 					}
+ 159:tasks/gprscon.c **** 
+ 160:tasks/gprscon.c **** 					ModemWrite("AT+QPOWD\r\n");
+ 505              		.loc 1 160 6
+ 506 0212 3048     		ldr	r0, .L35+136
+ 507 0214 304B     		ldr	r3, .L35+140
+ 508 0216 9847     		blx	r3
+ 509              	.LVL16:
+ 161:tasks/gprscon.c **** 					vTaskDelay(1500);
+ 510              		.loc 1 161 6
+ 511 0218 40F2DC50 		movw	r0, #1500
+ 512 021c 2B4B     		ldr	r3, .L35+128
+ 513 021e 9847     		blx	r3
+ 514              	.LVL17:
+ 515 0220 81E0     		b	.L20
+ 516              	.L16:
+ 162:tasks/gprscon.c **** 
+ 163:tasks/gprscon.c **** 				} else if (DeviceID == 3) {
+ 517              		.loc 1 163 25
+ 518 0222 224B     		ldr	r3, .L35+96
+ 519 0224 1B68     		ldr	r3, [r3]
+ 520              		.loc 1 163 15
+ 521 0226 032B     		cmp	r3, #3
+ 522 0228 72D1     		bne	.L21
+ 164:tasks/gprscon.c **** 					if (numRD > 0) {
+ 523              		.loc 1 164 16
+ 524 022a 224B     		ldr	r3, .L35+104
+ 525 022c 1B68     		ldr	r3, [r3]
+ 526              		.loc 1 164 9
+ 527 022e 002B     		cmp	r3, #0
+ 528 0230 66DD     		ble	.L22
+ 165:tasks/gprscon.c **** 						if (!WaitClose(numRD))
+ 529              		.loc 1 165 12
+ 530 0232 204B     		ldr	r3, .L35+104
+ 531 0234 1B68     		ldr	r3, [r3]
+ 532 0236 1846     		mov	r0, r3
+ 533 0238 234B     		ldr	r3, .L35+124
+ 534 023a 9847     		blx	r3
+ 535              	.LVL18:
+ 536 023c 0346     		mov	r3, r0
+ 537              		.loc 1 165 11
+ 538 023e 83F00103 		eor	r3, r3, #1
+ 539 0242 DBB2     		uxtb	r3, r3
+ 540              		.loc 1 165 10
+ 541 0244 002B     		cmp	r3, #0
+ 542 0246 49D0     		beq	.L23
+ 166:tasks/gprscon.c **** 							continue;
+ 543              		.loc 1 166 8
+ 544 0248 93E0     		b	.L12
+ 545              	.L36:
+ 546 024a 00BF     		.align	2
+ 547              	.L35:
+ 548 024c 00000000 		.word	GprsConnectionsAttempt
+ 549 0250 00000000 		.word	LedConnect
+ 550 0254 00000000 		.word	LedNoModem
+ 551 0258 00000000 		.word	LedSIM
+ 552 025c 00000000 		.word	LedAPN
+ 553 0260 00000000 		.word	LedNoModem_Journal
+ 554 0264 00000000 		.word	.LC0
+ 555 0268 00000000 		.word	JrnlWrite
+ 556 026c 00000000 		.word	GprsIdleMSec
+ 557 0270 00000000 		.word	RAM
+ 558 0274 81A90300 		.word	240001
+ 559 0278 00000000 		.word	ModemInit
+ 560 027c 7FA90300 		.word	239999
+ 561 0280 00000000 		.word	LedReg
+ 562 0284 000C0140 		.word	1073810432
+ 563 0288 00000000 		.word	GPIO_SetBits
+ 564 028c 80A90300 		.word	240000
+ 565 0290 00000000 		.word	BKP_WriteBackupRegister
+ 566 0294 00000000 		.word	gprsbuf
+ 567 0298 00000000 		.word	ModemReceiveData
+ 568 029c 00000000 		.word	gprssize
+ 569 02a0 00000000 		.word	xPortGetFreeHeapSize
+ 570 02a4 00000000 		.word	LedReceive
+ 571 02a8 00000000 		.word	RVnetTcpSlaveProcess
+ 572 02ac 00000000 		.word	DeviceID
+ 573 02b0 00000000 		.word	LedSend
+ 574 02b4 00000000 		.word	numRD
+ 575 02b8 00000000 		.word	ModemSendData
+ 576 02bc 00000000 		.word	vPortEnterCritical
+ 577 02c0 00000000 		.word	GprsIdleMSecCSQ
+ 578 02c4 00000000 		.word	vPortExitCritical
+ 579 02c8 00000000 		.word	WaitClose
+ 580 02cc 00000000 		.word	vTaskDelay
+ 581 02d0 00000000 		.word	WaitCloseServer
+ 582 02d4 14000000 		.word	.LC1
+ 583 02d8 00000000 		.word	ModemWrite
+ 584              	.L23:
+ 167:tasks/gprscon.c **** 						numRD = 0;
+ 585              		.loc 1 167 13
+ 586 02dc 5A4B     		ldr	r3, .L37
+ 587 02de 0022     		movs	r2, #0
+ 588 02e0 1A60     		str	r2, [r3]
+ 168:tasks/gprscon.c **** 						vTaskDelay(10);
+ 589              		.loc 1 168 7
+ 590 02e2 0A20     		movs	r0, #10
+ 591 02e4 594B     		ldr	r3, .L37+4
+ 592 02e6 9847     		blx	r3
+ 593              	.LVL19:
+ 169:tasks/gprscon.c **** 
+ 170:tasks/gprscon.c **** 						if (!WaitCloseServer())
+ 594              		.loc 1 170 12
+ 595 02e8 594B     		ldr	r3, .L37+8
+ 596 02ea 9847     		blx	r3
+ 597              	.LVL20:
+ 598 02ec 0346     		mov	r3, r0
+ 599              		.loc 1 170 11
+ 600 02ee 83F00103 		eor	r3, r3, #1
+ 601 02f2 DBB2     		uxtb	r3, r3
+ 602              		.loc 1 170 10
+ 603 02f4 002B     		cmp	r3, #0
+ 604 02f6 00D0     		beq	.L24
+ 171:tasks/gprscon.c **** 							continue;
+ 605              		.loc 1 171 8
+ 606 02f8 3BE0     		b	.L12
+ 607              	.L24:
+ 172:tasks/gprscon.c **** 						vTaskDelay(10);
+ 608              		.loc 1 172 7
+ 609 02fa 0A20     		movs	r0, #10
+ 610 02fc 534B     		ldr	r3, .L37+4
+ 611 02fe 9847     		blx	r3
+ 612              	.LVL21:
+ 613              	.L22:
+ 173:tasks/gprscon.c **** 					}
+ 174:tasks/gprscon.c **** 
+ 175:tasks/gprscon.c **** 					ModemWrite("AT+QPOWD\r\n");
+ 614              		.loc 1 175 6
+ 615 0300 5448     		ldr	r0, .L37+12
+ 616 0302 554B     		ldr	r3, .L37+16
+ 617 0304 9847     		blx	r3
+ 618              	.LVL22:
+ 176:tasks/gprscon.c **** 					vTaskDelay(1500);
+ 619              		.loc 1 176 6
+ 620 0306 40F2DC50 		movw	r0, #1500
+ 621 030a 504B     		ldr	r3, .L37+4
+ 622 030c 9847     		blx	r3
+ 623              	.LVL23:
+ 624 030e 0AE0     		b	.L20
+ 625              	.L21:
+ 177:tasks/gprscon.c **** 
+ 178:tasks/gprscon.c **** 				}
+ 179:tasks/gprscon.c **** 
+ 180:tasks/gprscon.c **** 				else if (DeviceID == 2) {
+ 626              		.loc 1 180 23
+ 627 0310 524B     		ldr	r3, .L37+20
+ 628 0312 1B68     		ldr	r3, [r3]
+ 629              		.loc 1 180 13
+ 630 0314 022B     		cmp	r3, #2
+ 631 0316 06D1     		bne	.L20
+ 181:tasks/gprscon.c **** 					ModemWrite("AT+QPOWD=0\r\n");
+ 632              		.loc 1 181 6
+ 633 0318 5148     		ldr	r0, .L37+24
+ 634 031a 4F4B     		ldr	r3, .L37+16
+ 635 031c 9847     		blx	r3
+ 636              	.LVL24:
+ 182:tasks/gprscon.c **** 					vTaskDelay(1000);
+ 637              		.loc 1 182 6
+ 638 031e 4FF47A70 		mov	r0, #1000
+ 639 0322 4A4B     		ldr	r3, .L37+4
+ 640 0324 9847     		blx	r3
+ 641              	.LVL25:
+ 642              	.L20:
+ 183:tasks/gprscon.c **** 				}
+ 184:tasks/gprscon.c **** 
+ 185:tasks/gprscon.c **** 				MODEM_DISABLE
+ 643              		.loc 1 185 5
+ 644 0326 0121     		movs	r1, #1
+ 645 0328 4E48     		ldr	r0, .L37+28
+ 646 032a 4F4B     		ldr	r3, .L37+32
+ 647 032c 9847     		blx	r3
+ 648              	.LVL26:
+ 186:tasks/gprscon.c **** 				;
+ 187:tasks/gprscon.c **** 
+ 188:tasks/gprscon.c **** 				vTaskDelay(15000); //15сек
+ 649              		.loc 1 188 5
+ 650 032e 43F69820 		movw	r0, #15000
+ 651 0332 464B     		ldr	r3, .L37+4
+ 652 0334 9847     		blx	r3
+ 653              	.LVL27:
+ 189:tasks/gprscon.c **** 
+ 190:tasks/gprscon.c **** 				GprsIdleMSec = 0;
+ 654              		.loc 1 190 18
+ 655 0336 4D4B     		ldr	r3, .L37+36
+ 656 0338 0022     		movs	r2, #0
+ 657 033a 1A60     		str	r2, [r3]
+ 191:tasks/gprscon.c **** 				LedConnect = 0;
+ 658              		.loc 1 191 16
+ 659 033c 4C4B     		ldr	r3, .L37+40
+ 660 033e 0022     		movs	r2, #0
+ 661 0340 1A70     		strb	r2, [r3]
+ 192:tasks/gprscon.c **** 				LedReg = 0;
+ 662              		.loc 1 192 12
+ 663 0342 4C4B     		ldr	r3, .L37+44
+ 664 0344 0022     		movs	r2, #0
+ 665 0346 1A70     		strb	r2, [r3]
+ 193:tasks/gprscon.c **** 				LedSIM = 0;
+ 666              		.loc 1 193 12
+ 667 0348 4B4B     		ldr	r3, .L37+48
+ 668 034a 0022     		movs	r2, #0
+ 669 034c 1A70     		strb	r2, [r3]
+ 194:tasks/gprscon.c **** 				LedAPN = 0;
+ 670              		.loc 1 194 12
+ 671 034e 4B4B     		ldr	r3, .L37+52
+ 672 0350 0022     		movs	r2, #0
+ 673 0352 1A70     		strb	r2, [r3]
+ 195:tasks/gprscon.c **** 
+ 196:tasks/gprscon.c **** 				break;
+ 674              		.loc 1 196 5
+ 675 0354 23E0     		b	.L25
+ 676              	.L15:
+ 197:tasks/gprscon.c **** 			}
+ 198:tasks/gprscon.c **** 			if (GprsIdleMSecCSQ > CSQ_TIMEOUT_MS) //проверка уровень сигнала
+ 677              		.loc 1 198 24
+ 678 0356 4A4B     		ldr	r3, .L37+56
+ 679 0358 1B68     		ldr	r3, [r3]
+ 680              		.loc 1 198 7
+ 681 035a 47F23052 		movw	r2, #30000
+ 682 035e 9342     		cmp	r3, r2
+ 683 0360 04D9     		bls	.L26
+ 199:tasks/gprscon.c **** 			{
+ 200:tasks/gprscon.c **** 				CSQ();
+ 684              		.loc 1 200 5
+ 685 0362 484B     		ldr	r3, .L37+60
+ 686 0364 9847     		blx	r3
+ 687              	.LVL28:
+ 201:tasks/gprscon.c **** 				//ATSTAT();
+ 202:tasks/gprscon.c **** 				GprsIdleMSecCSQ = 0;
+ 688              		.loc 1 202 21
+ 689 0366 464B     		ldr	r3, .L37+56
+ 690 0368 0022     		movs	r2, #0
+ 691 036a 1A60     		str	r2, [r3]
+ 692              	.L26:
+ 203:tasks/gprscon.c **** 
+ 204:tasks/gprscon.c **** 			}
+ 205:tasks/gprscon.c **** 			vTaskDelay(1);
+ 693              		.loc 1 205 4
+ 694 036c 0120     		movs	r0, #1
+ 695 036e 374B     		ldr	r3, .L37+4
+ 696 0370 9847     		blx	r3
+ 697              	.LVL29:
+ 698              	.L12:
+ 105:tasks/gprscon.c **** 
+ 699              		.loc 1 105 11
+ 700 0372 414B     		ldr	r3, .L37+48
+ 701 0374 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 702 0376 83F00103 		eor	r3, r3, #1
+ 703 037a DBB2     		uxtb	r3, r3
+ 105:tasks/gprscon.c **** 
+ 704              		.loc 1 105 9
+ 705 037c 002B     		cmp	r3, #0
+ 706 037e 0ED0     		beq	.L25
+ 105:tasks/gprscon.c **** 
+ 707              		.loc 1 105 24 discriminator 1
+ 708 0380 3E4B     		ldr	r3, .L37+52
+ 709 0382 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 710 0384 83F00103 		eor	r3, r3, #1
+ 711 0388 DBB2     		uxtb	r3, r3
+ 105:tasks/gprscon.c **** 
+ 712              		.loc 1 105 20 discriminator 1
+ 713 038a 002B     		cmp	r3, #0
+ 714 038c 07D0     		beq	.L25
+ 105:tasks/gprscon.c **** 
+ 715              		.loc 1 105 37 discriminator 2
+ 716 038e 3E4B     		ldr	r3, .L37+64
+ 717 0390 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 718 0392 83F00103 		eor	r3, r3, #1
+ 719 0396 DBB2     		uxtb	r3, r3
+ 105:tasks/gprscon.c **** 
+ 720              		.loc 1 105 33 discriminator 2
+ 721 0398 002B     		cmp	r3, #0
+ 722 039a 7FF4B0AE 		bne	.L27
+ 723              	.L25:
+ 206:tasks/gprscon.c **** 		}
+ 207:tasks/gprscon.c **** 		if ((LedNoModem) || (LedSIM) || (LedAPN)) {
+ 724              		.loc 1 207 7
+ 725 039e 3A4B     		ldr	r3, .L37+64
+ 726 03a0 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 727              		.loc 1 207 6
+ 728 03a2 002B     		cmp	r3, #0
+ 729 03a4 07D1     		bne	.L28
+ 730              		.loc 1 207 20 discriminator 1
+ 731 03a6 344B     		ldr	r3, .L37+48
+ 732 03a8 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 733 03aa 002B     		cmp	r3, #0
+ 734 03ac 03D1     		bne	.L28
+ 735              		.loc 1 207 32 discriminator 2
+ 736 03ae 334B     		ldr	r3, .L37+52
+ 737 03b0 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 738 03b2 002B     		cmp	r3, #0
+ 739 03b4 41D0     		beq	.L29
+ 740              	.L28:
+ 208:tasks/gprscon.c **** 
+ 209:tasks/gprscon.c **** 			if ((!LedNoModem_Journal) && (FlagNoModem_Journal == 2)) {
+ 741              		.loc 1 209 9
+ 742 03b6 354B     		ldr	r3, .L37+68
+ 743 03b8 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 744 03ba 83F00103 		eor	r3, r3, #1
+ 745 03be DBB2     		uxtb	r3, r3
+ 746              		.loc 1 209 7
+ 747 03c0 002B     		cmp	r3, #0
+ 748 03c2 09D0     		beq	.L30
+ 749              		.loc 1 209 54 discriminator 1
+ 750 03c4 324B     		ldr	r3, .L37+72
+ 751 03c6 1B68     		ldr	r3, [r3]
+ 752              		.loc 1 209 30 discriminator 1
+ 753 03c8 022B     		cmp	r3, #2
+ 754 03ca 05D1     		bne	.L30
+ 755              	.LBB3:
+ 210:tasks/gprscon.c **** 
+ 211:tasks/gprscon.c **** 				JrnlWrite("Ошибка адаптера");
+ 756              		.loc 1 211 5
+ 757 03cc 3148     		ldr	r0, .L37+76
+ 758 03ce 324B     		ldr	r3, .L37+80
+ 759 03d0 9847     		blx	r3
+ 760              	.LVL30:
+ 212:tasks/gprscon.c **** 				LedNoModem_Journal = 1;
+ 761              		.loc 1 212 24
+ 762 03d2 2E4B     		ldr	r3, .L37+68
+ 763 03d4 0122     		movs	r2, #1
+ 764 03d6 1A70     		strb	r2, [r3]
+ 765              	.L30:
+ 766              	.LBE3:
+ 213:tasks/gprscon.c **** 			}
+ 214:tasks/gprscon.c **** 			if (FlagNoModem_Journal < 2) {
+ 767              		.loc 1 214 28
+ 768 03d8 2D4B     		ldr	r3, .L37+72
+ 769 03da 1B68     		ldr	r3, [r3]
+ 770              		.loc 1 214 7
+ 771 03dc 012B     		cmp	r3, #1
+ 772 03de 04DC     		bgt	.L31
+ 215:tasks/gprscon.c **** 				FlagNoModem_Journal++;
+ 773              		.loc 1 215 24
+ 774 03e0 2B4B     		ldr	r3, .L37+72
+ 775 03e2 1B68     		ldr	r3, [r3]
+ 776 03e4 0133     		adds	r3, r3, #1
+ 777 03e6 2A4A     		ldr	r2, .L37+72
+ 778 03e8 1360     		str	r3, [r2]
+ 779              	.L31:
+ 216:tasks/gprscon.c **** 			}
+ 217:tasks/gprscon.c **** 			GprsIdleMSec = 0;
+ 780              		.loc 1 217 17
+ 781 03ea 204B     		ldr	r3, .L37+36
+ 782 03ec 0022     		movs	r2, #0
+ 783 03ee 1A60     		str	r2, [r3]
+ 218:tasks/gprscon.c **** 			LedNoModem = 0;
+ 784              		.loc 1 218 15
+ 785 03f0 254B     		ldr	r3, .L37+64
+ 786 03f2 0022     		movs	r2, #0
+ 787 03f4 1A70     		strb	r2, [r3]
+ 219:tasks/gprscon.c **** 			LedReg = 0;
+ 788              		.loc 1 219 11
+ 789 03f6 1F4B     		ldr	r3, .L37+44
+ 790 03f8 0022     		movs	r2, #0
+ 791 03fa 1A70     		strb	r2, [r3]
+ 220:tasks/gprscon.c **** 			LedSIM = 0;
+ 792              		.loc 1 220 11
+ 793 03fc 1E4B     		ldr	r3, .L37+48
+ 794 03fe 0022     		movs	r2, #0
+ 795 0400 1A70     		strb	r2, [r3]
+ 221:tasks/gprscon.c **** 			LedAPN = 0;
+ 796              		.loc 1 221 11
+ 797 0402 1E4B     		ldr	r3, .L37+52
+ 798 0404 0022     		movs	r2, #0
+ 799 0406 1A70     		strb	r2, [r3]
+ 222:tasks/gprscon.c **** 
+ 223:tasks/gprscon.c **** 			RAM.CSQ = 0;
+ 800              		.loc 1 223 12
+ 801 0408 244B     		ldr	r3, .L37+84
+ 802 040a 0022     		movs	r2, #0
+ 803 040c 83F83E20 		strb	r2, [r3, #62]
+ 804 0410 0022     		movs	r2, #0
+ 805 0412 83F83F20 		strb	r2, [r3, #63]
+ 224:tasks/gprscon.c **** 
+ 225:tasks/gprscon.c **** 			if (!restart) {
+ 806              		.loc 1 225 8
+ 807 0416 224B     		ldr	r3, .L37+88
+ 808 0418 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 809 041a 83F00103 		eor	r3, r3, #1
+ 810 041e DBB2     		uxtb	r3, r3
+ 811              		.loc 1 225 7
+ 812 0420 002B     		cmp	r3, #0
+ 813 0422 07D0     		beq	.L32
+ 226:tasks/gprscon.c **** 				MODEM_DISABLE
+ 814              		.loc 1 226 5
+ 815 0424 0121     		movs	r1, #1
+ 816 0426 0F48     		ldr	r0, .L37+28
+ 817 0428 0F4B     		ldr	r3, .L37+32
+ 818 042a 9847     		blx	r3
+ 819              	.LVL31:
+ 227:tasks/gprscon.c **** 				;
+ 228:tasks/gprscon.c **** 				restart = 1;
+ 820              		.loc 1 228 13
+ 821 042c 1C4B     		ldr	r3, .L37+88
+ 822 042e 0122     		movs	r2, #1
+ 823 0430 1A70     		strb	r2, [r3]
+ 824 0432 02E0     		b	.L29
+ 825              	.L32:
+ 229:tasks/gprscon.c **** 			} else {
+ 230:tasks/gprscon.c **** 				restart = 0;
+ 826              		.loc 1 230 13
+ 827 0434 1A4B     		ldr	r3, .L37+88
+ 828 0436 0022     		movs	r2, #0
+ 829 0438 1A70     		strb	r2, [r3]
+ 830              	.L29:
+ 231:tasks/gprscon.c **** 			}
+ 232:tasks/gprscon.c **** 
+ 233:tasks/gprscon.c **** 			//vTaskDelay(15000); //15сек
+ 234:tasks/gprscon.c **** 			//break; // try to Init modem again
+ 235:tasks/gprscon.c **** 		}
+ 236:tasks/gprscon.c **** 
+ 237:tasks/gprscon.c **** 		vTaskDelay(1000);
+ 831              		.loc 1 237 3
+ 832 043a 4FF47A70 		mov	r0, #1000
+ 833 043e 034B     		ldr	r3, .L37+4
+ 834 0440 9847     		blx	r3
+ 835              	.LVL32:
+  49:tasks/gprscon.c **** 		LedConnect = 0;
+ 836              		.loc 1 49 25
+ 837 0442 E0E5     		b	.L33
+ 838              	.L34:
+ 238:tasks/gprscon.c **** 	}
+ 239:tasks/gprscon.c **** }
+ 839              		.loc 1 239 1
+ 840 0444 00BF     		nop
+ 841              	.L38:
+ 842 0446 00BF     		.align	2
+ 843              	.L37:
+ 844 0448 00000000 		.word	numRD
+ 845 044c 00000000 		.word	vTaskDelay
+ 846 0450 00000000 		.word	WaitCloseServer
+ 847 0454 14000000 		.word	.LC1
+ 848 0458 00000000 		.word	ModemWrite
+ 849 045c 00000000 		.word	DeviceID
+ 850 0460 20000000 		.word	.LC2
+ 851 0464 000C0140 		.word	1073810432
+ 852 0468 00000000 		.word	GPIO_SetBits
+ 853 046c 00000000 		.word	GprsIdleMSec
+ 854 0470 00000000 		.word	LedConnect
+ 855 0474 00000000 		.word	LedReg
+ 856 0478 00000000 		.word	LedSIM
+ 857 047c 00000000 		.word	LedAPN
+ 858 0480 00000000 		.word	GprsIdleMSecCSQ
+ 859 0484 00000000 		.word	CSQ
+ 860 0488 00000000 		.word	LedNoModem
+ 861 048c 00000000 		.word	LedNoModem_Journal
+ 862 0490 00000000 		.word	FlagNoModem_Journal
+ 863 0494 30000000 		.word	.LC3
+ 864 0498 00000000 		.word	JrnlWrite
+ 865 049c 00000000 		.word	RAM
+ 866 04a0 00000000 		.word	restart
+ 867              		.cfi_endproc
+ 868              	.LFE28:
+ 870              		.text
+ 871              	.Letext0:
+ 872              		.file 2 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 873              		.file 3 "common/rtos/common/utils/typedef.h"
+ 874              		.file 4 "c:\\program files (x86)\\gnu arm embedded toolchain\\10 2021.10\\arm-none-eabi\\include\\
+ 875              		.file 5 "common/lib.stm32/CMSIS/Core/CM3/stm32f10x.h"
+ 876              		.file 6 "./src/usermemory.h"
+ 877              		.file 7 "./src/modem.h"
+ 878              		.file 8 "tasks/led.h"
+ 879              		.file 9 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_gpio.h"
+ 880              		.file 10 "common/lib.stm32/STM32F10x_StdPeriph_Driver/inc/stm32f10x_bkp.h"
+ 881              		.file 11 "common/rtos/include/portable.h"
+ 882              		.file 12 "common/rtos/common/utils/rvnettcp.h"
+ 883              		.file 13 "common/rtos/portable/GCC/ARM_CM3/portmacro.h"
+ 884              		.file 14 "common/rtos/include/task.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 gprscon.c
+C:\Users\Admin\AppData\Local\Temp\cc0JtXia.s:22     .bss.GprsIdleMSecCSQ:00000000 GprsIdleMSecCSQ
+C:\Users\Admin\AppData\Local\Temp\cc0JtXia.s:19     .bss.GprsIdleMSecCSQ:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\cc0JtXia.s:29     .bss.GprsConnectionsAttempt:00000000 GprsConnectionsAttempt
+C:\Users\Admin\AppData\Local\Temp\cc0JtXia.s:26     .bss.GprsConnectionsAttempt:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\cc0JtXia.s:36     .bss.gprssize:00000000 gprssize
+C:\Users\Admin\AppData\Local\Temp\cc0JtXia.s:33     .bss.gprssize:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\cc0JtXia.s:42     .bss.restart:00000000 restart
+C:\Users\Admin\AppData\Local\Temp\cc0JtXia.s:43     .bss.restart:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\cc0JtXia.s:49     .bss.FlagNoModem_Journal:00000000 FlagNoModem_Journal
+C:\Users\Admin\AppData\Local\Temp\cc0JtXia.s:46     .bss.FlagNoModem_Journal:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\cc0JtXia.s:56     .bss.gprsbuf:00000000 gprsbuf
+C:\Users\Admin\AppData\Local\Temp\cc0JtXia.s:53     .bss.gprsbuf:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\cc0JtXia.s:59     .text.GprsIdleIncMSec:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc0JtXia.s:65     .text.GprsIdleIncMSec:00000000 GprsIdleIncMSec
+C:\Users\Admin\AppData\Local\Temp\cc0JtXia.s:106    .text.GprsIdleIncMSec:00000020 $d
+C:\Users\Admin\AppData\Local\Temp\cc0JtXia.s:112    .rodata:00000000 $d
+C:\Users\Admin\AppData\Local\Temp\cc0JtXia.s:127    .text.vGprsConTask:00000000 $t
+C:\Users\Admin\AppData\Local\Temp\cc0JtXia.s:133    .text.vGprsConTask:00000000 vGprsConTask
+C:\Users\Admin\AppData\Local\Temp\cc0JtXia.s:548    .text.vGprsConTask:0000024c $d
+C:\Users\Admin\AppData\Local\Temp\cc0JtXia.s:586    .text.vGprsConTask:000002dc $t
+C:\Users\Admin\AppData\Local\Temp\cc0JtXia.s:844    .text.vGprsConTask:00000448 $d
+
+UNDEFINED SYMBOLS
+GprsIdleMSec
+LedConnect
+LedNoModem
+LedSIM
+LedAPN
+LedNoModem_Journal
+JrnlWrite
+RAM
+ModemInit
+LedReg
+GPIO_SetBits
+BKP_WriteBackupRegister
+ModemReceiveData
+xPortGetFreeHeapSize
+LedReceive
+RVnetTcpSlaveProcess
+DeviceID
+LedSend
+numRD
+ModemSendData
+vPortEnterCritical
+vPortExitCritical
+WaitClose
+vTaskDelay
+WaitCloseServer
+ModemWrite
+CSQ
